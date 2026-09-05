@@ -1,0 +1,1084 @@
+<!doctype html><html><head><!-- frame-runtime --><script>window.__FRAME_PREAMBLE={"v":1,"capabilities":{"artifact":"artifact.DfA2To-s.js","assets":"assets.8Gk803W0.js","comments":"comments.hEoja5zd.js","db":"db.h-3sndFg.js","downloads":"downloads.th1YuAIk.js","embed":"embed.eqL6deQM.js","endpoints":"endpoints.CfzSv5nM.js","mcp":"mcp.Bvma3qD7.js","network":"network.B5UA9Su4.js","permissions":"permissions.BNySkLV5.js","room":"room.VSdFwTE9.js","sample":"sample.BW2Uysoh.js","self":"artifact.DfA2To-s.js","user":"user.BpKav-Rf.js"},"transforms":"_transforms.-IAc0qoT.js","comments":"_comments.C-AkolIB.js","translate":"_translate.5HCW4BJh.js","ldx":"_ldx.f0k6Z2Dd.js"}</script><script>(function(){"use strict";var le=["light","dark","system"],ue=/^[A-Za-z0-9_-]{1,64}$/,J=/^[a-zA-Z_:][a-zA-Z0-9_:.-]{0,127}$/,fe=new Set(["class","hidden","value","checked","style","title","alt","placeholder","lang","dir","role","tabindex","disabled","readonly","contenteditable","open","colspan","rowspan"]);function de(e){const t=e.toLowerCase();return t.startsWith("data-")||t.startsWith("aria-")||fe.has(t)}var We="http://www.w3.org/1999/xhtml",pe="http://www.w3.org/2000/svg",me=new Set(["script","style","iframe","noscript","noframes","noembed","xmp","plaintext","template","title","textarea","object","embed"]),he=new Set(["script","style"]);function _e(e){const t=e.localName.toLowerCase();return e.namespaceURI==="http://www.w3.org/1999/xhtml"?!me.has(t):e.namespaceURI===pe?!he.has(t):!1}function I(e,t){return e===t||(e===160||e===32)&&(t===160||t===32)}function ve(e,t){const r=e.length,n=t.length;let a=0;for(;a<r&&a<n&&I(e.charCodeAt(a),t.charCodeAt(a));)a++;let s=0;for(;s<r-a&&s<n-a&&I(e.charCodeAt(r-1-s),t.charCodeAt(n-1-s));)s++;return{p:a,s}}function ye(e,t){const r=e.firstChild;if(e.childNodes.length!==1||r===null||r.nodeType!==Node.TEXT_NODE){e.textContent=t;return}const n=r.data,a=n.length,s=t.length,{p:c,s:i}=ve(n,t);c===a&&i===0&&a===s||r.replaceData(c,a-c-i,t.slice(c,s-i));const p=r.data,f=e.ownerDocument.getSelection?.()??null,v=f!==null&&f.rangeCount>0&&(f.anchorNode===r||f.focusNode===r)?{anchor:f.anchorNode,anchorOffset:f.anchorOffset,focus:f.focusNode,focusOffset:f.focusOffset}:null;let d=-1,y=-1;for(let _=0;_<p.length&&_<t.length;_++){const E=p.charCodeAt(_),T=t.charCodeAt(_);E!==T&&I(E,T)&&(d<0&&(d=_),y=_)}const w=d>=0;if(w&&r.replaceData(d,y-d+1,t.slice(d,y+1)),w&&v!==null&&v.anchor!==null&&v.focus!==null)try{f.setBaseAndExtent(v.anchor,v.anchorOffset,v.focus,v.focusOffset)}catch{}}var we=new Set(["html","head","body","frameset"]);function be(e){return e.namespaceURI==="http://www.w3.org/1999/xhtml"&&we.has(e.localName)}function Ee(e){if(e===null||typeof e!="object")return!1;const t=e;if(typeof t.target!="string"||!ue.test(t.target)||t.text!==void 0&&typeof t.text!="string")return!1;if(t.attrsSet!==void 0){if(t.attrsSet===null||typeof t.attrsSet!="object")return!1;for(const[r,n]of Object.entries(t.attrsSet))if(!J.test(r)||typeof n!="string")return!1}if(t.attrsRemoved!==void 0){if(!Array.isArray(t.attrsRemoved))return!1;for(const r of t.attrsRemoved)if(typeof r!="string"||!J.test(r))return!1}return!0}function ge(e,t){if(e===null||typeof e!="object")return!1;const{seq:r,elements:n}=e;if(typeof r!="number"||!Number.isSafeInteger(r)||!Array.isArray(n)||n.length===0||n.length>64)return!1;for(let a=0;a<n.length;a++)if(!t(n[a]))return!1;return!0}function Ae(e){return e===null||typeof e!="object"?!1:ge(e.__frame_patch,Ee)}function Te(e){if(e===null||typeof e!="object")return!1;const t=e.__frame_init;return t!==null&&typeof t=="object"}function Re(e){return e!==null&&typeof e=="object"&&e.__frame_size_poke===!0}function Le(e){if(e===null||typeof e!="object")return!1;const t=e.__frame_theme;if(t===null||typeof t!="object")return!1;const r=t.theme;return typeof r=="string"&&le.includes(r)}var L=/^[\w.-]+\.js$/;function Se(e,t,r){return r?"inert":typeof t=="string"&&L.test(t)?e?[t]:"inert":e?"inert":"framed"}var Ke="frame_ldx_runtime",$e="script#an-form";function ke(){return{post(e,t){parent.postMessage(e,t)},on(e){const t=r=>{r.source===parent&&e(r.data,r.origin,r.isTrusted)};return addEventListener("message",t),()=>removeEventListener("message",t)}}}function Pe(){return{post:()=>{},on:()=>()=>{}}}var U="__frame_scroll",Oe=150,Ce=310,Me=160,je=3e4;function Ne(){let e=0,t=!1,r=!1,n=!1,a=0,s=null;const c=u=>{try{sessionStorage.setItem(U,JSON.stringify({y:u}))}catch{}},i=()=>{if(clearTimeout(e),s===null)return;const u=s;s=null,c(u)},p=()=>{if(t){t=!1;return}r=!0,s=scrollY,clearTimeout(e),e=setTimeout(i,Oe)};try{addEventListener("scroll",p,{passive:!0}),addEventListener("pagehide",i)}catch{}const f=()=>{let u;try{u=sessionStorage.getItem(U)}catch{return null}if(u===null)return null;let b;try{b=JSON.parse(u)}catch{b=null}const o=b?.y;if(!(typeof o=="number"&&Number.isFinite(o)&&o>=0)){try{sessionStorage.removeItem(U)}catch{}return null}return o};let v=!1;const d=u=>{try{const b=scrollY;scrollTo({top:u,left:0,behavior:"instant"}),a=u,n=!0,clearTimeout(e),s=null,c(u);const o=scrollY;o!==b&&(t=!0),o!==u&&!v&&(v=!0,addEventListener("load",()=>{try{if(scrollY===o){const m=f();d(m!==null?m:a)}}catch{}},{once:!0}))}catch{}},y=()=>{try{return!!location.hash}catch{return!0}};let w=!1;const _=()=>{try{if(w||innerWidth>Ce||innerHeight>Me)return;w=!0;const u=Date.now(),b=()=>{try{removeEventListener("resize",b)}catch{}if(Date.now()-u>je||r||y())return;const o=f();d(o!==null?o:a)};addEventListener("resize",b)}catch{}};let E=!1,T=!1;return{restore(){if(E||(E=!0,y()))return;const u=f();u!==null&&(d(u),_())},promoted(){if(T||(T=!0,y()))return;const u=f();u!==null?(d(u),_()):n&&d(a)}}}function Be(e,t,r,n){let a=null;try{a=window.trustedTypes?.createPolicy("frame-runtime",{createScriptURL:p=>p})??null}catch{}const s=window.Worker,c=s?.prototype,i=Object.freeze({Worker:s,workerOn:c?.addEventListener,workerPost:c?.postMessage,workerTerminate:c?.terminate,fetch:window.fetch.bind(window),preventDefault:Event.prototype.preventDefault,policy:a,origins:t});r(e).then(p=>p?.bootTopLevel?p.bootTopLevel(i,n):n.settle()).catch(()=>n.settle())}var qe="modulepreload",Xe=function(e){return"/"+e},Ye={},De=function(t,r,n){let a=Promise.resolve();function s(c){const i=new Event("vite:preloadError",{cancelable:!0});if(i.payload=c,window.dispatchEvent(i),!i.defaultPrevented)throw c}return a.then(c=>{for(const i of c||[])i.status==="rejected"&&s(i.reason);return t().catch(s)})},Ie=window===top,Q=Object.getOwnPropertyDescriptor(window,"claude"),C=Se(Ie,window.__FRAME_PREAMBLE?.topLevel,Q?.writable===!1),x=typeof C=="object"&&C[0],h=x?Pe():ke();(function(){const e=Object.defineProperty,t=globalThis,r=["RTCPeerConnection","webkitRTCPeerConnection","RTCDataChannel","RTCIceCandidate","RTCSessionDescription","RTCRtpSender","RTCRtpReceiver"];let n=0;for(let a=0;a<r.length;a++){const s=r[a];try{e(t,s,{value:void 0,writable:!1,configurable:!1})}catch{try{delete t[s]}catch{}try{e(t,s,{value:void 0,writable:!1,configurable:!0})}catch{}}typeof t[s]=="function"&&n++}if(n&&C==="framed")try{h.post({__frame_rtc_lockdown_failed:n},"*")}catch{}})();var Ue=1e4,xe=2e3,ee=Object.freeze([...window.__FRAME_PREAMBLE?.origins??["https://claude.ai","https://preview.claude.ai"]]);function te(e){for(const t of ee)if(t.endsWith(":*"))try{const r=new URL(e);if(`${r.protocol}//${r.hostname}:*`===t)return!0}catch{}else if(e===t)return!0;return!1}var M=Object.freeze({...window.__FRAME_PREAMBLE?.capabilities}),F=window.__FRAME_PREAMBLE?.transforms,z=window.__FRAME_PREAMBLE?.comments,H=window.__FRAME_PREAMBLE?.translate,W=window.__FRAME_PREAMBLE?.ldx;function S(e){return De(()=>import("/_runtime/"+e),void 0)}function re(e,t){return{contract:e.contract,changes:new Set(e.changes??[]),flags:new Set(e.flags??[]),capabilities:e.capabilities??{},capBudgets:e.capBudgets??{},transforms:new Map,shellOrigin:t,mount:q,hooks:N,pipe:()=>({wrap:(r,n)=>(...a)=>{try{return n(...a)}catch(s){return Promise.reject(s)}}})}}var j=null,A=null;function ne(e,t,r){try{Object.defineProperty(e,t,{value:r,writable:!1,configurable:!1,enumerable:!0})}catch{try{Object.defineProperty(e,t,{value:r,writable:!1,configurable:!0,enumerable:!0})}catch{}}}var K=!1,N={editBefore:null,edit:null};function Fe(e,t,r=!1){const n=[];let a;if(r)try{N.editBefore?.(e)}catch{}for(const s of e.elements){const c=document.querySelector(`[data-id="${s.target}"]`);if(!c){a=s.target;break}if([...Object.keys(s.attrsSet??{}),...s.attrsRemoved??[]].some(i=>!de(i))){a=s.target;break}if(s.text!==void 0&&(!_e(c)||be(c))){a=s.target;break}for(const[i,p]of Object.entries(s.attrsSet??{}))if(!se(c,i)){try{c.setAttribute(i,p)}catch{}oe(c,i,p)}for(const i of s.attrsRemoved??[])se(c,i)||(c.removeAttribute(i),oe(c,i,null));typeof s.text=="string"&&ye(c,s.text),n.push(s.target)}if(r)try{N.edit?.(e.seq,n,a)}catch{}if(a!==void 0){h.post({__frame_patch_miss:{seq:e.seq}},t);return}try{document.dispatchEvent(new CustomEvent("claude:edit",{detail:{seq:e.seq,targets:n}}))}catch{}}function oe(e,t,r){if(!(e instanceof HTMLInputElement))return;const n=t.toLowerCase();n==="checked"?e.checked=r!==null:n==="value"&&e.type!=="file"&&(e.value=r??"")}function se(e,t){const r=t.toLowerCase(),n=e;return r==="data-id"||(r==="value"||r==="checked")&&(n.__artifactSecret===!0||/^(password|hidden|file)$/.test(n.type??"")||/(^|\s)(cc-|one-time-code|current-password|new-password)/i.test(`${e.getAttribute("autocomplete")??""} ${n.autocomplete??""}`))}function ae(e){const t=document.documentElement;e==="light"||e==="dark"?(t.dataset.theme=e,t.style.colorScheme=e,K=!0):K&&(delete t.dataset.theme,t.style.colorScheme="",K=!1)}var B=new Map;function ze(){let e;const t={u:new Promise(r=>{e=r}),r:r=>{t.done=!0,e(r)},done:!1,nulled:!1};return t}function $(){for(const e of B.values())e.done||(e.nulled=!0,e.r(null))}var He=Object.freeze(Object.assign(Object.create(null),{call:Function.prototype.call,apply:Function.prototype.apply,bind:Function.prototype.bind})),q=(e,t)=>{const r=B.get(e);if(!r||r.done){r?.nulled&&A&&h.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:e}},A);return}const n=typeof t=="function"?Object.setPrototypeOf(t,He):Object.assign(Object.create(null),t);typeof n.then=="function"&&delete n.then,r.r(Object.freeze(n))};function ie(){const e=Q?.value??{};ne(window,"claude",e);for(const t of Object.keys(M)){if(e[t]!==void 0){ne(e,t,e[t]);continue}B.set(t,ze())}if(e.use===void 0){const t=r=>{if(typeof r!="string"||!Object.hasOwn(M,r))return Promise.resolve(null);const n=B.get(r);return n?n.u:Promise.resolve(e[r]??null)};try{Object.defineProperty(e,"use",{value:t,writable:!0,configurable:!0,enumerable:!1})}catch{}}}if(C==="framed"){const e=F&&L.test(F)?S(F).catch(()=>{}):Promise.resolve(void 0),t=o=>{if(o.type==="auxclick"&&o.button!==1)return;const m=o.target,k=m&&m.closest?m.closest("a[href],area[href]"):null;if(!k)return;const O=k.getAttribute("href");if(!O)return;let R;try{R=new URL(O,document.baseURI)}catch{return}if((R.protocol==="http:"||R.protocol==="https:")&&R.origin!==location.origin){o.preventDefault();const P=(k.getAttribute("target")??"").toLowerCase(),g=o.type==="auxclick"||o.metaKey||o.ctrlKey||o.shiftKey||o.altKey||!["","_self","_top","_parent"].includes(P);h.post({__frame_nav:!0,url:R.href,newTab:g},"*")}};addEventListener("click",t,!0),addEventListener("auxclick",t,!0);const r={},n=o=>{o.isTrusted&&(r.pointer=!0)},a=o=>{o.isTrusted&&(r.click=!0)};addEventListener("pointermove",n,{capture:!0,passive:!0}),addEventListener("click",a,{capture:!0,passive:!0});const s={cb:null};addEventListener("keydown",o=>s.cb?.(o),!0),e.then(o=>o?.installEscapeForward?.(s,m=>{A&&h.post(m,A)})),e.then(o=>{o?.wireNav&&(o.wireNav(),removeEventListener("click",t,!0),removeEventListener("auxclick",t,!0),removeEventListener("pointermove",n,!0),removeEventListener("click",a,!0),o.wireEngagement?.(r))});let c=null;try{c=Ne()}catch{}ie();let i=null,p=null,f=0;const v=h.on((o,m)=>{te(m)&&Te(o)&&(i=o.__frame_init,A=m,v(),clearTimeout(f),p?.())});h.post({__frame_connect:!0},"*");const d=setTimeout,y=clearTimeout;let w=0;const _=()=>{try{h.post({__frame_alive:!0},"*")}catch{}w=d(_,xe)},E=()=>y(w);_(),addEventListener("load",E,{once:!0});const T=new Promise(o=>{p=o,f=setTimeout(()=>{v(),o()},Ue)}),u=document.readyState==="loading"?new Promise(o=>document.addEventListener("DOMContentLoaded",()=>o(),{once:!0})):Promise.resolve();u.then(()=>{try{c?.restore()}catch{}});const b={cb:null};h.on((o,m)=>{if(te(m)&&Re(o)){try{c?.promoted()}catch{}b.cb?.()}}),T.then(async()=>{if(!i||!A){$();return}ae(i.theme);const o=A;let m=!1,k=!1;h.on((l,Y,D)=>{if(Y!==o)return;Le(l)&&ae(l.__frame_theme.theme),Ae(l)&&Fe(l.__frame_patch,o,D);const G=l?.__fc_mode;G&&typeof G=="object"&&!m&&z&&L.test(z)&&(m=!0,S(z).then(Z=>Z.install?.(o,G.on===!0)).catch(()=>{}));const V=l?.__ft_cmd;V&&typeof V=="object"&&!k&&H&&L.test(H)&&(k=!0,S(H).then(Z=>Z.install?.(o,V)).catch(()=>{}))});const O=Object.keys(i.capabilities??{}).filter(l=>Object.hasOwn(M,l)).map(l=>[l,M[l]]).filter(l=>typeof l[1]=="string"&&L.test(l[1])),R=await Promise.allSettled(O.map(([,l])=>S(l))),P=await e,g=A;if(P?.buildBoot||h.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:"_transforms"}},g),P?.buildBoot)try{j=P.buildBoot(i,P.TRANSFORMS??{},{shellOrigin:g,mount:q,hooks:N},l=>h.post({__frame_cap_telemetry:l},g))}catch{h.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:"_transforms"}},g),j=re(i,g)}else j=re(i,g);const X=l=>h.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:l}},g),ce=j;R.forEach((l,Y)=>{const D=O[Y][0];if(l.status!=="fulfilled"){X(D);return}try{l.value?.install?.(ce)}catch{X(D)}}),$(),await u,E(),h.post({__frame_ready:!0},A),e.then(l=>l?.installSizeReporter?.(g,b)),ce.flags.has("frame_ldx_runtime")&&W&&L.test(W)&&document.querySelector("script#an-form")&&S(W).then(l=>l?.boot?.()).catch(()=>!1).then(l=>{l!==!0&&X("_ldx")})})}else x&&(ie(),Be(x,ee,S,{settle:$,mount:q}))})();</script><!-- /frame-runtime --><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
+<title>Testify</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#F6F3EC;
+    --surface:#FFFFFF;
+    --surface-2:#EDE8DC;
+    --border:#DDD6C4;
+    --ink:#191712;
+    --ink-2:#5B5648;
+    --ink-3:#8A836E;
+    --accent:#2458A6;
+    --accent-ink:#FFFFFF;
+    --accent-soft:#E3ECF8;
+    --good:#2F8F5B;
+    --good-soft:#E3F1E9;
+    --warn:#C8871A;
+    --warn-soft:#F7EBD8;
+    --bad:#C13B3B;
+    --bad-soft:#F8E3E1;
+    --shadow: 0 1px 2px rgba(25,23,18,.07), 0 10px 28px -14px rgba(25,23,18,.22);
+    --radius-s: 8px;
+    --radius-m: 14px;
+    --radius-l: 20px;
+    --font-display:'Manrope',"Segoe UI",sans-serif;
+    --font-body:'IBM Plex Sans',"Segoe UI",sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,"SFMono-Regular",monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#14171D;
+      --surface:#1B1F27;
+      --surface-2:#232833;
+      --border:#2E3440;
+      --ink:#EDEFF3;
+      --ink-2:#A7ADBB;
+      --ink-3:#767D8C;
+      --accent:#5A8FD6;
+      --accent-ink:#0B1220;
+      --accent-soft:#20304A;
+      --good:#2FA37C;
+      --good-soft:#17281F;
+      --warn:#B78E28;
+      --warn-soft:#302912;
+      --bad:#D85C6E;
+      --bad-soft:#331F27;
+      --shadow: 0 1px 2px rgba(0,0,0,.45), 0 10px 30px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#14171D;
+    --surface:#1B1F27;
+    --surface-2:#232833;
+    --border:#2E3440;
+    --ink:#EDEFF3;
+    --ink-2:#A7ADBB;
+    --ink-3:#767D8C;
+    --accent:#5A8FD6;
+    --accent-ink:#0B1220;
+    --accent-soft:#20304A;
+    --good:#2FA37C;
+    --good-soft:#17281F;
+    --warn:#B78E28;
+    --warn-soft:#302912;
+    --bad:#D85C6E;
+    --bad-soft:#331F27;
+    --shadow: 0 1px 2px rgba(0,0,0,.45), 0 10px 30px -14px rgba(0,0,0,.6);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:14px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:var(--font-display);color:var(--ink);margin:0;text-wrap:balance;}
+  p{margin:0;}
+  button{font-family:var(--font-body);}
+  ::selection{background:var(--accent-soft);}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  .eyebrow{
+    font:600 11px/1 var(--font-body);
+    letter-spacing:.07em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+  }
+
+  /* ---------- topbar ---------- */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    padding:12px 24px;
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;font-size:18px;}
+  .brand-mark{
+    width:28px;height:28px;border-radius:8px;
+    background:var(--accent);color:var(--accent-ink);
+    display:grid;place-items:center;
+    font-family:var(--font-mono);font-weight:600;font-size:13px;
+    flex:none;
+  }
+  .switcher{
+    display:inline-flex;background:var(--surface-2);border:1px solid var(--border);
+    border-radius:999px;padding:3px;gap:2px;flex-wrap:wrap;
+  }
+  .switcher button{
+    border:0;background:transparent;padding:7px 14px;border-radius:999px;
+    font:600 12.5px var(--font-body);color:var(--ink-2);cursor:pointer;white-space:nowrap;
+  }
+  .switcher button.active{background:var(--accent);color:var(--accent-ink);box-shadow:var(--shadow);}
+  .switcher button:hover:not(.active){color:var(--ink);}
+
+  .persona{display:flex;align-items:center;gap:9px;min-width:0;}
+  .persona-avatar{
+    width:32px;height:32px;border-radius:50%;flex:none;
+    background:var(--surface-2);color:var(--ink-2);border:1px solid var(--border);
+    display:grid;place-items:center;font:700 12px var(--font-display);
+  }
+  .persona-text{min-width:0;}
+  .persona-name{font:600 13px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;}
+  .persona-role{font:400 11.5px var(--font-body);color:var(--ink-3);white-space:nowrap;}
+
+  /* ---------- layout ---------- */
+  .app{max-width:1180px;margin:0 auto;padding:28px 24px 72px;}
+  .view{display:flex;flex-direction:column;gap:22px;}
+  .view[hidden]{display:none;}
+
+  .view-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .view-head h2{font-size:22px;font-weight:800;}
+  .view-head .desc{color:var(--ink-2);font-size:13px;max-width:56ch;margin-top:4px;}
+  .head-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+
+  select, .btn{
+    font:600 13px var(--font-body);
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--ink);
+    padding:8px 12px;
+    cursor:pointer;
+  }
+  select{padding-right:8px;}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+  .btn.ghost{background:transparent;}
+  .btn:hover{filter:brightness(0.97);}
+  :root[data-theme="dark"] .btn:hover, @media (prefers-color-scheme:dark){ .btn:hover{filter:brightness(1.12);} }
+
+  /* ---------- stat tiles ---------- */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+  .stat{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);
+    padding:16px 18px;display:flex;flex-direction:column;gap:6px;
+  }
+  .stat .eyebrow{color:var(--ink-3);}
+  .stat .value{font:800 26px/1.1 var(--font-display);letter-spacing:-.01em;}
+  .stat .sub{font-size:12px;color:var(--ink-2);font-family:var(--font-mono);}
+
+  /* ---------- cards / tables ---------- */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-l);padding:20px;}
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .card-head h3{font-size:14.5px;font-weight:700;}
+  .card-head .hint{font-size:12px;color:var(--ink-3);}
+
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{
+    text-align:left;font:600 11px var(--font-body);letter-spacing:.05em;text-transform:uppercase;
+    color:var(--ink-3);padding:0 10px 8px;border-bottom:1px solid var(--border);white-space:nowrap;
+  }
+  tbody td{padding:11px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:0;}
+  tbody tr.clickable{cursor:pointer;}
+  tbody tr.clickable:hover{background:var(--surface-2);}
+  td.num, th.num{font-family:var(--font-mono);text-align:right;font-variant-numeric:tabular-nums;}
+
+  .pill{
+    display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;
+    font:600 11.5px var(--font-body);white-space:nowrap;
+  }
+  .pill.good{background:var(--good-soft);color:var(--good);}
+  .pill.warn{background:var(--warn-soft);color:var(--warn);}
+  .pill.bad{background:var(--bad-soft);color:var(--bad);}
+  .pill.neutral{background:var(--surface-2);color:var(--ink-2);}
+  .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none;}
+
+  .trend{font-family:var(--font-mono);font-weight:600;font-size:13px;}
+  .trend.up{color:var(--good);}
+  .trend.down{color:var(--bad);}
+  .trend.flat{color:var(--ink-3);}
+
+  .rank-badge{
+    display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;
+    font:700 11px var(--font-mono);background:var(--surface-2);color:var(--ink-2);
+  }
+  .rank-badge.r1{background:var(--accent);color:var(--accent-ink);}
+
+  /* ---------- structure view ---------- */
+  .hierarchy{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;}
+  .h-card{
+    flex:1 1 190px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);
+    padding:16px;display:flex;flex-direction:column;gap:8px;min-width:170px;
+  }
+  .h-card .num{font:700 11px var(--font-mono);color:var(--accent);}
+  .h-card h3{font-size:14.5px;}
+  .h-card p{font-size:12.5px;color:var(--ink-2);}
+  .h-card ul{margin:2px 0 0;padding-left:16px;font-size:12px;color:var(--ink-2);display:flex;flex-direction:column;gap:3px;}
+  .h-arrow{align-self:center;color:var(--ink-3);font-size:18px;flex:0 0 auto;padding:0 2px;}
+  @media (max-width:900px){ .h-arrow{transform:rotate(90deg);} }
+
+  /* ---------- bar chart (topic error) ---------- */
+  .barchart{display:flex;flex-direction:column;gap:10px;}
+  .bar-row{display:grid;grid-template-columns:190px 1fr 46px;align-items:center;gap:10px;}
+  .bar-row .label{font-size:12.5px;color:var(--ink-2);}
+  .bar-track{position:relative;height:18px;background:var(--surface-2);border-radius:6px;overflow:hidden;}
+  .bar-fill{position:absolute;inset:0 auto 0 0;border-radius:6px;}
+  .bar-row .val{font-family:var(--font-mono);font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums;}
+  .bar-axis{display:grid;grid-template-columns:190px 1fr 46px;font-size:10.5px;color:var(--ink-3);font-family:var(--font-mono);}
+  .bar-axis .ticks{position:relative;height:12px;}
+  .bar-axis .ticks span{position:absolute;transform:translateX(-50%);}
+
+  .missed-list{display:flex;flex-direction:column;gap:10px;}
+  .missed-item{border:1px solid var(--border);border-radius:var(--radius-s);padding:12px 14px;display:flex;flex-direction:column;gap:5px;}
+  .missed-item .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;}
+  .missed-item .topic-tag{font:600 10.5px var(--font-body);letter-spacing:.03em;text-transform:uppercase;color:var(--accent);}
+  .missed-item .miss-pct{font:700 13px var(--font-mono);color:var(--bad);}
+  .missed-item .q{font-size:13px;}
+  .missed-item .note{font-size:12px;color:var(--ink-2);}
+
+  /* ---------- student detail / mastery ---------- */
+  .mastery-list{display:flex;flex-direction:column;gap:9px;}
+  .mastery-row{display:grid;grid-template-columns:190px 1fr 40px;align-items:center;gap:10px;}
+  .mastery-row .label{font-size:12.5px;color:var(--ink-2);}
+  .mastery-row .val{font-family:var(--font-mono);font-size:12.5px;text-align:right;}
+
+  .ring{
+    width:132px;height:132px;border-radius:50%;flex:none;
+    display:grid;place-items:center;
+    background: conic-gradient(var(--ring-color, var(--accent)) calc(var(--pct,0)*1%), var(--surface-2) 0);
+  }
+  .ring-inner{
+    width:100px;height:100px;border-radius:50%;background:var(--surface);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  }
+  .ring-inner .n{font:800 26px var(--font-display);}
+  .ring-inner .l{font:600 10px var(--font-body);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);}
+
+  .detail-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;}
+  @media (max-width:860px){ .detail-grid{grid-template-columns:1fr;} }
+
+  /* ---------- modal ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(20,18,14,.45);
+    display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;
+  }
+  .modal-overlay[hidden]{display:none;}
+  .modal{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-l);
+    padding:22px;width:100%;max-width:420px;box-shadow:var(--shadow);
+    display:flex;flex-direction:column;gap:14px;
+  }
+  .modal h3{font-size:16px;}
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field label{font:600 11.5px var(--font-body);color:var(--ink-2);}
+  .field input, .field select{width:100%;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:4px;}
+
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+    background:var(--ink);color:var(--paper);
+    padding:10px 18px;border-radius:999px;font:600 12.5px var(--font-body);
+    box-shadow:var(--shadow);z-index:60;
+  }
+  :root[data-theme="dark"] .toast, @media (prefers-color-scheme:dark){ .toast{background:var(--surface);color:var(--ink);border:1px solid var(--border);} }
+  .toast[hidden]{display:none;}
+
+  .empty-hint{font-size:12.5px;color:var(--ink-3);padding:6px 2px;}
+</style>
+
+<div class="topbar">
+  <div class="brand"><span class="brand-mark">T</span>Testify</div>
+  <nav class="switcher" id="roleSwitcher">
+    <button type="button" data-role="structure" class="active">Struktura</button>
+    <button type="button" data-role="owner">App Owner</button>
+    <button type="button" data-role="director">Direktor</button>
+    <button type="button" data-role="tutor">Ustoz</button>
+    <button type="button" data-role="student">O'quvchi</button>
+  </nav>
+  <div class="persona" id="personaChip" hidden>
+    <div class="persona-avatar" id="personaAvatar">—</div>
+    <div class="persona-text">
+      <div class="persona-name" id="personaName">—</div>
+      <div class="persona-role" id="personaRole">—</div>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- ===================== STRUCTURE ===================== -->
+  <section class="view" id="view-structure">
+    <div class="view-head">
+      <div>
+        <h2>Beshta rol, bitta nazorat zanjiri</h2>
+        <p class="desc">Testify — haydovchilik guvohnomasi testiga tayyorgarlik ko'radigan avtomaktablarga obuna asosida sotiladigan platforma. Har bir rol faqat o'ziga tegishli darajani ko'radi.</p>
+      </div>
+    </div>
+
+    <div class="hierarchy" id="hierarchy"></div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Platforma bo'yicha umumiy holat</h3>
+        <span class="hint">barcha tashkilotlar bo'yicha, real vaqtda hisoblangan</span>
+      </div>
+      <div class="stats" id="platformStats"></div>
+    </div>
+  </section>
+
+  <!-- ===================== APP OWNER ===================== -->
+  <section class="view" id="view-owner" hidden>
+    <div class="view-head">
+      <div>
+        <h2>App Owner paneli</h2>
+        <p class="desc">Barcha avtomaktablarni, ularning obuna holatini va platforma bo'yicha o'sishni shu yerdan boshqarasiz.</p>
+      </div>
+      <div class="head-controls">
+        <button type="button" class="btn primary" id="addOrgBtn">+ Yangi tashkilot qo'shish</button>
+      </div>
+    </div>
+
+    <div class="stats" id="ownerStats"></div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Tashkilotlar</h3>
+        <span class="hint" id="orgCountHint"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tashkilot</th><th>Shahar</th><th>Reja</th><th>Holat</th>
+              <th class="num">Ustozlar</th><th class="num">O'quvchilar</th><th>Ro'yxatdan o'tgan</th>
+            </tr>
+          </thead>
+          <tbody id="orgTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DIRECTOR ===================== -->
+  <section class="view" id="view-director" hidden>
+    <div class="view-head">
+      <div>
+        <h2 id="directorOrgName">Direktor paneli</h2>
+        <p class="desc">O'z avtomaktabingizdagi barcha ustozlar va guruhlarning natijalarini solishtiring.</p>
+      </div>
+    </div>
+
+    <div class="stats" id="directorStats"></div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Ustozlar reytingi</h3>
+        <span class="hint">o'rtacha ball bo'yicha saralangan</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Ustoz</th><th>Guruh</th><th class="num">O'quvchilar</th><th class="num">O'rtacha ball</th><th>Trend</th></tr>
+          </thead>
+          <tbody id="tutorRankBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Guruhlar</h3>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Guruh</th><th>Ustoz</th><th class="num">O'quvchilar</th><th>Faollik</th></tr>
+          </thead>
+          <tbody id="groupsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TUTOR ===================== -->
+  <section class="view" id="view-tutor" hidden>
+    <div class="view-head">
+      <div>
+        <h2 id="tutorHeading">Ustoz paneli</h2>
+        <p class="desc">Guruhingiz qaysi mavzularda ko'p xato qilayotganini va har bir o'quvchining progressini shu yerdan kuzatasiz.</p>
+      </div>
+      <div class="head-controls">
+        <label class="empty-hint" for="groupSelect" style="padding:0;">Guruh:</label>
+        <select id="groupSelect"></select>
+      </div>
+    </div>
+
+    <div class="stats" id="tutorStats"></div>
+
+    <div class="detail-grid">
+      <div class="card">
+        <div class="card-head">
+          <h3>Mavzu bo'yicha xato foizi</h3>
+          <span class="hint">guruh bo'yicha, so'nggi 30 kun</span>
+        </div>
+        <div class="barchart" id="topicChart"></div>
+        <div class="bar-axis"><div></div><div class="ticks"><span style="left:0%">0%</span><span style="left:25%">25%</span><span style="left:50%">50%</span><span style="left:75%">75%</span><span style="left:100%">100%</span></div><div></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Eng ko'p xato qilingan savollar</h3>
+          <span class="hint">guruh bo'yicha</span>
+        </div>
+        <div class="missed-list" id="missedList"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>O'quvchilar</h3>
+        <span class="hint">qatorni bosing — to'liq progress ochiladi</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>O'quvchi</th><th class="num">Urinishlar</th><th>Oxirgi faollik</th><th class="num">O'rtacha ball</th><th>Trend</th><th>Holat</th></tr>
+          </thead>
+          <tbody id="rosterTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" id="studentDetailPanel" hidden></div>
+  </section>
+
+  <!-- ===================== STUDENT ===================== -->
+  <section class="view" id="view-student" hidden>
+    <div class="view-head">
+      <div>
+        <h2>O'quvchi paneli</h2>
+        <p class="desc">O'zingizning tayyorgarlik darajangiz, xato qilgan savollaringiz va urinishlar tarixi.</p>
+      </div>
+      <div class="head-controls">
+        <label class="empty-hint" for="studentSelect" style="padding:0;">Profil:</label>
+        <select id="studentSelect"></select>
+      </div>
+    </div>
+
+    <div id="studentBody"></div>
+  </section>
+
+</div>
+
+<div class="modal-overlay" id="orgModalOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="orgModalTitle">
+    <h3 id="orgModalTitle">Yangi tashkilot qo'shish</h3>
+    <div class="field">
+      <label for="f-name">Avtomaktab nomi</label>
+      <input id="f-name" type="text" placeholder="masalan, Chirchiq Avto Yo'l">
+    </div>
+    <div class="field">
+      <label for="f-city">Shahar</label>
+      <input id="f-city" type="text" placeholder="masalan, Chirchiq">
+    </div>
+    <div class="field">
+      <label for="f-plan">Tarif rejasi</label>
+      <select id="f-plan">
+        <option>Start</option>
+        <option selected>Standart</option>
+        <option>Pro</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="f-tutors">Taxminiy ustozlar soni</label>
+      <input id="f-tutors" type="number" min="1" value="3">
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn ghost" id="orgCancelBtn">Bekor qilish</button>
+      <button type="button" class="btn primary" id="orgSaveBtn">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var TODAY = new Date(2026, 8, 4); // 2026-09-04, mos keladi joriy sanaga
+
+  // ---------------------------------------------------------------
+  // Deterministik pseudo-tasodifiy generator (har safar bir xil natija)
+  // ---------------------------------------------------------------
+  function seedFromString(str){
+    var h = 1779033703 ^ str.length;
+    for (var i = 0; i < str.length; i++){
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    return function(){
+      h = Math.imul(h ^ (h >>> 16), 2246822519);
+      h = Math.imul(h ^ (h >>> 13), 3266489917);
+      h ^= h >>> 16;
+      return (h >>> 0) / 4294967296;
+    };
+  }
+  function clamp(n, lo, hi){ return Math.max(lo, Math.min(hi, n)); }
+  function round(n){ return Math.round(n); }
+
+  function statusFromScore(pct){
+    if (pct >= 85) return {label:"Tayyor", cls:"good"};
+    if (pct >= 65) return {label:"Deyarli tayyor", cls:"warn"};
+    return {label:"Yordam kerak", cls:"bad"};
+  }
+  function errorBandColorVar(pct){
+    if (pct < 15) return "var(--good)";
+    if (pct <= 30) return "var(--warn)";
+    return "var(--bad)";
+  }
+  function trendArrow(t){
+    if (t === "up") return '<span class="trend up">&#8593;</span>';
+    if (t === "down") return '<span class="trend down">&#8595;</span>';
+    return '<span class="trend flat">&#8594;</span>';
+  }
+  function fmtRelativeDate(d){
+    var days = Math.round((TODAY - d) / 86400000);
+    if (days <= 0) return "bugun";
+    if (days === 1) return "kecha";
+    if (days < 7) return days + " kun oldin";
+    var weeks = Math.round(days/7);
+    return weeks + " hafta oldin";
+  }
+  function fmtDate(d){
+    return String(d.getDate()).padStart(2,"0") + "." + String(d.getMonth()+1).padStart(2,"0") + "." + d.getFullYear();
+  }
+  function initials(name){
+    var parts = name.split(" ");
+    return (parts[0][0] + (parts[1] ? parts[1][0] : "")).toUpperCase();
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; });
+  }
+
+  // ---------------------------------------------------------------
+  // Mavzular va savollar banki (PDD — yo'l harakati qoidalari)
+  // ---------------------------------------------------------------
+  var TOPICS = [
+    {id:"signs",      name:"Yo'l belgilari"},
+    {id:"lights",     name:"Svetofor va nazoratchi ishoralari"},
+    {id:"priority",   name:"Ustunlik huquqi va chorrahalar"},
+    {id:"speed",      name:"Tezlik va masofa rejimi"},
+    {id:"parking",    name:"To'xtash va turish qoidalari"},
+    {id:"accidents",  name:"YTH va javobgarlik"},
+    {id:"tech",       name:"Texnik holat va xavfsizlik"},
+    {id:"pedestrian", name:"Piyodalar xavfsizligi"}
+  ];
+  var TOPIC_BY_ID = {};
+  TOPICS.forEach(function(t){ TOPIC_BY_ID[t.id] = t; });
+
+  var QUESTION_BANK = {
+    signs: [
+      {id:"signs-1", q:"Doira shaklidagi qizil ramkali “Kirish taqiqlangan” belgisi o'rnatilgan yo'lga transport vositasi kira oladimi?"},
+      {id:"signs-2", q:"Uchburchak shaklidagi ogohlantiruvchi belgilar haydovchini nima haqida ogohlantiradi?"}
+    ],
+    lights: [
+      {id:"lights-1", q:"Svetoforda sariq chiroq yonganda haydovchi qanday harakat qilishi kerak?"},
+      {id:"lights-2", q:"Nazoratchi ishorasi svetofor ko'rsatkichiga zid bo'lsa, haydovchi kimga bo'ysunadi?"}
+    ],
+    priority: [
+      {id:"priority-1", q:"Tenglashtirilgan yo'llar chorrahasida chapdan transport kelayotgan bo'lsa, kim yo'l beradi?"},
+      {id:"priority-2", q:"Aylanma harakat tashkil etilgan doiraviy chorrahaga kirayotgan haydovchi kimga yo'l berishi shart?"}
+    ],
+    speed: [
+      {id:"speed-1", q:"Aholi punktida, boshqacha belgi qo'yilmagan bo'lsa, ruxsat etilgan eng yuqori tezlik necha km/soat?"},
+      {id:"speed-2", q:"Yomon ob-havo va tor ko'rinish sharoitida haydovchi tezlik va masofani qanday tanlashi kerak?"}
+    ],
+    parking: [
+      {id:"parking-1", q:"Piyodalar o'tish joyidan necha metr masofada to'xtash taqiqlanadi?"},
+      {id:"parking-2", q:"Ikki qatorli sariq chiziq bilan belgilangan yo'l qismida to'xtash mumkinmi?"}
+    ],
+    accidents: [
+      {id:"accidents-1", q:"YTH sodir bo'lgach, haydovchi transport vositasini joyidan siljitishdan oldin nima qilishi shart?"},
+      {id:"accidents-2", q:"Yengil YTHda ikkala tomon ham rozi bo'lsa, GAI chaqirmasdan hujjatlashtirish mumkinmi?"}
+    ],
+    tech: [
+      {id:"tech-1", q:"Tormoz tizimi nosoz bo'lgan transport vositasini haydash mumkinmi?"},
+      {id:"tech-2", q:"Old oyna darzli bo'lgan holatda transport vositasidan foydalanishga ruxsat beriladimi?"}
+    ],
+    pedestrian: [
+      {id:"pedestrian-1", q:"Piyodalar o'tish joyida to'xtagan piyoda oldida haydovchi qanday harakat qilishi shart?"},
+      {id:"pedestrian-2", q:"Maktab oldidagi hududda haydovchi qanday alohida ehtiyot choralarini ko'rishi kerak?"}
+    ]
+  };
+  function pickQuestion(topicId, idx){
+    var arr = QUESTION_BANK[topicId];
+    return arr[idx % arr.length];
+  }
+
+  // ---------------------------------------------------------------
+  // Tashkilotlar (App Owner darajasi)
+  // ---------------------------------------------------------------
+  var ORGS = [
+    {name:"Yulduz Avto Maktabi", city:"Toshkent", plan:"Pro", status:"Faol", tutors:12, students:340, since:new Date(2023,1,14)},
+    {name:"Nam-Avto O'quv Markazi", city:"Namangan", plan:"Standart", status:"Faol", tutors:6, students:158, since:new Date(2024,4,3)},
+    {name:"Farg'ona Yo'l Litsey", city:"Farg'ona", plan:"Standart", status:"Sinov muddati", tutors:3, students:41, since:new Date(2026,7,18)},
+    {name:"Zarafshon DrivePro", city:"Samarqand", plan:"Pro", status:"Faol", tutors:9, students:260, since:new Date(2023,10,22)},
+    {name:"Andijon Ustama Avto", city:"Andijon", plan:"Start", status:"Muddati tugagan", tutors:2, students:35, since:new Date(2025,0,9)},
+    {name:"Buxoro Yo'lchi", city:"Buxoro", plan:"Standart", status:"Faol", tutors:5, students:122, since:new Date(2024,8,27)}
+  ];
+  var ORG_STATUS_CLS = {"Faol":"good", "Sinov muddati":"warn", "Muddati tugagan":"bad"};
+  var PLAN_PRICE = {"Start":420000, "Standart":890000, "Pro":1650000}; // so'm/oy, taxminiy
+
+  // ---------------------------------------------------------------
+  // Direktor tashkiloti: Nam-Avto O'quv Markazi (Namangan)
+  // 4 ta ustoz / guruh. Guruh #14 (Sardor) qo'lda batafsil tuzilgan;
+  // qolganlari uchun seed asosida izchil ma'lumot hosil qilinadi.
+  // ---------------------------------------------------------------
+  var DIRECTOR_ORG = "Nam-Avto O'quv Markazi";
+  var DIRECTOR_NAME = "Otabek Yusupov";
+
+  var NAME_POOL = [
+    "Javlon Mirzayev","Gulbahor Tosheva","Sevinch Qodirova","Farrux Abdullayev","Malika Umarova",
+    "Otabek Ergashev","Madina Yusupova","Zarina Nematova","Ilhom Saidov","Shahzod Rahimov",
+    "Sanjar Bekmuratov","Dilnoza Egamberdiyeva","Kamronbek Turayev","Nodira Xasanova","Aziz Qurbonov",
+    "Feruza Alimova","Bobur Nazarov","Shahnoza G'ulomova","Rustam Yoqubov","Mohira Sattorova",
+    "Diyorbek Ne'matov","Yulduz Rashidova","Sardor Xudoyberdiyev","Lobar Mirzaeva","Jasur Tojiboyev",
+    "Sarvinoz Karimova","Ozodbek Yusupov","Kamola G'aniyeva","Anvar Isroilov","Nigora Boltayeva"
+  ];
+
+  var GROUP14_ROSTER = [
+    {name:"Dilnoza Egamberdiyeva", score:96, attempts:7, trend:"up",   lastDaysAgo:1},
+    {name:"Javlon Mirzayev",       score:89, attempts:6, trend:"up",   lastDaysAgo:2},
+    {name:"Gulbahor Tosheva",      score:86, attempts:8, trend:"flat", lastDaysAgo:2},
+    {name:"Sevinch Qodirova",      score:81, attempts:5, trend:"up",   lastDaysAgo:3},
+    {name:"Farrux Abdullayev",     score:78, attempts:9, trend:"down", lastDaysAgo:1},
+    {name:"Malika Umarova",        score:75, attempts:4, trend:"up",   lastDaysAgo:4},
+    {name:"Otabek Ergashev",       score:71, attempts:6, trend:"flat", lastDaysAgo:5},
+    {name:"Madina Yusupova",       score:68, attempts:5, trend:"down", lastDaysAgo:3},
+    {name:"Zarina Nematova",       score:63, attempts:7, trend:"up",   lastDaysAgo:6},
+    {name:"Ilhom Saidov",          score:58, attempts:8, trend:"flat", lastDaysAgo:2},
+    {name:"Shahzod Rahimov",       score:52, attempts:10,trend:"down", lastDaysAgo:1},
+    {name:"Sanjar Bekmuratov",     score:46, attempts:11,trend:"down", lastDaysAgo:4}
+  ];
+  var GROUP14_TOPIC_ERROR = {signs:18, lights:9, priority:34, speed:22, parking:12, accidents:41, tech:15, pedestrian:8};
+  var GROUP14_MISSED = [
+    {q:pickQuestion("accidents",0), topicId:"accidents", miss:61, note:"Ko'pchilik “transport holatini darhol o'zgartirish kerak” deb javob beradi — aslida yo'l harakatiga xalaqit bo'lmasa yoki jarohat bo'lmasa, holat saqlanib GAIga xabar berilishi lozim."},
+    {q:pickQuestion("priority",1), topicId:"priority", miss:54, note:"O'quvchilar aylanmaga kirayotgan transportga ustunlik berib qo'yadi — to'g'ri javob: aylanma ichidagi transportga yo'l beriladi."},
+    {q:pickQuestion("signs",0), topicId:"signs", miss:47, note:"“Kirish taqiqlangan” belgisini “harakatlanish taqiqlangan” bilan chalkashtirib, istisnolarni noto'g'ri belgilashadi."},
+    {q:pickQuestion("speed",1), topicId:"speed", miss:44, note:"Tor ko'rinishda ham ruxsat etilgan maksimal tezlikni tanlash xato — masofa his qilish o'rniga faqat belgiga qarab javob berishadi."},
+    {q:pickQuestion("tech",0), topicId:"tech", miss:39, note:"“Ehtiyotkorlik bilan, yaqin masofaga harakatlanish mumkin” degan noto'g'ri variant ko'p tanlanadi."}
+  ];
+
+  var TUTORS = [
+    {id:"g14", group:"Guruh #14", tutor:"Sardor Islomov", size:12, custom:true},
+    {id:"g9",  group:"Guruh #9",  tutor:"Kamola Rashidova", size:10, custom:false},
+    {id:"g21", group:"Guruh #21", tutor:"Bekzod Tursunov", size:9,  custom:false},
+    {id:"g7",  group:"Guruh #7",  tutor:"Nilufar Xolova",  size:11, custom:false}
+  ];
+
+  function generateGroup(tutorMeta){
+    var rand = seedFromString(tutorMeta.id + "-topics");
+    var topicError = {};
+    TOPICS.forEach(function(t){ topicError[t.id] = round(clamp(8 + rand()*45, 5, 58)); });
+
+    var nameRand = seedFromString(tutorMeta.id + "-names");
+    var startIdx = round(nameRand()*10);
+    var roster = [];
+    for (var i=0;i<tutorMeta.size;i++){
+      var name = NAME_POOL[(startIdx+i) % NAME_POOL.length];
+      var r = seedFromString(tutorMeta.id + "-" + name);
+      var score = round(clamp(45 + r()*52, 40, 98));
+      var attempts = round(clamp(3 + r()*9, 3, 12));
+      var trendPick = r();
+      var trend = trendPick < 0.4 ? "up" : (trendPick < 0.7 ? "flat" : "down");
+      var lastDaysAgo = round(1 + r()*7);
+      roster.push({name:name, score:score, attempts:attempts, trend:trend, lastDaysAgo:lastDaysAgo});
+    }
+    roster.sort(function(a,b){ return b.score - a.score; });
+
+    var sortedTopics = TOPICS.slice().sort(function(a,b){ return topicError[b.id]-topicError[a.id]; });
+    var missed = sortedTopics.slice(0,5).map(function(t, idx){
+      var mr = seedFromString(tutorMeta.id + "-missed-" + t.id);
+      return {
+        q: pickQuestion(t.id, Math.floor(mr()*2)),
+        topicId: t.id,
+        miss: round(clamp(topicError[t.id] + 10 + mr()*15, 20, 72)),
+        note: "Guruh ichida bu mavzuda o'rtachadan yuqori xato darajasi kuzatilmoqda — darsda takroran mustahkamlash tavsiya etiladi."
+      };
+    });
+
+    return {topicError:topicError, roster:roster, missed:missed};
+  }
+
+  var GROUP_DATA = {};
+  TUTORS.forEach(function(t){
+    if (t.custom){
+      GROUP_DATA[t.id] = {topicError:GROUP14_TOPIC_ERROR, roster:GROUP14_ROSTER.slice(), missed:GROUP14_MISSED};
+    } else {
+      GROUP_DATA[t.id] = generateGroup(t);
+    }
+  });
+
+  function groupAvg(groupId){
+    var roster = GROUP_DATA[groupId].roster;
+    var sum = roster.reduce(function(a,s){ return a+s.score; }, 0);
+    return round(sum/roster.length);
+  }
+
+  // ---------------------------------------------------------------
+  // O'quvchi darajasidagi tafsilotlarni generatsiya qilish
+  // (Ustoz panelidagi qator bosilganda ham, O'quvchi profilida ham ishlatiladi)
+  // ---------------------------------------------------------------
+  function genStudentDetail(name, score){
+    var rand = seedFromString("student-" + name);
+
+    var mastery = {};
+    TOPICS.forEach(function(t){
+      mastery[t.id] = round(clamp(score + (rand()*34 - 17), 8, 99));
+    });
+
+    var weakTopics = TOPICS.slice().sort(function(a,b){ return mastery[a.id]-mastery[b.id]; }).slice(0,3);
+    var review = weakTopics.map(function(t){
+      var r = seedFromString("review-" + name + "-" + t.id);
+      return {q: pickQuestion(t.id, Math.floor(r()*2)), topicId:t.id, mastery:mastery[t.id]};
+    });
+
+    var numAttempts = round(clamp(4 + rand()*3, 4, 7));
+    var attempts = [];
+    var dayCursor = 2 + round(rand()*3);
+    for (var i=numAttempts-1;i>=0;i--){
+      var progressToward = (numAttempts-1-i) / Math.max(1,numAttempts-1);
+      var raw = score - 22 + progressToward*22 + (rand()*10 - 5);
+      var pct = clamp(round(raw), 30, 100);
+      var out20 = clamp(round(pct/5), 6, 20);
+      var duration = round(clamp(14 + rand()*10, 12, 26));
+      var date = new Date(TODAY);
+      date.setDate(date.getDate() - dayCursor);
+      attempts.push({date:date, score20:out20, duration:duration, passed: out20 >= 18});
+      dayCursor += round(3 + rand()*4);
+    }
+    attempts.reverse();
+
+    return {mastery:mastery, review:review, attempts:attempts};
+  }
+
+  // =================================================================
+  // RENDER: Struktura
+  // =================================================================
+  var HIERARCHY = [
+    {n:"01", title:"App Owner", desc:"Testify egasi — SaaS ni butunligicha boshqaradi.", bullets:["Barcha avtomaktablar va obunalar","Platforma bo'yicha o'sish ko'rsatkichlari","Yangi tashkilotlarni faollashtirish"]},
+    {n:"02", title:"Tashkilot", desc:"Har bir avtomaktab — obuna to'lovchi mijoz.", bullets:["Tarif reja: Start / Standart / Pro","O'z ustozlari va o'quvchilari","Faol / sinov / muddati tugagan holat"]},
+    {n:"03", title:"Direktor", desc:"Avtomaktab rahbari — ichki nazorat.", bullets:["Barcha ustozlar va guruhlar","Ustozlar samaradorligini solishtirish","Maktab bo'yicha umumiy natija"]},
+    {n:"04", title:"Ustoz", desc:"Guruh yetakchisi — kundalik nazorat.", bullets:["Mavzu bo'yicha xato foizi","Eng ko'p xato qilingan savollar","Har bir o'quvchining to'liq progressi"]},
+    {n:"05", title:"O'quvchi", desc:"Test topshiruvchi — o'z natijasini ko'radi.", bullets:["Tayyorgarlik darajasi","Xato qilgan savollarni qayta ko'rish","Urinishlar tarixi"]}
+  ];
+  function renderHierarchy(){
+    var el = document.getElementById("hierarchy");
+    var html = "";
+    HIERARCHY.forEach(function(h, idx){
+      html += '<div class="h-card"><div class="num">' + h.n + '</div><h3>' + h.title + '</h3><p>' + h.desc + '</p><ul>' +
+        h.bullets.map(function(b){ return "<li>" + b + "</li>"; }).join("") + "</ul></div>";
+      if (idx < HIERARCHY.length-1) html += '<div class="h-arrow">&#8594;</div>';
+    });
+    el.innerHTML = html;
+  }
+  function renderPlatformStats(){
+    var totalOrgs = ORGS.length;
+    var totalTutors = ORGS.reduce(function(a,o){return a+o.tutors;},0);
+    var totalStudents = ORGS.reduce(function(a,o){return a+o.students;},0);
+    var avgReadiness = round(GROUP14_ROSTER.reduce(function(a,s){return a+s.score;},0)/GROUP14_ROSTER.length);
+    var el = document.getElementById("platformStats");
+    el.innerHTML = [
+      stat("Jami tashkilotlar", totalOrgs, "avtomaktab"),
+      stat("Jami ustozlar", totalTutors, "barcha tashkilotlar bo'yicha"),
+      stat("Jami o'quvchilar", totalStudents.toLocaleString("ru-RU"), "ro'yxatdan o'tgan"),
+      stat("O'rtacha tayyorlik", avgReadiness + "%", "namunaviy guruh bo'yicha")
+    ].join("");
+  }
+  function stat(label, value, sub){
+    return '<div class="stat"><span class="eyebrow">' + label + '</span><span class="value">' + value + '</span><span class="sub">' + sub + '</span></div>';
+  }
+
+  // =================================================================
+  // RENDER: App Owner
+  // =================================================================
+  function renderOwner(){
+    var active = ORGS.filter(function(o){return o.status==="Faol";}).length;
+    var totalStudents = ORGS.reduce(function(a,o){return a+o.students;},0);
+    var mrr = ORGS.reduce(function(a,o){ return a + (o.status!=="Muddati tugagan" ? PLAN_PRICE[o.plan] : 0); }, 0);
+    document.getElementById("ownerStats").innerHTML = [
+      stat("Jami tashkilotlar", ORGS.length, "platformada ro'yxatdan o'tgan"),
+      stat("Faol obunalar", active, "sinov / tugagan bundan tashqari"),
+      stat("Jami o'quvchilar", totalStudents.toLocaleString("ru-RU"), "barcha avtomaktablar bo'yicha"),
+      stat("Oylik tushum", (mrr/1000000).toFixed(1) + " mln so'm", "taxminiy, faol rejalar asosida")
+    ].join("");
+    document.getElementById("orgCountHint").textContent = ORGS.length + " ta tashkilot";
+
+    document.getElementById("orgTableBody").innerHTML = ORGS.map(function(o){
+      var cls = ORG_STATUS_CLS[o.status];
+      return "<tr><td>" + escapeHtml(o.name) + "</td><td>" + escapeHtml(o.city) + "</td><td>" + o.plan + "</td>" +
+        '<td><span class="pill ' + cls + '">' + o.status + "</span></td>" +
+        '<td class="num">' + o.tutors + '</td><td class="num">' + o.students + "</td><td>" + fmtDate(o.since) + "</td></tr>";
+    }).join("");
+  }
+
+  // =================================================================
+  // RENDER: Director
+  // =================================================================
+  function renderDirector(){
+    document.getElementById("directorOrgName").textContent = DIRECTOR_ORG + " — Direktor";
+    var groupCount = TUTORS.length;
+    var tutorCount = TUTORS.length;
+    var studentCount = TUTORS.reduce(function(a,t){return a+t.size;},0);
+    var avgAll = round(TUTORS.reduce(function(a,t){return a+groupAvg(t.id);},0)/TUTORS.length);
+
+    document.getElementById("directorStats").innerHTML = [
+      stat("Guruhlar soni", groupCount, DIRECTOR_ORG),
+      stat("Ustozlar soni", tutorCount, "faol dars berayotgan"),
+      stat("O'quvchilar soni", studentCount, "barcha guruhlar bo'yicha"),
+      stat("O'rtacha natija", avgAll + "%", "maktab bo'yicha")
+    ].join("");
+
+    var ranked = TUTORS.map(function(t){
+      return {tutor:t.tutor, group:t.group, size:t.size, avg:groupAvg(t.id), id:t.id};
+    }).sort(function(a,b){ return b.avg-a.avg; });
+
+    document.getElementById("tutorRankBody").innerHTML = ranked.map(function(r, i){
+      var rand = seedFromString(r.id + "-dirtrend");
+      var trendPick = rand();
+      var trend = trendPick < 0.45 ? "up" : (trendPick < 0.75 ? "flat" : "down");
+      return "<tr><td><span class=\"rank-badge" + (i===0?" r1":"") + "\">" + (i+1) + "</span></td><td>" + r.tutor + "</td><td>" + r.group + "</td>" +
+        '<td class="num">' + r.size + '</td><td class="num">' + r.avg + "%</td><td>" + trendArrow(trend) + "</td></tr>";
+    }).join("");
+
+    document.getElementById("groupsTableBody").innerHTML = TUTORS.map(function(t){
+      var avgAttempts = GROUP_DATA[t.id].roster.reduce(function(a,s){return a+s.attempts;},0)/GROUP_DATA[t.id].roster.length;
+      var activity = avgAttempts >= 6 ? {l:"Yuqori faollik", c:"good"} : (avgAttempts >= 4 ? {l:"O'rtacha faollik", c:"warn"} : {l:"Past faollik", c:"bad"});
+      return "<tr><td>" + t.group + "</td><td>" + t.tutor + '</td><td class="num">' + t.size + "</td><td>" +
+        '<span class="pill ' + activity.c + '">' + activity.l + "</span></td></tr>";
+    }).join("");
+  }
+
+  // =================================================================
+  // RENDER: Tutor
+  // =================================================================
+  var currentGroupId = "g14";
+  function renderTutorControls(){
+    var sel = document.getElementById("groupSelect");
+    sel.innerHTML = TUTORS.map(function(t){ return '<option value="' + t.id + '">' + t.group + " — " + t.tutor + "</option>"; }).join("");
+    sel.value = currentGroupId;
+    sel.onchange = function(){ currentGroupId = sel.value; renderTutorView(); };
+  }
+  function renderTutorView(){
+    var meta = TUTORS.filter(function(t){return t.id===currentGroupId;})[0];
+    var data = GROUP_DATA[currentGroupId];
+    document.getElementById("tutorHeading").textContent = meta.tutor + " — " + meta.group;
+
+    var avg = groupAvg(currentGroupId);
+    var ready = data.roster.filter(function(s){ return s.score>=85; }).length;
+    var help = data.roster.filter(function(s){ return s.score<65; }).length;
+    var totalAttempts = data.roster.reduce(function(a,s){return a+s.attempts;},0);
+    document.getElementById("tutorStats").innerHTML = [
+      stat("O'quvchilar", data.roster.length, meta.group),
+      stat("O'rtacha ball", avg + "%", "guruh bo'yicha"),
+      stat("Tayyor", ready, "85%+ natija"),
+      stat("Yordam kerak", help, "65% dan past"),
+      stat("Jami urinishlar", totalAttempts, "so'nggi 30 kunda")
+    ].join("");
+
+    var maxErr = 100;
+    document.getElementById("topicChart").innerHTML = TOPICS.map(function(t){
+      var pct = data.topicError[t.id];
+      return '<div class="bar-row"><span class="label">' + t.name + '</span>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + (pct/maxErr*100) + "%;background:" + errorBandColorVar(pct) + ';"></div></div>' +
+        '<span class="val">' + pct + "%</span></div>";
+    }).join("");
+
+    document.getElementById("missedList").innerHTML = data.missed.map(function(m){
+      return '<div class="missed-item"><div class="top"><span class="topic-tag">' + TOPIC_BY_ID[m.topicId].name + '</span><span class="miss-pct">' + m.miss + '% xato</span></div>' +
+        '<div class="q">' + m.q.q + '</div><div class="note">' + m.note + "</div></div>";
+    }).join("");
+
+    document.getElementById("rosterTableBody").innerHTML = data.roster.map(function(s, idx){
+      var st = statusFromScore(s.score);
+      var lastDate = new Date(TODAY); lastDate.setDate(lastDate.getDate()-s.lastDaysAgo);
+      return '<tr class="clickable" data-idx="' + idx + '"><td>' + escapeHtml(s.name) + '</td>' +
+        '<td class="num">' + s.attempts + "</td><td>" + fmtRelativeDate(lastDate) + '</td>' +
+        '<td class="num">' + s.score + "%</td><td>" + trendArrow(s.trend) + "</td>" +
+        '<td><span class="pill ' + st.cls + '">' + st.label + "</span></td></tr>";
+    }).join("");
+
+    Array.prototype.forEach.call(document.querySelectorAll("#rosterTableBody tr"), function(tr){
+      tr.addEventListener("click", function(){
+        var idx = Number(tr.getAttribute("data-idx"));
+        openStudentDetail(data.roster[idx]);
+      });
+    });
+
+    document.getElementById("studentDetailPanel").hidden = true;
+  }
+
+  function renderMasteryList(mastery){
+    return TOPICS.map(function(t){
+      var pct = mastery[t.id];
+      return '<div class="mastery-row"><span class="label">' + t.name + '</span>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + pct + "%;background:" + errorBandColorVar(100-pct) + ';"></div></div>' +
+        '<span class="val">' + pct + "%</span></div>";
+    }).join("");
+  }
+  function renderAttemptsTable(attempts){
+    return '<div class="table-wrap"><table><thead><tr><th>Sana</th><th class="num">Natija</th><th class="num">Vaqt</th><th>Holat</th></tr></thead><tbody>' +
+      attempts.map(function(a){
+        return "<tr><td>" + fmtDate(a.date) + '</td><td class="num">' + a.score20 + "/20</td><td class=\"num\">" + a.duration + " daq</td><td>" +
+          '<span class="pill ' + (a.passed?"good":"bad") + '">' + (a.passed?"O'tdi":"Qaytadan") + "</span></td></tr>";
+      }).join("") + "</tbody></table></div>";
+  }
+  function renderReviewList(review){
+    return '<div class="missed-list">' + review.map(function(r){
+      return '<div class="missed-item"><div class="top"><span class="topic-tag">' + TOPIC_BY_ID[r.topicId].name + '</span><span class="miss-pct">' + r.mastery + '% egallagan</span></div><div class="q">' + r.q.q + "</div></div>";
+    }).join("") + "</div>";
+  }
+
+  function openStudentDetail(student){
+    var detail = genStudentDetail(student.name, student.score);
+    var panel = document.getElementById("studentDetailPanel");
+    panel.innerHTML =
+      '<div class="card-head"><h3>' + escapeHtml(student.name) + ' — to\'liq progress</h3>' +
+      '<button type="button" class="btn ghost" id="closeDetailBtn">Yopish</button></div>' +
+      '<div class="detail-grid">' +
+        '<div><div class="eyebrow" style="margin-bottom:8px;">Mavzu bo\'yicha egallash darajasi</div><div class="mastery-list">' + renderMasteryList(detail.mastery) + '</div></div>' +
+        '<div><div class="eyebrow" style="margin-bottom:8px;">Urinishlar tarixi</div>' + renderAttemptsTable(detail.attempts) + '</div>' +
+      '</div>' +
+      '<div style="margin-top:16px;"><div class="eyebrow" style="margin-bottom:8px;">Qayta ko\'rib chiqish tavsiya etiladi</div>' + renderReviewList(detail.review) + '</div>';
+    panel.hidden = false;
+    document.getElementById("closeDetailBtn").onclick = function(){ panel.hidden = true; };
+    panel.scrollIntoView({behavior:"smooth", block:"nearest"});
+  }
+
+  // =================================================================
+  // RENDER: Student
+  // =================================================================
+  function renderStudentControls(){
+    var sel = document.getElementById("studentSelect");
+    sel.innerHTML = GROUP14_ROSTER.map(function(s){ return '<option value="' + escapeHtml(s.name) + '">' + escapeHtml(s.name) + "</option>"; }).join("");
+    sel.value = GROUP14_ROSTER[0].name;
+    sel.onchange = function(){ renderStudentView(sel.value); };
+  }
+  function renderStudentView(name){
+    var base = GROUP14_ROSTER.filter(function(s){ return s.name===name; })[0] || GROUP14_ROSTER[0];
+    var detail = genStudentDetail(base.name, base.score);
+    var ringColor = base.score>=85 ? "var(--good)" : (base.score>=65 ? "var(--warn)" : "var(--bad)");
+    var st = statusFromScore(base.score);
+
+    document.getElementById("studentBody").innerHTML =
+      '<div class="card" style="display:flex;gap:22px;align-items:center;flex-wrap:wrap;">' +
+        '<div class="ring" style="--pct:' + base.score + ';--ring-color:' + ringColor + ';"><div class="ring-inner"><span class="n">' + base.score + '%</span><span class="l">Tayyorlik</span></div></div>' +
+        '<div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px;">' +
+          '<div><span class="pill ' + st.cls + '">' + st.label + '</span></div>' +
+          '<div class="eyebrow">Guruh #14 · Nam-Avto O\'quv Markazi</div>' +
+          '<p style="font-size:13px;color:var(--ink-2);max-width:52ch;">So\'nggi ' + detail.attempts.length + ' urinishingiz bo\'yicha hisoblangan. Eng zaif mavzularingiz pastda ko\'rsatilgan — ularni qayta ko\'rib chiqing.</p>' +
+        '</div>' +
+        '<button type="button" class="btn primary" id="startTestBtn">Testni boshlash</button>' +
+      '</div>' +
+      '<div class="detail-grid" style="margin-top:18px;">' +
+        '<div class="card"><div class="card-head"><h3>Mavzu bo\'yicha egallash darajasi</h3></div><div class="mastery-list">' + renderMasteryList(detail.mastery) + '</div></div>' +
+        '<div class="card"><div class="card-head"><h3>Urinishlar tarixi</h3></div>' + renderAttemptsTable(detail.attempts) + '</div>' +
+      '</div>' +
+      '<div class="card" style="margin-top:18px;"><div class="card-head"><h3>Qayta ko\'rib chiqish kerak bo\'lgan savollar</h3></div>' + renderReviewList(detail.review) + '</div>';
+
+    document.getElementById("startTestBtn").onclick = function(){ showToast("Demo rejimida test simulyatsiyasi mavjud emas — bu spec-prototip."); };
+  }
+
+  // =================================================================
+  // Toast
+  // =================================================================
+  var toastTimer = null;
+  function showToast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.hidden = true; }, 2600);
+  }
+
+  // =================================================================
+  // Rol almashtirish
+  // =================================================================
+  var PERSONAS = {
+    structure: null,
+    owner:   {name:"Aziz Norqobilov", role:"App Owner"},
+    director:{name:DIRECTOR_NAME, role:"Direktor — " + DIRECTOR_ORG},
+    tutor:   {name:"Sardor Islomov", role:"Ustoz — Guruh #14"},
+    student: {name:"Dilnoza Egamberdiyeva", role:"O'quvchi — Guruh #14"}
+  };
+  function setPersona(role){
+    var chip = document.getElementById("personaChip");
+    if (role === "structure"){ chip.hidden = true; return; }
+    var p = PERSONAS[role];
+    if (role === "tutor"){
+      var meta = TUTORS.filter(function(t){return t.id===currentGroupId;})[0];
+      p = {name: meta.tutor, role: "Ustoz — " + meta.group};
+    }
+    chip.hidden = false;
+    document.getElementById("personaAvatar").textContent = initials(p.name);
+    document.getElementById("personaName").textContent = p.name;
+    document.getElementById("personaRole").textContent = p.role;
+  }
+
+  function switchRole(role){
+    Array.prototype.forEach.call(document.querySelectorAll("#roleSwitcher button"), function(b){
+      b.classList.toggle("active", b.getAttribute("data-role") === role);
+    });
+    ["structure","owner","director","tutor","student"].forEach(function(r){
+      document.getElementById("view-" + r).hidden = (r !== role);
+    });
+    setPersona(role);
+  }
+
+  document.getElementById("roleSwitcher").addEventListener("click", function(e){
+    var btn = e.target.closest("button[data-role]");
+    if (!btn) return;
+    switchRole(btn.getAttribute("data-role"));
+  });
+
+  // =================================================================
+  // Yangi tashkilot qo'shish modali
+  // =================================================================
+  var overlay = document.getElementById("orgModalOverlay");
+  document.getElementById("addOrgBtn").addEventListener("click", function(){
+    overlay.hidden = false;
+    document.getElementById("f-name").focus();
+  });
+  document.getElementById("orgCancelBtn").addEventListener("click", function(){ overlay.hidden = true; });
+  overlay.addEventListener("click", function(e){ if (e.target === overlay) overlay.hidden = true; });
+  document.addEventListener("keydown", function(e){ if (e.key === "Escape" && !overlay.hidden) overlay.hidden = true; });
+
+  document.getElementById("orgSaveBtn").addEventListener("click", function(){
+    var name = document.getElementById("f-name").value.trim();
+    var city = document.getElementById("f-city").value.trim();
+    var plan = document.getElementById("f-plan").value;
+    var tutorsN = clamp(Number(document.getElementById("f-tutors").value) || 1, 1, 50);
+    if (!name || !city){ showToast("Iltimos, nomi va shaharni kiriting."); return; }
+    ORGS.unshift({name:name, city:city, plan:plan, status:"Sinov muddati", tutors:tutorsN, students:0, since:new Date(TODAY)});
+    overlay.hidden = true;
+    document.getElementById("f-name").value = "";
+    document.getElementById("f-city").value = "";
+    document.getElementById("f-tutors").value = "3";
+    renderOwner();
+    showToast(name + " qo'shildi — sinov muddati boshlandi.");
+  });
+
+  // =================================================================
+  // Ishga tushirish
+  // =================================================================
+  renderHierarchy();
+  renderPlatformStats();
+  renderOwner();
+  renderDirector();
+  renderTutorControls();
+  renderTutorView();
+  renderStudentControls();
+  renderStudentView(GROUP14_ROSTER[0].name);
+  switchRole("structure");
+})();
+</script>
+
+</body></html>
