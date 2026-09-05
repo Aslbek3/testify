@@ -4,8 +4,11 @@ import {
   getOrganizationOverview,
   getTutorRanking,
   getGroupsOverview,
+  listTutorsForOrganization,
 } from "@/services/directorDashboard";
 import { LogoutButton } from "@/components/LogoutButton";
+import { NewTutorModal } from "./NewTutorModal";
+import { NewGroupModal } from "./NewGroupModal";
 import { StatTile } from "@/components/StatTile";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
 import {
@@ -36,10 +39,11 @@ export default async function DirectorPage() {
 
   const organizationId = user.organizationId;
 
-  const [overview, tutorRanking, groups] = await Promise.all([
+  const [overview, tutorRanking, groups, tutors] = await Promise.all([
     getOrganizationOverview(organizationId),
     getTutorRanking(organizationId),
     getGroupsOverview(organizationId),
+    listTutorsForOrganization(organizationId),
   ]);
 
   return (
@@ -53,7 +57,11 @@ export default async function DirectorPage() {
               ko&apos;rsatkichlar shu yerda.
             </p>
           </div>
-          <LogoutButton />
+          <div className="flex items-center gap-2">
+            <NewTutorModal />
+            <NewGroupModal tutors={tutors} />
+            <LogoutButton />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">

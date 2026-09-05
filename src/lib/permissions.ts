@@ -24,6 +24,11 @@ export function canManageOrganizations(user: SessionUser): boolean {
   return isOwner(user);
 }
 
+/** Faqat App Owner savollar bazasini (mavzular/savollar) boshqara oladi. */
+export function canManageQuestionBank(user: SessionUser): boolean {
+  return isOwner(user);
+}
+
 /** Owner har qanday tashkilotni, Direktor faqat o'zinikini ko'ra oladi. */
 export function canViewOrganization(
   user: SessionUser,

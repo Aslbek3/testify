@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
+export class DirectorActionError extends Error {}
+
 export type OrganizationOverview = {
   groupCount: number;
   tutorCount: number;
@@ -157,5 +159,40 @@ export async function getGroupsOverview(
       studentCount: group.students.length,
       lastActivityAt,
     };
+  });
+}
+
+/** "Yangi guruh" modalidagi ustoz tanlash ro'yxati uchun. */
+export async function listTutorsForOrganization(
+  organizationId: string
+): Promise<{ id: string; name: string }[]> {
+  return prisma.user.findMany({
+    where: { organizationId, role: "TUTOR" },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function createGroup(input: {
+  name: string;
+  tutorId: string;
+  organizationId: string;
+}) {
+  const tutor = await prisma.user.findUnique({
+    where: { id: input.tutorId },
+    select: { role: true, organizationId: true },
+  });
+  if (!tutor || tutor.role !== "TUTOR" || tutor.organizationId !== input.organizationId) {
+    throw new DirectorActionError(
+      "Tanlangan ustoz shu tashkilotga tegishli emas yoki topilmadi"
+    );
+  }
+
+  return prisma.group.create({
+    data: {
+      name: input.name,
+      tutorId: input.tutorId,
+      organizationId: input.organizationId,
+    },
   });
 }

@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { listOrganizations } from "@/services/organizations";
 import { LogoutButton } from "@/components/LogoutButton";
 import { StatTile } from "@/components/StatTile";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
+import { Button } from "@/components/Button";
 import {
   Table,
   TableHead,
@@ -15,6 +17,7 @@ import { Badge } from "@/components/Badge";
 import { PLAN_LABEL, ORG_STATUS_LABEL, ORG_STATUS_VARIANT } from "@/lib/labels";
 import { formatDate } from "@/lib/format";
 import { NewOrganizationModal } from "./NewOrganizationModal";
+import { NewDirectorModal } from "./NewDirectorModal";
 
 export default async function OwnerPage() {
   await requireRole("OWNER");
@@ -36,6 +39,14 @@ export default async function OwnerPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Link href="/owner/questions">
+              <Button type="button" variant="secondary">
+                Savollar bazasi
+              </Button>
+            </Link>
+            <NewDirectorModal
+              organizations={organizations.map((o) => ({ id: o.id, name: o.name }))}
+            />
             <NewOrganizationModal />
             <LogoutButton />
           </div>

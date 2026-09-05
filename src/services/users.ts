@@ -1,0 +1,57 @@
+import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/prisma";
+import { RegistrationError } from "@/services/auth";
+
+const SALT_ROUNDS = 10;
+
+async function createStaffUser(input: {
+  name: string;
+  email: string;
+  password: string;
+  role: "DIRECTOR" | "TUTOR";
+  organizationId: string;
+}) {
+  const existing = await prisma.user.findUnique({ where: { email: input.email } });
+  if (existing) {
+    throw new RegistrationError("Bu email allaqachon mavjud");
+  }
+
+  const organization = await prisma.organization.findUnique({
+    where: { id: input.organizationId },
+    select: { id: true },
+  });
+  if (!organization) {
+    throw new RegistrationError("Tashkilot topilmadi");
+  }
+
+  const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
+  return prisma.user.create({
+    data: {
+      name: input.name,
+      email: input.email,
+      passwordHash,
+      role: input.role,
+      organizationId: input.organizationId,
+    },
+  });
+}
+
+/** Owner tomonidan bir tashkilotga Direktor tayinlash uchun. */
+export function createDirector(input: {
+  name: string;
+  email: string;
+  password: string;
+  organizationId: string;
+}) {
+  return createStaffUser({ ...input, role: "DIRECTOR" });
+}
+
+/** Direktor tomonidan o'z tashkilotiga Ustoz qo'shish uchun. */
+export function createTutor(input: {
+  name: string;
+  email: string;
+  password: string;
+  organizationId: string;
+}) {
+  return createStaffUser({ ...input, role: "TUTOR" });
+}
