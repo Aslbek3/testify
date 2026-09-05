@@ -79,11 +79,12 @@ export default async function TutorPage({
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <StatTile label="Guruhdagi o'quvchilar" value={roster.length} />
           <StatTile
+            emphasis="primary"
             label="O'rtacha ball"
             value={averageScore !== null ? `${averageScore}%` : "—"}
           />
+          <StatTile label="Guruhdagi o'quvchilar" value={roster.length} />
           <StatTile label="Jami urinishlar" value={totalAttempts} />
         </div>
 

@@ -25,6 +25,9 @@ export default async function OwnerPage() {
   const totalTutors = organizations.reduce((sum, o) => sum + o.tutorCount, 0);
   const totalStudents = organizations.reduce((sum, o) => sum + o.studentCount, 0);
   const activeCount = organizations.filter((o) => o.status === "ACTIVE").length;
+  const activeStudents = organizations
+    .filter((o) => o.status === "ACTIVE")
+    .reduce((sum, o) => sum + o.studentCount, 0);
 
   return (
     <div className="space-y-6">
@@ -50,6 +53,12 @@ export default async function OwnerPage() {
       </div>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <StatTile
+            emphasis="primary"
+            label="Jami faol o'quvchilar"
+            value={activeStudents}
+            sub="Faol tashkilotlardagi o'quvchilar"
+          />
           <StatTile label="Jami tashkilotlar" value={organizations.length} />
           <StatTile label="Faol tashkilotlar" value={activeCount} />
           <StatTile label="Jami ustozlar" value={totalTutors} />

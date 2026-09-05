@@ -34,24 +34,7 @@ Oddiy va soddadan boshla, keraksiz murakkablik kiritma.
 Qatlamlar bir yo'nalishda bog'liq: **API route → service → Prisma**. 
 Route'lar hech qachon to'g'ridan-to'g'ri Prisma'ga murojaat qilmaydi.
 
-```
-src/
-  app/
-    (auth)/login/, register/
-    owner/, director/, tutor/, student/   → rol sahifalari (UI qatlami)
-    api/                                  → route handler'lar: faqat
-                                             permission tekshiruvi + service chaqiruvi
-  components/        → qayta ishlatiladigan UI (Card, Table, StatTile, Badge, Modal)
-  lib/
-    auth.ts           → login/sessiya (JWT) tekshirish
-    permissions.ts    → "kim nimani ko'ra/boshqara oladi" — canViewGroup(user, groupId),
-                         canManageOrganization(user, orgId) kabi funksiyalar
-    prisma.ts         → bazaga ulanish (singleton client)
-    format.ts         → sana/raqam formatlash kabi umumiy yordamchilar
-  services/           → biznes-mantiq, Prisma shu yerda chaqiriladi
-                         (masalan getStudentsForTutor, getOrgStats)
-  types/              → TypeScript tiplar
-```
+
 
 Qoidalar:
 - **Har bir API route** boshida `permissions.ts` orqali tekshiruv bo'lishi shart — 
@@ -60,3 +43,17 @@ Qoidalar:
   Prisma import'i faqat `services/` va `lib/prisma.ts` ichida bo'ladi.
 - Bir xil kod (jadval render qilish, xato xabari, sana formatlash va h.k.) ikki joyda 
   qayta yozilmaydi — umumiy funksiya (`lib/`) yoki komponentga (`components/`) chiqariladi.
+
+## Test hisoblari (faqat lokal dev baza — seed skript, `prisma/seed.ts`)
+
+Parol hammasida bir xil: **testify123**
+
+| Rol | Email |
+|---|---|
+| App Owner | owner@testify.dev |
+| Direktor | director@testify.dev |
+| Ustoz | tutor@testify.dev |
+| O'quvchi | student1@testify.dev ... student8@testify.dev |
+
+Bular faqat rivojlantirish (Neon dev) bazasidagi test ma'lumotlari — 
+production'ga hech qachon shu holicha ko'chirilmaydi.

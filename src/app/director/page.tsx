@@ -58,14 +58,15 @@ export default async function DirectorPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <StatTile label="Jami guruhlar" value={overview.groupCount} />
-          <StatTile label="Jami ustozlar" value={overview.tutorCount} />
-          <StatTile label="Jami o'quvchilar" value={overview.studentCount} />
           <StatTile
+            emphasis="primary"
             label="O'rtacha ball"
             value={overview.averageScore === null ? "—" : `${overview.averageScore}%`}
             sub={overview.averageScore === null ? "Ma'lumot yo'q" : undefined}
           />
+          <StatTile label="Jami guruhlar" value={overview.groupCount} />
+          <StatTile label="Jami ustozlar" value={overview.tutorCount} />
+          <StatTile label="Jami o'quvchilar" value={overview.studentCount} />
         </div>
 
         <Card>
