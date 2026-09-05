@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import type { Role } from "@prisma/client";
 import { cn } from "@/lib/cn";
 import { LogoutButton } from "@/components/LogoutButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 type NavItem = { label: string; href: string };
 
@@ -52,7 +53,7 @@ export function AppShell({
     <div className="flex min-h-screen bg-bg-subtle">
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-text/40 md:hidden"
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -96,6 +97,7 @@ export function AppShell({
             <p className="truncate text-sm font-medium text-white">{userName}</p>
             <p className="text-xs text-white/50">{ROLE_LABEL[role]}</p>
           </div>
+          <ThemeToggle />
           <LogoutButton variant="ghost-dark" />
         </div>
       </aside>

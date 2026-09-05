@@ -12,6 +12,47 @@
   --warning: #b8790e;
   --danger: #c0362c;
   --sidebar-bg: #1b2430;
+  color-scheme: light dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* Tizim afzalligi bo'yicha qorong'i rejim — foydalanuvchi aniq "light"
+   tanlamagan bo'lsa. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #171a21;
+    --bg-subtle: #0d0f13;
+    --border: #262b35;
+    --text: #e7e9ee;
+    --text-muted: #8b92a3;
+    --brand: #4f86d1;
+    --brand-soft: #1c2c42;
+    --success: #34b374;
+    --warning: #d99a2b;
+    --danger: #e0584c;
+  }
+}
+
+/* Foydalanuvchi sidebar'dagi tugma orqali aniq "dark" tanlagan bo'lsa —
+   tizim afzalligidan qat'iy nazar. */
+:root[data-theme="dark"] {
+  --bg: #171a21;
+  --bg-subtle: #0d0f13;
+  --border: #262b35;
+  --text: #e7e9ee;
+  --text-muted: #8b92a3;
+  --brand: #4f86d1;
+  --brand-soft: #1c2c42;
+  --success: #34b374;
+  --warning: #d99a2b;
+  --danger: #e0584c;
 }
 
 @theme inline {
