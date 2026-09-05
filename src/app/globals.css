@@ -11,6 +11,7 @@
   --success: #1f8a5f;
   --warning: #b8790e;
   --danger: #c0362c;
+  --sidebar-bg: #1b2430;
 }
 
 @theme inline {
@@ -24,6 +25,7 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
+  --color-sidebar: var(--sidebar-bg);
   --font-sans: var(--font-inter);
 }
 

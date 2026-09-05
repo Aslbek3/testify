@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { listTopicsWithQuestionCount } from "@/services/questions";
-import { LogoutButton } from "@/components/LogoutButton";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
 import {
   Table,
@@ -18,28 +17,19 @@ export default async function QuestionBankPage() {
   const topics = await listTopicsWithQuestionCount();
 
   return (
-    <main className="min-h-screen bg-bg-subtle p-8">
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <a href="/owner" className="text-sm text-text-muted hover:text-text">
-              &larr; Owner paneliga qaytish
-            </a>
-            <h1 className="mt-1 text-xl font-semibold text-text">
-              Savollar bazasi
-            </h1>
-            <p className="mt-1 text-sm text-text-muted">
-              Bu yerda barcha tashkilotlar foydalanadigan umumiy mavzular va
-              savollar boshqariladi.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <NewTopicModal />
-            <LogoutButton />
-          </div>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-text">Savollar bazasi</h1>
+          <p className="mt-1 text-sm text-text-muted">
+            Bu yerda barcha tashkilotlar foydalanadigan umumiy mavzular va
+            savollar boshqariladi.
+          </p>
         </div>
+        <NewTopicModal />
+      </div>
 
-        <Card>
+      <Card>
           <CardHeader>
             <CardTitle>Mavzular</CardTitle>
             <span className="text-sm text-text-muted">{topics.length} ta mavzu</span>
@@ -80,9 +70,8 @@ export default async function QuestionBankPage() {
                 ))}
               </TableBody>
             </Table>
-          )}
-        </Card>
-      </div>
-    </main>
+        )}
+      </Card>
+    </div>
   );
 }

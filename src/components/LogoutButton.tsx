@@ -1,9 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/Button";
+import { Button, type ButtonVariant } from "@/components/Button";
 
-export function LogoutButton() {
+export function LogoutButton({
+  variant = "secondary",
+  className,
+}: {
+  variant?: ButtonVariant;
+  className?: string;
+}) {
   const router = useRouter();
 
   async function handleLogout() {
@@ -13,7 +19,7 @@ export function LogoutButton() {
   }
 
   return (
-    <Button type="button" variant="secondary" onClick={handleLogout}>
+    <Button type="button" variant={variant} className={className} onClick={handleLogout}>
       Chiqish
     </Button>
   );

@@ -55,3 +55,9 @@ export function createTutor(input: {
 }) {
   return createStaffUser({ ...input, role: "TUTOR" });
 }
+
+/** AppShell sidebar footerida foydalanuvchi ismini ko'rsatish uchun. */
+export async function getUserName(id: string): Promise<string | null> {
+  const user = await prisma.user.findUnique({ where: { id }, select: { name: true } });
+  return user?.name ?? null;
+}

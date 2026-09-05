@@ -1,12 +1,15 @@
 import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
-type ButtonVariant = "primary" | "secondary";
+export type ButtonVariant = "primary" | "secondary" | "ghost-dark";
 
+// Har bir variant o'z padding/spacing'ini to'liq o'zi belgilaydi (bazaviy
+// klassda emas) — shunda className orqali boshqa kontekst uchun (masalan
+// sidebar) qayta yozishda Tailwind klasslari to'qnashib qolmaydi.
 const VARIANT_STYLES: Record<ButtonVariant, string> = {
-  primary: "bg-brand text-white hover:bg-brand/90",
-  secondary:
-    "border border-border bg-bg text-text hover:bg-bg-subtle",
+  primary: "px-4 py-2 bg-brand text-white hover:bg-brand/90",
+  secondary: "px-4 py-2 border border-border bg-bg text-text hover:bg-bg-subtle",
+  "ghost-dark": "w-full px-3 py-2 text-left text-white/70 hover:bg-white/10 hover:text-white",
 };
 
 export function Button({
@@ -17,7 +20,7 @@ export function Button({
   return (
     <button
       className={cn(
-        "rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50",
+        "rounded-md text-sm font-medium disabled:opacity-50",
         VARIANT_STYLES[variant],
         className
       )}

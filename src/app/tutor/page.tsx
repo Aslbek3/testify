@@ -1,5 +1,4 @@
 import { requireRole } from "@/lib/auth";
-import { LogoutButton } from "@/components/LogoutButton";
 import { StatTile } from "@/components/StatTile";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
 import {
@@ -29,25 +28,20 @@ export default async function TutorPage({
 
   if (groups.length === 0) {
     return (
-      <main className="min-h-screen bg-bg-subtle p-8">
-        <div className="mx-auto max-w-5xl space-y-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="text-xl font-semibold text-text">Ustoz paneli</h1>
-              <p className="mt-1 text-sm text-text-muted">
-                Guruhingiz qaysi mavzularda ko&apos;p xato qilayotganini va har bir
-                o&apos;quvchining progressini shu yerdan kuzatasiz.
-              </p>
-            </div>
-            <LogoutButton />
-          </div>
-          <Card>
-            <p className="text-sm text-text-muted">
-              Sizga hali guruh biriktirilmagan.
-            </p>
-          </Card>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-xl font-semibold text-text">Ustoz paneli</h1>
+          <p className="mt-1 text-sm text-text-muted">
+            Guruhingiz qaysi mavzularda ko&apos;p xato qilayotganini va har bir
+            o&apos;quvchining progressini shu yerdan kuzatasiz.
+          </p>
         </div>
-      </main>
+        <Card>
+          <p className="text-sm text-text-muted">
+            Sizga hali guruh biriktirilmagan.
+          </p>
+        </Card>
+      </div>
     );
   }
 
@@ -70,25 +64,21 @@ export default async function TutorPage({
   const totalAttempts = roster.reduce((sum, r) => sum + r.attemptCount, 0);
 
   return (
-    <main className="min-h-screen bg-bg-subtle p-8">
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-text">Ustoz paneli</h1>
-            <p className="mt-1 text-sm text-text-muted">
-              Guruhingiz qaysi mavzularda ko&apos;p xato qilayotganini va har bir
-              o&apos;quvchining progressini shu yerdan kuzatasiz.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-end gap-2">
-            {groups.length > 1 && (
-              <GroupSelect groups={groups} selectedId={selectedGroup.id} />
-            )}
-            <LogoutButton />
-          </div>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-text">Ustoz paneli</h1>
+          <p className="mt-1 text-sm text-text-muted">
+            Guruhingiz qaysi mavzularda ko&apos;p xato qilayotganini va har bir
+            o&apos;quvchining progressini shu yerdan kuzatasiz.
+          </p>
         </div>
+        {groups.length > 1 && (
+          <GroupSelect groups={groups} selectedId={selectedGroup.id} />
+        )}
+      </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <StatTile label="Guruhdagi o'quvchilar" value={roster.length} />
           <StatTile
             label="O'rtacha ball"
@@ -162,9 +152,8 @@ export default async function TutorPage({
               Qatorni bosing — to&apos;liq progress ochiladi
             </span>
           </CardHeader>
-          <RosterTable roster={roster} />
-        </Card>
-      </div>
-    </main>
+        <RosterTable roster={roster} />
+      </Card>
+    </div>
   );
 }

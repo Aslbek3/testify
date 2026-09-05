@@ -1,5 +1,4 @@
 import { requireRole } from "@/lib/auth";
-import { LogoutButton } from "@/components/LogoutButton";
 import { StatTile } from "@/components/StatTile";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
 import {
@@ -43,20 +42,16 @@ export default async function StudentPage() {
   ]);
 
   return (
-    <main className="min-h-screen bg-bg-subtle p-8">
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-text">O&apos;quvchi paneli</h1>
-            <p className="mt-1 text-sm text-text-muted">
-              O&apos;zingizning tayyorgarlik darajangiz, mavzular bo&apos;yicha bilim
-              darajasi va urinishlar tarixi shu yerda.
-            </p>
-          </div>
-          <LogoutButton />
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold text-text">O&apos;quvchi paneli</h1>
+        <p className="mt-1 text-sm text-text-muted">
+          O&apos;zingizning tayyorgarlik darajangiz, mavzular bo&apos;yicha bilim
+          darajasi va urinishlar tarixi shu yerda.
+        </p>
+      </div>
 
-        <Card>
+      <Card>
           <div className="flex flex-wrap items-center gap-8">
             <ProgressRing score={overview.overallScore} />
             <div className="grid flex-1 grid-cols-2 gap-4 sm:max-w-md">
@@ -131,7 +126,6 @@ export default async function StudentPage() {
             </Table>
           )}
         </Card>
-      </div>
-    </main>
+    </div>
   );
 }

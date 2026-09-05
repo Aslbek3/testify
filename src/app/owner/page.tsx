@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { listOrganizations } from "@/services/organizations";
-import { LogoutButton } from "@/components/LogoutButton";
 import { StatTile } from "@/components/StatTile";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
@@ -28,29 +27,27 @@ export default async function OwnerPage() {
   const activeCount = organizations.filter((o) => o.status === "ACTIVE").length;
 
   return (
-    <main className="min-h-screen bg-bg-subtle p-8">
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-text">App Owner paneli</h1>
-            <p className="mt-1 text-sm text-text-muted">
-              Barcha avtomaktablarni va platforma bo&apos;yicha o&apos;sishni shu
-              yerdan boshqarasiz.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/owner/questions">
-              <Button type="button" variant="secondary">
-                Savollar bazasi
-              </Button>
-            </Link>
-            <NewDirectorModal
-              organizations={organizations.map((o) => ({ id: o.id, name: o.name }))}
-            />
-            <NewOrganizationModal />
-            <LogoutButton />
-          </div>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-text">App Owner paneli</h1>
+          <p className="mt-1 text-sm text-text-muted">
+            Barcha avtomaktablarni va platforma bo&apos;yicha o&apos;sishni shu
+            yerdan boshqarasiz.
+          </p>
         </div>
+        <div className="flex items-center gap-2">
+          <Link href="/owner/questions">
+            <Button type="button" variant="secondary">
+              Savollar bazasi
+            </Button>
+          </Link>
+          <NewDirectorModal
+            organizations={organizations.map((o) => ({ id: o.id, name: o.name }))}
+          />
+          <NewOrganizationModal />
+        </div>
+      </div>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <StatTile label="Jami tashkilotlar" value={organizations.length} />
@@ -103,8 +100,7 @@ export default async function OwnerPage() {
               </TableBody>
             </Table>
           )}
-        </Card>
-      </div>
-    </main>
+      </Card>
+    </div>
   );
 }

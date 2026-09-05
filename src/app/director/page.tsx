@@ -6,7 +6,6 @@ import {
   getGroupsOverview,
   listTutorsForOrganization,
 } from "@/services/directorDashboard";
-import { LogoutButton } from "@/components/LogoutButton";
 import { NewTutorModal } from "./NewTutorModal";
 import { NewGroupModal } from "./NewGroupModal";
 import { StatTile } from "@/components/StatTile";
@@ -26,14 +25,10 @@ export default async function DirectorPage() {
 
   if (!user.organizationId || !canViewOrganization(user, user.organizationId)) {
     return (
-      <main className="min-h-screen bg-bg-subtle p-8">
-        <div className="mx-auto max-w-5xl">
-          <p className="text-sm text-text-muted">
-            Tashkilotga biriktirilmagansiz. Iltimos, administrator bilan
-            bog&apos;laning.
-          </p>
-        </div>
-      </main>
+      <p className="text-sm text-text-muted">
+        Tashkilotga biriktirilmagansiz. Iltimos, administrator bilan
+        bog&apos;laning.
+      </p>
     );
   }
 
@@ -47,24 +42,22 @@ export default async function DirectorPage() {
   ]);
 
   return (
-    <main className="min-h-screen bg-bg-subtle p-8">
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-text">Direktor paneli</h1>
-            <p className="mt-1 text-sm text-text-muted">
-              Tashkilotingizdagi ustozlar va guruhlar bo&apos;yicha umumiy
-              ko&apos;rsatkichlar shu yerda.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <NewTutorModal />
-            <NewGroupModal tutors={tutors} />
-            <LogoutButton />
-          </div>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-text">Direktor paneli</h1>
+          <p className="mt-1 text-sm text-text-muted">
+            Tashkilotingizdagi ustozlar va guruhlar bo&apos;yicha umumiy
+            ko&apos;rsatkichlar shu yerda.
+          </p>
         </div>
+        <div className="flex items-center gap-2">
+          <NewTutorModal />
+          <NewGroupModal tutors={tutors} />
+        </div>
+      </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <StatTile label="Jami guruhlar" value={overview.groupCount} />
           <StatTile label="Jami ustozlar" value={overview.tutorCount} />
           <StatTile label="Jami o'quvchilar" value={overview.studentCount} />
@@ -146,9 +139,8 @@ export default async function DirectorPage() {
                 ))}
               </TableBody>
             </Table>
-          )}
-        </Card>
-      </div>
-    </main>
+      )}
+      </Card>
+    </div>
   );
 }
