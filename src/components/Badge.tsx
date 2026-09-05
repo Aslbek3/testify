@@ -20,7 +20,9 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium",
+        // font-sans — raqamli (font-mono) ustunlar ichiga qo'yilganda ham
+        // (masalan "Davom etmoqda" holat belgisi) shrift meros olib qolmasin.
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-sans font-medium",
         VARIANT_STYLES[variant]
       )}
     >

@@ -84,7 +84,7 @@ export default async function StudentPage() {
                     />
                   </div>
                   <Badge variant={masteryVariant(topic.masteryPercent)}>
-                    {topic.masteryPercent}%
+                    <span className="font-mono">{topic.masteryPercent}%</span>
                   </Badge>
                 </div>
               ))}

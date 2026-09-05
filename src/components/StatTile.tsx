@@ -15,7 +15,9 @@ export function StatTile({
   return (
     <div className={cn("rounded-lg border border-border bg-bg p-5", className)}>
       <p className="text-sm text-text-muted">{label}</p>
-      <p className="mt-2 text-3xl font-semibold tracking-tight text-text">{value}</p>
+      <p className="mt-2 font-mono text-3xl font-semibold tracking-tight text-text">
+        {value}
+      </p>
       {sub && <p className="mt-1 text-sm text-text-muted">{sub}</p>}
     </div>
   );

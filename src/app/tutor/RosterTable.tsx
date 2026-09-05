@@ -115,7 +115,7 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
                                     style={{ width: `${m.masteryPercent}%` }}
                                   />
                                 </div>
-                                <span className="text-right text-sm tabular-nums text-text-muted">
+                                <span className="text-right font-mono text-sm tabular-nums text-text-muted">
                                   {m.masteryPercent}%
                                 </span>
                               </div>
@@ -140,7 +140,7 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
                                   <span className="text-text-muted">
                                     {formatDate(new Date(a.date))}
                                   </span>
-                                  <span className="tabular-nums text-text">
+                                  <span className="font-mono tabular-nums text-text">
                                     {a.score !== null ? `${a.score}%` : "—"}
                                   </span>
                                 </li>

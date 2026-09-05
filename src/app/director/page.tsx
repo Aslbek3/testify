@@ -92,7 +92,7 @@ export default async function DirectorPage() {
               <TableBody>
                 {tutorRanking.map((row, index) => (
                   <TableRow key={row.tutorId}>
-                    <TableCell>{index + 1}</TableCell>
+                    <TableCell className="font-mono">{index + 1}</TableCell>
                     <TableCell className="font-medium">{row.tutorName}</TableCell>
                     <TableCell>{row.groupName}</TableCell>
                     <TableCell align="right">{row.studentCount}</TableCell>

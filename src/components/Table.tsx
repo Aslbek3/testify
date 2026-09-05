@@ -64,7 +64,7 @@ export function TableCell({
     <td
       className={cn(
         "px-3 py-3 text-text",
-        align === "right" ? "text-right tabular-nums" : "text-left",
+        align === "right" ? "text-right font-mono tabular-nums" : "text-left",
         className
       )}
       {...props}

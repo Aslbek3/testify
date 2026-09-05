@@ -2,8 +2,8 @@
 
 :root {
   --bg: #ffffff;
-  --bg-subtle: #f5f6f8;
-  --border: #e2e5ea;
+  --bg-subtle: #eff2f6;
+  --border: #dfe3ea;
   --text: #14171f;
   --text-muted: #5c6270;
   --brand: #1e4b8c;
@@ -27,6 +27,7 @@
   --color-danger: var(--danger);
   --color-sidebar: var(--sidebar-bg);
   --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
 body {

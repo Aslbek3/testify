@@ -110,7 +110,7 @@ export default async function TutorPage({
                         style={{ width: `${t.errorRatePercent}%` }}
                       />
                     </div>
-                    <span className="text-right text-sm tabular-nums text-text-muted">
+                    <span className="text-right font-mono text-sm tabular-nums text-text-muted">
                       {t.errorRatePercent}%
                     </span>
                   </div>
@@ -133,7 +133,7 @@ export default async function TutorPage({
                   <li key={q.questionId} className="rounded-md border border-border p-3">
                     <div className="flex items-baseline justify-between gap-3">
                       <span className="text-sm font-medium text-brand">{q.topicName}</span>
-                      <span className="text-sm font-semibold text-danger">
+                      <span className="font-mono text-sm font-semibold text-danger">
                         {q.missPercent}%
                       </span>
                     </div>

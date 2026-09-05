@@ -20,7 +20,9 @@ export function Button({
   return (
     <button
       className={cn(
-        "rounded-md text-sm font-medium disabled:opacity-50",
+        // font-sans — raqamli (font-mono) ustunlar ichida (masalan "Amallar"
+        // ustunidagi tugmalar) ham shrift meros olib qolmasin.
+        "rounded-md font-sans text-sm font-medium disabled:opacity-50",
         VARIANT_STYLES[variant],
         className
       )}

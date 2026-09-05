@@ -17,7 +17,9 @@ export function ProgressRing({ score }: { score: number | null }) {
         {score === null ? (
           <span className="text-lg font-semibold text-text-muted">Hali yo&apos;q</span>
         ) : (
-          <span className="text-3xl font-semibold tracking-tight text-text">{score}%</span>
+          <span className="font-mono text-3xl font-semibold tracking-tight text-text">
+            {score}%
+          </span>
         )}
       </div>
     </div>
