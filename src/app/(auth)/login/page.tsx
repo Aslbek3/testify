@@ -2,6 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Field } from "@/components/Field";
+import { Button } from "@/components/Button";
 
 const ROLE_HOME: Record<string, string> = {
   OWNER: "/owner",
@@ -42,61 +44,47 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <main className="flex min-h-screen items-center justify-center bg-bg-subtle px-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-5 rounded-lg border border-gray-200 bg-white p-8"
+        className="w-full max-w-sm space-y-5 rounded-lg border border-border bg-bg p-8"
       >
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Kirish</h1>
-          <p className="mt-1 text-sm text-gray-500">Testify hisobingizga kiring</p>
+          <h1 className="text-xl font-semibold text-text">Kirish</h1>
+          <p className="mt-1 text-sm text-text-muted">Testify hisobingizga kiring</p>
         </div>
 
         {error && (
-          <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
             {error}
           </p>
         )}
 
-        <div className="space-y-1">
-          <label htmlFor="email" className="text-sm font-medium text-gray-700">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-          />
-        </div>
+        <Field
+          id="email"
+          label="Email"
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-        <div className="space-y-1">
-          <label htmlFor="password" className="text-sm font-medium text-gray-700">
-            Parol
-          </label>
-          <input
-            id="password"
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-          />
-        </div>
+        <Field
+          id="password"
+          label="Parol"
+          type="password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
-        >
+        <Button type="submit" disabled={loading} className="w-full">
           {loading ? "Kirilmoqda..." : "Kirish"}
-        </button>
+        </Button>
 
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-text-muted">
           Hisobingiz yo&apos;qmi?{" "}
-          <a href="/register" className="font-medium text-gray-900 underline">
+          <a href="/register" className="font-medium text-brand underline">
             Ro&apos;yxatdan o&apos;tish
           </a>
         </p>
