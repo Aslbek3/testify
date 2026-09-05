@@ -4,13 +4,8 @@ import { useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Field } from "@/components/Field";
 import { Button } from "@/components/Button";
-
-const ROLE_HOME: Record<string, string> = {
-  OWNER: "/owner",
-  DIRECTOR: "/director",
-  TUTOR: "/tutor",
-  STUDENT: "/student",
-};
+import { ROLE_HOME } from "@/lib/roles";
+import type { Role } from "@prisma/client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,7 +34,7 @@ export default function LoginPage() {
     }
 
     const next = searchParams.get("next");
-    router.push(next ?? ROLE_HOME[data.role] ?? "/");
+    router.push(next ?? ROLE_HOME[data.role as Role] ?? "/");
     router.refresh();
   }
 

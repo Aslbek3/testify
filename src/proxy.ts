@@ -1,14 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
+import { ROLE_HOME } from "@/lib/roles";
 import type { Role } from "@prisma/client";
-
-const ROLE_HOME: Record<Role, string> = {
-  OWNER: "/owner",
-  DIRECTOR: "/director",
-  TUTOR: "/tutor",
-  STUDENT: "/student",
-};
 
 const ROLE_PREFIX: Record<string, Role> = {
   owner: "OWNER",

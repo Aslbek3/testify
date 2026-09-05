@@ -1,6 +1,9 @@
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import type { SessionUser } from "@/types/auth";
+import type { Role } from "@prisma/client";
+import { ROLE_HOME } from "@/lib/roles";
 
 function requireJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
@@ -56,4 +59,16 @@ export async function setSessionCookie(user: SessionUser) {
 export async function clearSessionCookie() {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE);
+}
+
+/**
+ * Dashboard sahifalarida takrorlanadigan tekshiruv: sessiyasiz /login ga,
+ * boshqa rolda o'ziga tegishli sahifaga qaytaradi. proxy.ts allaqachon
+ * himoya qiladi — bu server komponent darajasidagi qo'shimcha himoya.
+ */
+export async function requireRole(role: Role): Promise<SessionUser> {
+  const user = await getSessionUser();
+  if (!user) redirect("/login");
+  if (user.role !== role) redirect(ROLE_HOME[user.role]);
+  return user;
 }
