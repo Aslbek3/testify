@@ -25,6 +25,7 @@ export type QuestionListItem = {
   text: string;
   options: string[];
   correctOptionIndex: number;
+  imageAlt: string | null;
 };
 
 export async function listTopicsWithQuestionCount(): Promise<
@@ -77,6 +78,7 @@ export async function listQuestionsForTopic(
     text: question.text,
     options: toStringArray(question.options),
     correctOptionIndex: question.correctOptionIndex,
+    imageAlt: question.imageAlt,
   }));
 }
 
@@ -111,6 +113,7 @@ export async function createQuestion(input: {
   text: string;
   options: string[];
   correctOptionIndex: number;
+  imageAlt?: string | null;
 }) {
   validateQuestionInput(input);
 
@@ -120,13 +123,19 @@ export async function createQuestion(input: {
       text: input.text.trim(),
       options: input.options.map((option) => option.trim()),
       correctOptionIndex: input.correctOptionIndex,
+      imageAlt: input.imageAlt?.trim() || null,
     },
   });
 }
 
 export async function updateQuestion(
   id: string,
-  input: { text: string; options: string[]; correctOptionIndex: number }
+  input: {
+    text: string;
+    options: string[];
+    correctOptionIndex: number;
+    imageAlt?: string | null;
+  }
 ) {
   validateQuestionInput(input);
 
@@ -136,6 +145,7 @@ export async function updateQuestion(
       text: input.text.trim(),
       options: input.options.map((option) => option.trim()),
       correctOptionIndex: input.correctOptionIndex,
+      imageAlt: input.imageAlt?.trim() || null,
     },
   });
 }

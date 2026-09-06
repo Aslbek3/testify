@@ -12,6 +12,7 @@ export function NewQuestionModal({ topicId }: { topicId: string }) {
   const [text, setText] = useState("");
   const [options, setOptions] = useState(["", "", "", ""]);
   const [correctOptionIndex, setCorrectOptionIndex] = useState("0");
+  const [imageAlt, setImageAlt] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -24,6 +25,7 @@ export function NewQuestionModal({ topicId }: { topicId: string }) {
     setText("");
     setOptions(["", "", "", ""]);
     setCorrectOptionIndex("0");
+    setImageAlt("");
   }
 
   function updateOption(index: number, value: string) {
@@ -43,6 +45,7 @@ export function NewQuestionModal({ topicId }: { topicId: string }) {
         text,
         options,
         correctOptionIndex: Number(correctOptionIndex),
+        imageAlt,
       }),
     });
     const data = await res.json();
@@ -115,6 +118,23 @@ export function NewQuestionModal({ topicId }: { topicId: string }) {
             <option value="2">3-variant</option>
             <option value="3">4-variant</option>
           </SelectField>
+
+          <div className="space-y-1">
+            <label htmlFor="question-image-alt" className="text-sm font-medium text-text">
+              Rasm tavsifi (ixtiyoriy)
+            </label>
+            <input
+              id="question-image-alt"
+              placeholder="Masalan: To'rt tomonlama chorraha, chapdan tramvay yaqinlashmoqda"
+              className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm text-text"
+              value={imageAlt}
+              onChange={(e) => setImageAlt(e.target.value)}
+            />
+            <p className="text-xs text-text-muted">
+              Savolga rasm biriktirilgan bo&apos;lsa, uning matnli tavsifi
+              (ko&apos;rmaydigan foydalanuvchilar uchun).
+            </p>
+          </div>
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="secondary" onClick={close}>

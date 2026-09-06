@@ -33,6 +33,7 @@ export type AttemptQuestionForClient = {
   text: string;
   options: string[];
   imageUrl: string | null;
+  imageAlt: string | null;
   topicId: string;
   topicName: string;
 };
@@ -96,6 +97,7 @@ export async function startAttempt(input: {
       text: true,
       options: true,
       imageUrl: true,
+      imageAlt: true,
       topicId: true,
       topic: { select: { name: true } },
       // correctOptionIndex va explanation ATAYLAB tanlanmagan —
@@ -118,6 +120,7 @@ export async function startAttempt(input: {
       text: q.text,
       options: toStringArray(q.options),
       imageUrl: q.imageUrl,
+      imageAlt: q.imageAlt,
       topicId: q.topicId,
       topicName: q.topic.name,
     })),
@@ -263,6 +266,7 @@ export async function getAttemptForResume(input: {
         text: true,
         options: true,
         imageUrl: true,
+        imageAlt: true,
         topicId: true,
         topic: { select: { name: true } },
         ...(attempt.mode === "PRACTICE"
@@ -307,6 +311,7 @@ export async function getAttemptForResume(input: {
       text: q.text,
       options: toStringArray(q.options),
       imageUrl: q.imageUrl,
+      imageAlt: q.imageAlt,
       topicId: q.topicId,
       topicName: q.topic.name,
     })),

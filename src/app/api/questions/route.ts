@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     : [];
   const correctOptionIndex =
     typeof body?.correctOptionIndex === "number" ? body.correctOptionIndex : -1;
+  const imageAlt = typeof body?.imageAlt === "string" ? body.imageAlt : null;
 
   if (!topicId || !text || options.length === 0) {
     return NextResponse.json(
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
       text,
       options,
       correctOptionIndex,
+      imageAlt,
     });
     return NextResponse.json(question, { status: 201 });
   } catch (error) {

@@ -22,6 +22,7 @@ export function EditQuestionModal({
   const [correctOptionIndex, setCorrectOptionIndex] = useState(
     String(question.correctOptionIndex)
   );
+  const [imageAlt, setImageAlt] = useState(question.imageAlt ?? "");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -46,6 +47,7 @@ export function EditQuestionModal({
         text,
         options,
         correctOptionIndex: Number(correctOptionIndex),
+        imageAlt,
       }),
     });
     const data = await res.json();
@@ -112,6 +114,23 @@ export function EditQuestionModal({
           <option value="2">3-variant</option>
           <option value="3">4-variant</option>
         </SelectField>
+
+        <div className="space-y-1">
+          <label htmlFor="edit-question-image-alt" className="text-sm font-medium text-text">
+            Rasm tavsifi (ixtiyoriy)
+          </label>
+          <input
+            id="edit-question-image-alt"
+            placeholder="Masalan: To'rt tomonlama chorraha, chapdan tramvay yaqinlashmoqda"
+            className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm text-text"
+            value={imageAlt}
+            onChange={(e) => setImageAlt(e.target.value)}
+          />
+          <p className="text-xs text-text-muted">
+            Savolga rasm biriktirilgan bo&apos;lsa, uning matnli tavsifi
+            (ko&apos;rmaydigan foydalanuvchilar uchun).
+          </p>
+        </div>
 
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={close}>

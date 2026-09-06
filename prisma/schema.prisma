@@ -102,6 +102,7 @@ model Question {
   options            Json
   correctOptionIndex Int
   imageUrl           String?
+  imageAlt           String?
   explanation        String?
   category           String?
 

@@ -43,6 +43,7 @@ const TOPIC_DEFS = [
         explanation:
           "Bu taqiqlovchi belgi barcha transport turlariga ushbu yo'nalishda harakatlanishni butunlay man etadi.",
         imageUrl: "/questions/belgi-1.svg",
+        imageAlt: "Qizil doira ichida oq gorizontal chiziqli \"Kirish taqiqlangan\" yo'l belgisi",
       },
       {
         text: "Uchburchak shaklidagi ogohlantiruvchi belgilar nimani bildiradi?",
@@ -56,6 +57,7 @@ const TOPIC_DEFS = [
         explanation:
           "Ogohlantiruvchi belgilar oldinda xavfli uchastka borligi haqida haydovchini oldindan xabardor qiladi.",
         imageUrl: "/questions/belgi-2.svg",
+        imageAlt: "Qizil chegarali uchburchak shaklidagi ogohlantiruvchi yo'l belgisi, o'rtasida undov belgisi",
       },
       {
         text: "Doira shaklidagi ko'k fonli belgilar odatda nimani bildiradi?",
@@ -92,6 +94,7 @@ const TOPIC_DEFS = [
         correctOptionIndex: 0,
         explanation: "\"Bosh yo'l\" belgisi ushbu yo'l kesishmalarda ustunlikka ega ekanini bildiradi.",
         imageUrl: "/questions/chorraha-1.svg",
+        imageAlt: "To'rt tomonlama to'g'ri chorraha sxemasi, o'rtadan tepaga qarab strelka bilan",
       },
       {
         text: "Yo'l belgisi zarar ko'rgan yoki yaxshi ko'rinmasa, haydovchi qanday yo'l tutadi?",
@@ -105,6 +108,7 @@ const TOPIC_DEFS = [
         explanation:
           "Belgi yaxshi ko'rinmasa ham, haydovchi umumiy YHQ qoidalari va yo'l chizig'iga (nishonlarga) amal qilishi shart.",
         imageUrl: "/questions/belgi-2.svg",
+        imageAlt: "Qizil chegarali uchburchak shaklidagi ogohlantiruvchi yo'l belgisi, o'rtasida undov belgisi",
       },
       {
         text: "Bir necha belgi bir joyda qarama-qarshi ma'no bersa (masalan vaqtinchalik va doimiy), qaysi ustunlik qiladi?",
@@ -130,6 +134,7 @@ const TOPIC_DEFS = [
         explanation:
           "Bu belgi piyodalar yo'lni kesib o'tadigan rasmiy joyni bildiradi, haydovchi bu joyda alohida ehtiyot bo'lishi kerak.",
         imageUrl: "/questions/chorraha-2.svg",
+        imageAlt: "T-shaklidagi yo'l kesishmasi (yon yo'lakash) sxemasi",
       },
     ],
   },
@@ -148,6 +153,7 @@ const TOPIC_DEFS = [
         explanation:
           "Sariq chiroq svetofor rangi almashayotganini bildiradi, haydovchi xavfsiz to'xtashga tayyorlanishi kerak.",
         imageUrl: "/questions/svetofor-1.svg",
+        imageAlt: "Qizil, sariq va yashil chiroqli svetofor ustuni",
       },
       {
         text: "Nazoratchi ishorasi svetofor ko'rsatkichiga zid bo'lsa, haydovchi kimga bo'ysunadi?",
@@ -180,6 +186,7 @@ const TOPIC_DEFS = [
         explanation:
           "Miltillovchi rejim odatda svetofor tartibga solish funksiyasini bajarmayotganini bildiradi, shu bois YHQning umumiy ustunlik qoidalariga amal qilinadi.",
         imageUrl: "/questions/svetofor-1.svg",
+        imageAlt: "Qizil, sariq va yashil chiroqli svetofor ustuni",
       },
       {
         text: "Qo'shimcha sektsiya (strelka) bilan yashil chiroq yonganda, u qanday harakatga ruxsat beradi?",
@@ -217,6 +224,7 @@ const TOPIC_DEFS = [
         explanation:
           "Qizil va sariq bir vaqtda yonishi yaqinda yashil yonishidan darak beradi, ammo transport hali harakatni boshlamasligi kerak.",
         imageUrl: "/questions/svetofor-1.svg",
+        imageAlt: "Qizil, sariq va yashil chiroqli svetofor ustuni",
       },
       {
         text: "Svetofor butunlay o'chgan (ishlamayapti) chorrahada haydovchi qanday qoidaga amal qiladi?",
@@ -247,6 +255,7 @@ const TOPIC_DEFS = [
         explanation:
           "Tenglashtirilgan yo'llarda \"o'ng qo'l qoidasi\" amal qiladi — chapdan kelayotgan haydovchi o'ngdan kelayotganga yo'l berishi shart.",
         imageUrl: "/questions/chorraha-1.svg",
+        imageAlt: "To'rt tomonlama to'g'ri chorraha sxemasi, o'rtadan tepaga qarab strelka bilan",
       },
       {
         text: "Aylanma harakatga kirayotgan haydovchi kimga yo'l berishi shart?",
@@ -260,6 +269,7 @@ const TOPIC_DEFS = [
         explanation:
           "Aylanmaga kirayotgan transport, allaqachon aylanma ichida harakatlanayotgan transport vositalariga yo'l berishi kerak.",
         imageUrl: "/questions/chorraha-2.svg",
+        imageAlt: "T-shaklidagi yo'l kesishmasi (yon yo'lakash) sxemasi",
       },
       {
         text: "\"Yo'l bering\" (teskari uchburchak) belgisi o'rnatilgan chorrahada haydovchi qanday harakat qiladi?",
@@ -273,6 +283,7 @@ const TOPIC_DEFS = [
         explanation:
           "\"Yo'l bering\" belgisi kesishayotgan bosh yo'ldagi transportlarga ustunlik berishni talab qiladi.",
         imageUrl: "/questions/chorraha-2.svg",
+        imageAlt: "T-shaklidagi yo'l kesishmasi (yon yo'lakash) sxemasi",
       },
       {
         text: "\"Harakatlanishni to'xtatmasdan o'tish taqiqlanadi\" (STOP) belgisi qo'yilgan joyda haydovchi nima qiladi?",
@@ -329,6 +340,7 @@ const TOPIC_DEFS = [
         explanation:
           "Teng sharoitlarda umumiy qoida bo'yicha o'ngdan kelayotgan transportga ustunlik beriladi.",
         imageUrl: "/questions/chorraha-1.svg",
+        imageAlt: "To'rt tomonlama to'g'ri chorraha sxemasi, o'rtadan tepaga qarab strelka bilan",
       },
     ],
   },
@@ -440,6 +452,7 @@ const TOPIC_DEFS = [
         explanation:
           "Ikki qatorli uzluksiz sariq chiziq to'xtash va turishni taqiqlaydigan yo'l nishoni hisoblanadi.",
         imageUrl: "/questions/chiziq-1.svg",
+        imageAlt: "Yo'l yuzasida ikki qatorli uzluksiz sariq chiziq nishoni",
       },
       {
         text: "Avtobus bekati yaqinida qancha masofada to'xtash taqiqlanadi (umumiy qoida)?",
@@ -448,6 +461,7 @@ const TOPIC_DEFS = [
         explanation:
           "Avtobus bekatidan 15 metr radiusda to'xtash taqiqlanadi, bu jamoat transportining bemalol to'xtashi uchun zarur.",
         imageUrl: "/questions/chiziq-1.svg",
+        imageAlt: "Yo'l yuzasida ikki qatorli uzluksiz sariq chiziq nishoni",
       },
       {
         text: "Nogironlar uchun ajratilgan joyga maxsus belgisiz avtomobil to'xtatish mumkinmi?",
@@ -474,6 +488,7 @@ const TOPIC_DEFS = [
         explanation:
           "Sariq chiziq to'xtash-turish taqiqlangan zonalarni bildiradi, oq chiziq esa harakat qatorlarini ajratish uchun ishlatiladi.",
         imageUrl: "/questions/chiziq-1.svg",
+        imageAlt: "Yo'l yuzasida ikki qatorli uzluksiz sariq chiziq nishoni",
       },
       {
         text: "Avtomobilni tepalikda (nishab yo'lda) to'xtatganda qo'shimcha qanday chora ko'riladi?",
@@ -680,6 +695,7 @@ const TOPIC_DEFS = [
         correctOptionIndex: 1,
         explanation: "Piyodalar o'tish joyida piyoda bo'lsa, haydovchi to'liq o'tib bo'lguncha kutishi shart.",
         imageUrl: "/questions/chorraha-2.svg",
+        imageAlt: "T-shaklidagi yo'l kesishmasi (yon yo'lakash) sxemasi",
       },
       {
         text: "Maktab oldidagi hududda haydovchi qanday ehtiyot chorasini ko'radi?",
@@ -711,6 +727,7 @@ const TOPIC_DEFS = [
         explanation:
           "Oldingi mashina to'xtagan bo'lsa, ko'rinish cheklangan bo'lishi mumkin va piyoda yashiringan bo'lishi ehtimoli bor, shu bois xavfsiz to'xtash zarur.",
         imageUrl: "/questions/chorraha-1.svg",
+        imageAlt: "To'rt tomonlama to'g'ri chorraha sxemasi, o'rtadan tepaga qarab strelka bilan",
       },
       {
         text: "Piyodalar o'tish joyisiz ko'chada bir guruh piyoda kesib o'tayotgan bo'lsa nima qilinadi?",
@@ -719,6 +736,7 @@ const TOPIC_DEFS = [
         explanation:
           "Rasmiy o'tish joyi bo'lmasa ham piyodalar xavfsizligi ustuvor, shuning uchun ehtiyotkorlik bilan harakatlanish lozim.",
         imageUrl: "/questions/chorraha-2.svg",
+        imageAlt: "T-shaklidagi yo'l kesishmasi (yon yo'lakash) sxemasi",
       },
       {
         text: "Ko'r nuqta (piyoda ko'rinmaydigan hudud) tufayli qaysi joylarda alohida ehtiyot kerak?",
@@ -835,18 +853,22 @@ async function main() {
     const questions = [];
     for (let i = 0; i < t.questions.length; i++) {
       const q = t.questions[i];
+      // `update` ham to'liq to'ldirilgan — aks holda TOPIC_DEFS'dagi matn/izoh/
+      // rasm o'zgarishlari allaqachon mavjud qatorlarga hech qachon
+      // yetib bormas edi (upsert faqat yangi qator yaratganda ishlardi).
+      const questionData = {
+        topicId: topic.id,
+        text: q.text,
+        options: q.options,
+        correctOptionIndex: q.correctOptionIndex,
+        explanation: q.explanation,
+        imageUrl: q.imageUrl,
+        imageAlt: q.imageAlt,
+      };
       const question = await prisma.question.upsert({
         where: { id: `${topic.id}-q${i}` },
-        update: {},
-        create: {
-          id: `${topic.id}-q${i}`,
-          topicId: topic.id,
-          text: q.text,
-          options: q.options,
-          correctOptionIndex: q.correctOptionIndex,
-          explanation: q.explanation,
-          imageUrl: q.imageUrl,
-        },
+        update: questionData,
+        create: { id: `${topic.id}-q${i}`, ...questionData },
       });
       questions.push(question);
     }
