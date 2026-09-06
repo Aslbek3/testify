@@ -17,6 +17,27 @@ type LocalAnswer = {
   explanation?: string | null;
 };
 
+type SaveStatus = "saving" | "retrying" | "failed";
+
+/** 1s, so'ng 3s dan keyin avtomatik qayta urinish — shundan keyin ham
+ * muvaffaqiyatsiz bo'lsa, foydalanuvchiga qo'lda "Qayta urinish" ko'rsatiladi. */
+const RETRY_DELAYS_MS = [1000, 3000];
+
+function WarningIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M10 2.5 1.5 17h17L10 2.5Z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+      <path d="M10 8v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <circle cx="10" cy="14.3" r="0.9" fill="currentColor" />
+    </svg>
+  );
+}
+
 function formatTime(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
@@ -53,10 +74,14 @@ export function TestRunner({
     const firstUnanswered = questions.findIndex((q) => !answers[q.id]);
     return firstUnanswered === -1 ? 0 : firstUnanswered;
   });
-  const [savingId, setSavingId] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<Record<string, SaveStatus>>({});
   const [finishing, setFinishing] = useState(false);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const finishTriggered = useRef(false);
+  // Har bir savol uchun so'nggi so'ralgan variant — eski (allaqachon
+  // ustidan bosilgan) qayta urinish javobi kelib qolsa, uni e'tiborsiz
+  // qoldirish uchun solishtiriladi.
+  const latestSelectionRef = useRef<Record<string, number>>({});
 
   // Boshlang'ich qiymat DOIM statik (Date.now() ishlatilmaydi) — aks holda
   // server render qilgan payt bilan klient hidratsiya qilgan payt orasidagi
@@ -113,41 +138,75 @@ export function TestRunner({
     }
   }, [secondsLeft, handleFinish]);
 
-  async function handleSelect(optionIndex: number) {
-    if (practiceLocked) return;
+  async function saveAnswer(questionId: string, optionIndex: number, attemptNumber = 0) {
+    // Shu orada foydalanuvchi boshqa variantni bosib ulgurgan bo'lsa, bu
+    // (eski) urinish natijasi e'tiborsiz qoldiriladi.
+    if (latestSelectionRef.current[questionId] !== optionIndex) return;
 
-    setAnswers((prev) => ({
+    setSaveStatus((prev) => ({
       ...prev,
-      [currentQuestion.id]: { ...prev[currentQuestion.id], selectedOptionIndex: optionIndex },
+      [questionId]: attemptNumber === 0 ? "saving" : "retrying",
     }));
-    setSavingId(currentQuestion.id);
 
     try {
       const res = await fetch(`/api/attempts/${attemptId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ questionId: currentQuestion.id, selectedOptionIndex: optionIndex }),
+        body: JSON.stringify({ questionId, selectedOptionIndex: optionIndex }),
       });
+
+      if (res.status === 409) {
+        // Server tomonda vaqt tugagan deb topildi (soat sinxronsizligi
+        // kabi chekka holat) — mijoz taymeri buni allaqachon sezishi kerak
+        // edi, shu bois to'g'ridan-to'g'ri yakunlashga o'tkazamiz.
+        handleFinish();
+        return;
+      }
+      if (!res.ok) throw new Error(`saqlash muvaffaqiyatsiz: ${res.status}`);
+
       const data = await res.json();
-      if (res.ok && data.mode === "PRACTICE") {
+      if (latestSelectionRef.current[questionId] !== optionIndex) return;
+
+      if (data.mode === "PRACTICE") {
         setAnswers((prev) => ({
           ...prev,
-          [currentQuestion.id]: {
+          [questionId]: {
             selectedOptionIndex: optionIndex,
             isCorrect: data.isCorrect,
             correctOptionIndex: data.correctOptionIndex,
             explanation: data.explanation,
           },
         }));
-      } else if (res.status === 409) {
-        // Server tomonda vaqt tugagan deb topildi (soat sinxronsizligi
-        // kabi chekka holat) — mijoz taymeri buni allaqachon sezishi kerak
-        // edi, shu bois to'g'ridan-to'g'ri yakunlashga o'tkazamiz.
-        handleFinish();
       }
-    } finally {
-      setSavingId(null);
+      setSaveStatus((prev) => {
+        const next = { ...prev };
+        delete next[questionId];
+        return next;
+      });
+    } catch {
+      if (latestSelectionRef.current[questionId] !== optionIndex) return;
+
+      if (attemptNumber < RETRY_DELAYS_MS.length) {
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attemptNumber]));
+        saveAnswer(questionId, optionIndex, attemptNumber + 1);
+      } else {
+        setSaveStatus((prev) => ({ ...prev, [questionId]: "failed" }));
+      }
     }
+  }
+
+  function handleSelect(optionIndex: number) {
+    if (practiceLocked) return;
+
+    const questionId = currentQuestion.id;
+    latestSelectionRef.current[questionId] = optionIndex;
+
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: { ...prev[questionId], selectedOptionIndex: optionIndex },
+    }));
+
+    saveAnswer(questionId, optionIndex);
   }
 
   const goNext = useCallback(() => {
@@ -169,12 +228,21 @@ export function TestRunner({
     setCurrentIndex((i) => Math.max(i - 1, 0));
   }, []);
 
+  function retrySave(questionId: string) {
+    const optionIndex = answers[questionId]?.selectedOptionIndex;
+    if (optionIndex === undefined) return;
+    latestSelectionRef.current[questionId] = optionIndex;
+    saveAnswer(questionId, optionIndex);
+  }
+
   // Klaviatura: 1-4 variant tanlaydi, Enter keyingisiga o'tadi. Tasdiqlash
   // modali ochiq bo'lsa hech narsa qilmaydi — aks holda fonda javob
   // o'zgarib ketishi yoki modal qayta ochilib ketishi mumkin edi.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (showFinishConfirm) return;
+      const target = event.target as HTMLElement | null;
+      if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
       if (event.key >= "1" && event.key <= "4") {
         const idx = Number(event.key) - 1;
         if (idx < currentQuestion.options.length) {
@@ -217,32 +285,43 @@ export function TestRunner({
         )}
       </div>
 
-      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Savollar holati">
+      <nav className="flex flex-wrap gap-1.5" aria-label="Savollar holati">
         {questions.map((q, i) => {
           const isCurrent = i === currentIndex;
           const isAnswered = Boolean(answers[q.id]);
+          const status = saveStatus[q.id];
+          const barColor = isCurrent
+            ? "bg-text"
+            : status === "failed"
+              ? "bg-danger"
+              : status === "retrying" || status === "saving"
+                ? "bg-warning"
+                : isAnswered
+                  ? "bg-brand"
+                  : "bg-border";
           return (
             <button
               key={q.id}
               type="button"
               onClick={() => setCurrentIndex(i)}
-              aria-label={`${i + 1}-savol${isAnswered ? ", javob berilgan" : ""}`}
-              aria-current={isCurrent}
-              className={cn(
-                "h-2 min-w-[10px] flex-1 rounded-full transition-colors",
-                isCurrent ? "bg-text" : isAnswered ? "bg-brand" : "bg-border"
-              )}
-            />
+              aria-label={`${i + 1}-savol${isAnswered ? ", javob berilgan" : ""}${
+                status === "failed" ? ", saqlanmadi" : ""
+              }`}
+              aria-current={isCurrent ? "step" : undefined}
+              className="flex min-h-[24px] min-w-[10px] flex-1 items-center rounded-full"
+            >
+              <span className={cn("block h-2 w-full rounded-full transition-colors", barColor)} />
+            </button>
           );
         })}
-      </div>
+      </nav>
 
       <Card>
         {currentQuestion.imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={currentQuestion.imageUrl}
-            alt=""
+            alt={currentQuestion.imageAlt ?? ""}
             className="mb-4 max-h-64 w-full rounded-md object-contain"
           />
         )}
@@ -253,6 +332,9 @@ export function TestRunner({
         <div className="mt-6 space-y-3">
           {currentQuestion.options.map((option, i) => {
             const isSelected = currentAnswer?.selectedOptionIndex === i;
+            const currentStatus = saveStatus[currentQuestion.id];
+            const showUnsavedWarning =
+              isSelected && (currentStatus === "retrying" || currentStatus === "failed");
             // `correctOptionIndex` faqat server javob qaytargandan keyin
             // keladi — shundan oldin ham "currentAnswer" mavjud bo'ladi
             // (optimistik selectedOptionIndex bilan), shuning uchun aynan
@@ -293,6 +375,14 @@ export function TestRunner({
                   {i + 1}
                 </span>
                 <span className="text-text">{option}</span>
+                {showUnsavedWarning && (
+                  <WarningIcon
+                    className={cn(
+                      "ml-auto h-4 w-4 shrink-0",
+                      currentStatus === "failed" ? "text-danger" : "text-warning"
+                    )}
+                  />
+                )}
               </button>
             );
           })}
@@ -314,8 +404,27 @@ export function TestRunner({
           </div>
         )}
 
-        {savingId === currentQuestion.id && (
+        {saveStatus[currentQuestion.id] === "saving" && (
           <p className="mt-2 text-xs text-text-muted">Saqlanmoqda...</p>
+        )}
+        {saveStatus[currentQuestion.id] === "retrying" && (
+          <p className="mt-2 flex items-center gap-1.5 text-xs text-warning">
+            <WarningIcon className="h-3.5 w-3.5" />
+            Saqlanmadi, qayta urinilmoqda...
+          </p>
+        )}
+        {saveStatus[currentQuestion.id] === "failed" && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-danger">
+            <WarningIcon className="h-3.5 w-3.5" />
+            <span>Javobingiz saqlanmadi. Internet aloqasini tekshiring.</span>
+            <button
+              type="button"
+              onClick={() => retrySave(currentQuestion.id)}
+              className="font-medium underline"
+            >
+              Qayta urinish
+            </button>
+          </div>
         )}
       </Card>
 
