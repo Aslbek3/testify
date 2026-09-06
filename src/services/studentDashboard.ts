@@ -20,6 +20,19 @@ export type AttemptHistoryItem = {
 };
 
 /**
+ * O'quvchining o'z guruhi ID'si — test boshlanganda Attempt.groupId'ga
+ * yozish uchun. Klient tomonidan yuborilgan groupId'ga ishonilmaydi,
+ * har doim shu orqali serverda aniqlanadi.
+ */
+export async function getStudentGroupId(studentId: string): Promise<string | null> {
+  const profile = await prisma.studentProfile.findUnique({
+    where: { userId: studentId },
+    select: { groupId: true },
+  });
+  return profile?.groupId ?? null;
+}
+
+/**
  * O'quvchining umumiy ko'rsatkichlari: tugallangan urinishlar bo'yicha
  * o'rtacha ball, jami urinishlar soni va guruh nomi.
  */

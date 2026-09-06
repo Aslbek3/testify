@@ -7,9 +7,15 @@ import type { SessionUser } from "@/types/auth";
 /**
  * Test urinishlari bilan bog'liq domen xatolari — "topilmadi", "ruxsat
  * yo'q", "allaqachon yakunlangan" kabi holatlarning barchasi shu orqali.
- * API route'lar buni ushlab, mos status kod bilan javob qaytaradi.
+ * API route'lar `status`ni to'g'ridan-to'g'ri javobga qo'yadi.
  */
-export class AttemptError extends Error {}
+export class AttemptError extends Error {
+  status: number;
+  constructor(message: string, status = 400) {
+    super(message);
+    this.status = status;
+  }
+}
 
 const QUESTION_COUNT: Record<AttemptMode, number> = {
   PRACTICE: 10,
@@ -46,7 +52,7 @@ export async function startAttempt(input: {
   questions: AttemptQuestionForClient[];
 }> {
   if (input.user.role !== "STUDENT") {
-    throw new AttemptError("Faqat o'quvchilar test boshlashi mumkin");
+    throw new AttemptError("Faqat o'quvchilar test boshlashi mumkin", 403);
   }
 
   const where =
@@ -135,19 +141,19 @@ export async function saveAnswer(input: {
     where: { id: input.attemptId },
     select: { studentId: true, mode: true, finishedAt: true },
   });
-  if (!attempt) throw new AttemptError("Urinish topilmadi");
+  if (!attempt) throw new AttemptError("Urinish topilmadi", 404);
   if (!canTakeAttempt(input.user, attempt)) {
-    throw new AttemptError("Bu urinish sizga tegishli emas");
+    throw new AttemptError("Bu urinish sizga tegishli emas", 403);
   }
   if (attempt.finishedAt) {
-    throw new AttemptError("Bu urinish allaqachon yakunlangan");
+    throw new AttemptError("Bu urinish allaqachon yakunlangan", 409);
   }
 
   const question = await prisma.question.findUnique({
     where: { id: input.questionId },
     select: { correctOptionIndex: true, explanation: true },
   });
-  if (!question) throw new AttemptError("Savol topilmadi");
+  if (!question) throw new AttemptError("Savol topilmadi", 404);
 
   const isCorrect = input.selectedOptionIndex === question.correctOptionIndex;
 
@@ -192,12 +198,12 @@ export async function finishAttempt(input: {
     where: { id: input.attemptId },
     select: { studentId: true, finishedAt: true, questionIds: true },
   });
-  if (!attempt) throw new AttemptError("Urinish topilmadi");
+  if (!attempt) throw new AttemptError("Urinish topilmadi", 404);
   if (!canTakeAttempt(input.user, attempt)) {
-    throw new AttemptError("Bu urinish sizga tegishli emas");
+    throw new AttemptError("Bu urinish sizga tegishli emas", 403);
   }
   if (attempt.finishedAt) {
-    throw new AttemptError("Bu urinish allaqachon yakunlangan");
+    throw new AttemptError("Bu urinish allaqachon yakunlangan", 409);
   }
 
   const answers = await prisma.attemptAnswer.findMany({
