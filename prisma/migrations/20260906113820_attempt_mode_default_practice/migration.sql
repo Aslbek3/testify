@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Attempt" ALTER COLUMN "mode" SET DEFAULT 'PRACTICE';

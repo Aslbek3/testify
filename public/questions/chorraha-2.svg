@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+  <rect width="300" height="200" fill="#eef1f5"/>
+  <rect x="0" y="80" width="300" height="40" fill="#4b5563"/>
+  <rect x="130" y="80" width="40" height="120" fill="#4b5563"/>
+  <line x1="0" y1="100" x2="300" y2="100" stroke="#f5f5f5" stroke-width="2" stroke-dasharray="14 10"/>
+  <line x1="150" y1="80" x2="150" y2="200" stroke="#f5f5f5" stroke-width="2" stroke-dasharray="14 10"/>
+  <polygon points="40,90 40,110 20,100" fill="#f9fafb"/>
+  <text x="150" y="30" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#374151">T-yo'lakash (DEMO)</text>
+</svg>
