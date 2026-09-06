@@ -364,9 +364,9 @@ export function TestRunner({
                 className={cn(
                   "flex w-full items-center gap-3 rounded-lg border p-4 text-left transition-colors",
                   isTheCorrectOne
-                    ? "border-success bg-success/10"
+                    ? "border-success bg-success/25"
                     : isWrongSelected
-                      ? "border-danger bg-danger/10"
+                      ? "border-danger bg-danger/25"
                       : isSelected
                         ? "border-brand bg-brand-soft"
                         : "border-border bg-bg hover:bg-bg-subtle",
@@ -401,7 +401,7 @@ export function TestRunner({
           <div
             className={cn(
               "mt-4 rounded-md p-3 text-sm",
-              currentAnswer.isCorrect ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
+              currentAnswer.isCorrect ? "bg-success/25 text-success" : "bg-danger/25 text-danger"
             )}
           >
             <p className="font-medium">
