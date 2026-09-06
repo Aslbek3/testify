@@ -12,6 +12,7 @@
   --warning: #b8790e;
   --danger: #c0362c;
   --sidebar-bg: #1b2430;
+  --skeleton: #dfe3ea;
   color-scheme: light dark;
 }
 
@@ -37,6 +38,8 @@
     --success: #34b374;
     --warning: #d99a2b;
     --danger: #e0584c;
+    --sidebar-bg: #101319;
+    --skeleton: #232833;
   }
 }
 
@@ -53,6 +56,8 @@
   --success: #34b374;
   --warning: #d99a2b;
   --danger: #e0584c;
+  --sidebar-bg: #101319;
+  --skeleton: #232833;
 }
 
 @theme inline {
@@ -67,6 +72,7 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --color-sidebar: var(--sidebar-bg);
+  --color-skeleton: var(--skeleton);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
 }
