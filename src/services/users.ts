@@ -89,3 +89,27 @@ export async function getUserName(id: string): Promise<string | null> {
   const user = await prisma.user.findUnique({ where: { id }, select: { name: true } });
   return user?.name ?? null;
 }
+
+/** Ustozni bloklash/tiklash uchun ruxsat tekshiruvida (canManageTutor) kerak. */
+export async function getTutorOrgContext(
+  tutorId: string
+): Promise<{ organizationId: string | null } | null> {
+  const tutor = await prisma.user.findUnique({
+    where: { id: tutorId, role: "TUTOR" },
+    select: { organizationId: true },
+  });
+  return tutor;
+}
+
+/**
+ * Hisobni bloklash/tiklash. Bloklaganda sessionVersion oshiriladi —
+ * shunda foydalanuvchining joriy sessiyasi (token muddati hali
+ * tugamagan bo'lsa ham) requireRole orqali darhol bekor bo'ladi.
+ * Tiklashda esa oshirish shart emas — zararli faol sessiya yo'q.
+ */
+export async function setUserActive(userId: string, isActive: boolean) {
+  return prisma.user.update({
+    where: { id: userId },
+    data: isActive ? { isActive: true } : { isActive: false, sessionVersion: { increment: 1 } },
+  });
+}

@@ -24,6 +24,34 @@ export type RateLimitResult =
  * Eskirgan yozuvlar alohida interval/cron orqali emas, balki shu funksiya
  * chaqirilganda "yo'l-yo'lakay" tozalanadi — bu miqyosda buning o'zi yetarli.
  */
+/**
+ * So'rovchining IP manzilini "ishonchli hop" sifatida oladi.
+ *
+ * `x-forwarded-for`ning BIRINCHI qiymatini olish xato — bu sarlavhani
+ * mijozning o'zi (hujumchi) to'liq yasab yubora oladi, va har safar
+ * boshqa qiymat qo'yib rate limit'ni butunlay aylanib o'tishi mumkin.
+ * Loyiha reverse-proxy (Nginx) orqasida ishlashini hisobga olib, faqat
+ * proxy o'zi qo'shgan OXIRGI qiymat ishonchli — proxy mijozdan kelgan
+ * `x-forwarded-for`ni har doim o'zining ko'rgan IP manzili bilan
+ * to'ldiradi (oldingi (agar bo'lsa, hujumchi yasagan) qiymatlarni
+ * o'chirmasdan oxiriga qo'shib), shuning uchun ro'yxatning oxirgi
+ * elementi — bevosita proxy bilan gaplashgan haqiqiy client bo'ladi.
+ * `x-real-ip` (Nginx'da odatda alohida sozlanadi) mavjud bo'lsa, u ham
+ * ishonchli hisoblanadi va ustunlik beriladi.
+ */
+export function getClientIp(request: Request): string {
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp) return realIp.trim();
+
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    const hops = forwardedFor.split(",").map((h) => h.trim());
+    return hops[hops.length - 1] || "unknown";
+  }
+
+  return "unknown";
+}
+
 export function checkRateLimit(key: string): RateLimitResult {
   const now = Date.now();
 

@@ -68,6 +68,25 @@ export function canViewStudent(
 }
 
 /**
+ * O'quvchi hisobini boshqarish (bloklash/tiklash, parolni tiklash):
+ * hozircha faqat shu o'quvchi guruhi egasi bo'lgan Ustoz.
+ */
+export function canManageStudent(user: SessionUser, group: GroupRef): boolean {
+  return isTutor(user) && user.id === group.tutorId;
+}
+
+/**
+ * Ustoz hisobini boshqarish (bloklash/tiklash, parolni tiklash): shu
+ * ustoz tegishli bo'lgan tashkilot Direktori.
+ */
+export function canManageTutor(
+  user: SessionUser,
+  tutor: { organizationId: string | null }
+): boolean {
+  return isDirector(user) && user.organizationId !== null && user.organizationId === tutor.organizationId;
+}
+
+/**
  * Test urinishini boshqarish (javob berish/yakunlash): FAQAT shu urinish
  * egasi bo'lgan o'quvchining o'zi — Owner/Director/Tutor ham emas, chunki
  * bu boshqaruv emas, imtihon topshirishning o'zi.

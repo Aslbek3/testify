@@ -4,4 +4,5 @@ export type SessionUser = {
   id: string;
   role: Role;
   organizationId: string | null;
+  sessionVersion: number;
 };

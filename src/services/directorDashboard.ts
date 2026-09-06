@@ -12,6 +12,7 @@ export type OrganizationOverview = {
 export type TutorRankingRow = {
   tutorId: string;
   tutorName: string;
+  isActive: boolean;
   groupName: string;
   studentCount: number;
   averageScore: number | null;
@@ -69,6 +70,7 @@ export async function getTutorRanking(
     select: {
       id: true,
       name: true,
+      isActive: true,
       tutorOfGroups: {
         where: { organizationId },
         select: {
@@ -102,6 +104,7 @@ export async function getTutorRanking(
     return {
       tutorId: tutor.id,
       tutorName: tutor.name,
+      isActive: tutor.isActive,
       groupName,
       studentCount: students.length,
       averageScore: average(scores),
