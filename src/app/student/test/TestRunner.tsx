@@ -7,7 +7,6 @@ import { Button } from "@/components/Button";
 import { cn } from "@/lib/cn";
 import type { ResumableAttempt } from "@/services/attempts";
 
-const EXAM_DURATION_SECONDS = 25 * 60;
 const DANGER_THRESHOLD_SECONDS = 2 * 60;
 
 type LocalAnswer = {
@@ -36,7 +35,13 @@ function initialAnswersMap(attempt: ResumableAttempt): Record<string, LocalAnswe
   return map;
 }
 
-export function TestRunner({ attempt }: { attempt: ResumableAttempt }) {
+export function TestRunner({
+  attempt,
+  examDurationSeconds,
+}: {
+  attempt: ResumableAttempt;
+  examDurationSeconds: number;
+}) {
   const router = useRouter();
   const { questions, mode, attemptId } = attempt;
 
@@ -56,7 +61,7 @@ export function TestRunner({ attempt }: { attempt: ResumableAttempt }) {
   // farq "hydration mismatch" xatosiga olib kelardi. Haqiqiy qolgan vaqt
   // pastdagi effekt ichida (faqat klientda) hisoblanadi.
   const [secondsLeft, setSecondsLeft] = useState<number | null>(
-    mode === "EXAM" ? EXAM_DURATION_SECONDS : null
+    mode === "EXAM" ? examDurationSeconds : null
   );
 
   const total = questions.length;
@@ -87,7 +92,7 @@ export function TestRunner({ attempt }: { attempt: ResumableAttempt }) {
       const elapsed = Math.floor(
         (Date.now() - new Date(attempt.startedAt).getTime()) / 1000
       );
-      return Math.max(0, EXAM_DURATION_SECONDS - elapsed);
+      return Math.max(0, examDurationSeconds - elapsed);
     }
 
     setSecondsLeft(computeRemaining());
@@ -129,6 +134,11 @@ export function TestRunner({ attempt }: { attempt: ResumableAttempt }) {
             explanation: data.explanation,
           },
         }));
+      } else if (res.status === 409) {
+        // Server tomonda vaqt tugagan deb topildi (soat sinxronsizligi
+        // kabi chekka holat) — mijoz taymeri buni allaqachon sezishi kerak
+        // edi, shu bois to'g'ridan-to'g'ri yakunlashga o'tkazamiz.
+        handleFinish();
       }
     } finally {
       setSavingId(null);

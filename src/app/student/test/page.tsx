@@ -4,6 +4,7 @@ import {
   startAttempt,
   getAttemptForResume,
   AttemptError,
+  EXAM_DURATION_SECONDS,
 } from "@/services/attempts";
 import { getStudentGroupId } from "@/services/studentDashboard";
 import { TestRunner } from "./TestRunner";
@@ -36,7 +37,7 @@ export default async function TestPage({
       redirect(`/student/test/${attemptId}/natija`);
     }
 
-    return <TestRunner attempt={resumed} />;
+    return <TestRunner attempt={resumed} examDurationSeconds={EXAM_DURATION_SECONDS} />;
   }
 
   // Yangi urinish — boshlab, kanonik URL'ga (attemptId bilan) yo'naltiramiz,

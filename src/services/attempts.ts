@@ -22,6 +22,12 @@ const QUESTION_COUNT: Record<AttemptMode, number> = {
   EXAM: 20,
 };
 
+/** Bitta joyda — TestRunner klient komponenti buni props orqali oladi. */
+export const EXAM_DURATION_SECONDS = 25 * 60;
+
+/** EXAM uchun o'tish sharti: 20 tadan ko'pi bilan 2 tasi xato bo'lishi mumkin. */
+const EXAM_MAX_WRONG = 2;
+
 export type AttemptQuestionForClient = {
   id: string;
   text: string;
@@ -66,6 +72,10 @@ export async function startAttempt(input: {
   }
 
   const targetCount = QUESTION_COUNT[input.mode];
+  if (input.mode === "EXAM" && candidates.length < targetCount) {
+    throw new AttemptError("Imtihon uchun savollar yetarli emas", 400);
+  }
+
   const selectedIds = shuffle(candidates)
     .slice(0, Math.min(targetCount, candidates.length))
     .map((c) => c.id);
@@ -139,7 +149,7 @@ export async function saveAnswer(input: {
 
   const attempt = await prisma.attempt.findUnique({
     where: { id: input.attemptId },
-    select: { studentId: true, mode: true, finishedAt: true },
+    select: { studentId: true, mode: true, finishedAt: true, questionIds: true, startedAt: true },
   });
   if (!attempt) throw new AttemptError("Urinish topilmadi", 404);
   if (!canTakeAttempt(input.user, attempt)) {
@@ -147,6 +157,17 @@ export async function saveAnswer(input: {
   }
   if (attempt.finishedAt) {
     throw new AttemptError("Bu urinish allaqachon yakunlangan", 409);
+  }
+  // Aks holda o'quvchi boshqa (o'z urinishiga tegishli bo'lmagan) savollarga
+  // ham javob yuborib, correctCount'ni totalCount'dan oshirib yuborishi mumkin.
+  if (!attempt.questionIds.includes(input.questionId)) {
+    throw new AttemptError("Bu savol urinishga tegishli emas", 400);
+  }
+  if (attempt.mode === "EXAM") {
+    const elapsedSeconds = (Date.now() - attempt.startedAt.getTime()) / 1000;
+    if (elapsedSeconds > EXAM_DURATION_SECONDS) {
+      throw new AttemptError("Imtihon vaqti tugagan", 409);
+    }
   }
 
   const question = await prisma.question.findUnique({
@@ -299,7 +320,7 @@ export async function finishAttempt(input: {
 }): Promise<{ score: number; correctCount: number; totalCount: number }> {
   const attempt = await prisma.attempt.findUnique({
     where: { id: input.attemptId },
-    select: { studentId: true, finishedAt: true, questionIds: true },
+    select: { studentId: true, mode: true, startedAt: true, finishedAt: true, questionIds: true },
   });
   if (!attempt) throw new AttemptError("Urinish topilmadi", 404);
   if (!canTakeAttempt(input.user, attempt)) {
@@ -309,13 +330,28 @@ export async function finishAttempt(input: {
     throw new AttemptError("Bu urinish allaqachon yakunlangan", 409);
   }
 
+  // questionId filtri — urinishga tegishli bo'lmagan javoblar (masalan eski
+  // ma'lumot yoki chetlab o'tilgan tekshiruv) ballga qo'shilmasin.
   const answers = await prisma.attemptAnswer.findMany({
-    where: { attemptId: input.attemptId },
-    select: { isCorrect: true },
+    where: { attemptId: input.attemptId, questionId: { in: attempt.questionIds } },
+    select: { isCorrect: true, answeredAt: true },
   });
 
+  // Vaqt tugagach ham urinish normal yakunlanadi, lekin EXAM rejimida
+  // limitdan keyin kelgan javoblar (soatlar sinxron emasligi yoki
+  // saveAnswer'ning 409'dan oldin qabul qilib ulgurgan chekka holat uchun)
+  // hisobga olinmaydi.
+  const validAnswers =
+    attempt.mode === "EXAM"
+      ? answers.filter(
+          (a) =>
+            (a.answeredAt.getTime() - attempt.startedAt.getTime()) / 1000 <=
+            EXAM_DURATION_SECONDS
+        )
+      : answers;
+
   const totalCount = attempt.questionIds.length;
-  const correctCount = answers.filter((a) => a.isCorrect).length;
+  const correctCount = validAnswers.filter((a) => a.isCorrect).length;
   const score = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
 
   await prisma.attempt.update({
@@ -325,9 +361,6 @@ export async function finishAttempt(input: {
 
   return { score, correctCount, totalCount };
 }
-
-/** EXAM uchun o'tish balli: 20 tadan 18 to'g'ri = 90%. */
-const EXAM_PASS_THRESHOLD = 90;
 
 export type TopicBreakdownRow = {
   topicId: string;
@@ -392,7 +425,7 @@ export async function getAttemptResult(input: {
       },
     }),
     prisma.attemptAnswer.findMany({
-      where: { attemptId: input.attemptId },
+      where: { attemptId: input.attemptId, questionId: { in: attempt.questionIds } },
       select: { questionId: true, selectedOptionIndex: true, isCorrect: true },
     }),
   ]);
@@ -434,6 +467,7 @@ export async function getAttemptResult(input: {
 
   const totalCount = attempt.questionIds.length;
   const correctCount = savedAnswers.filter((a) => a.isCorrect).length;
+  const wrongCount = totalCount - correctCount;
   const score = attempt.score ?? 0;
 
   return {
@@ -442,7 +476,7 @@ export async function getAttemptResult(input: {
     score,
     correctCount,
     totalCount,
-    passed: attempt.mode === "EXAM" ? score >= EXAM_PASS_THRESHOLD : null,
+    passed: attempt.mode === "EXAM" ? wrongCount <= EXAM_MAX_WRONG : null,
     topicBreakdown: Array.from(topicMap.values()),
     missedQuestions,
   };

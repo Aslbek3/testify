@@ -46,11 +46,11 @@ export default async function AttemptResultPage({
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-sm text-text-muted">Ball</p>
-            <p className="font-mono text-4xl font-semibold text-text">{result.score}%</p>
-            <p className="mt-1 font-mono text-sm text-text-muted">
-              {result.correctCount} / {result.totalCount} to&apos;g&apos;ri
+            <p className="text-sm text-text-muted">Natija</p>
+            <p className="font-mono text-4xl font-semibold text-text">
+              {result.totalCount} tadan {result.correctCount} tasi to&apos;g&apos;ri
             </p>
+            <p className="mt-1 font-mono text-sm text-text-muted">{result.score}%</p>
           </div>
           {result.passed !== null && (
             <Badge variant={result.passed ? "success" : "danger"}>
