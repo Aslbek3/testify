@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { toStringArray } from "@/lib/json";
 
 /**
  * Savollar bazasi bilan bog'liq domen xatolari uchun maxsus xato turi.
@@ -25,11 +26,6 @@ export type QuestionListItem = {
   options: string[];
   correctOptionIndex: number;
 };
-
-function toOptionsArray(options: Prisma.JsonValue): string[] {
-  if (!Array.isArray(options)) return [];
-  return options.map((option) => String(option));
-}
 
 export async function listTopicsWithQuestionCount(): Promise<
   TopicWithQuestionCount[]
@@ -79,7 +75,7 @@ export async function listQuestionsForTopic(
   return questions.map((question) => ({
     id: question.id,
     text: question.text,
-    options: toOptionsArray(question.options),
+    options: toStringArray(question.options),
     correctOptionIndex: question.correctOptionIndex,
   }));
 }

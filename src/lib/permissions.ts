@@ -2,6 +2,7 @@ import type { SessionUser } from "@/types/auth";
 
 type GroupRef = { tutorId: string; organizationId: string };
 type StudentRef = { userId: string; organizationId: string | null };
+type AttemptRef = { studentId: string };
 
 export function isOwner(user: SessionUser): boolean {
   return user.role === "OWNER";
@@ -64,4 +65,13 @@ export function canViewStudent(
   if (isDirector(user)) return user.organizationId === student.organizationId;
   if (isTutor(user) && group) return user.id === group.tutorId;
   return false;
+}
+
+/**
+ * Test urinishini boshqarish (javob berish/yakunlash): FAQAT shu urinish
+ * egasi bo'lgan o'quvchining o'zi — Owner/Director/Tutor ham emas, chunki
+ * bu boshqaruv emas, imtihon topshirishning o'zi.
+ */
+export function canTakeAttempt(user: SessionUser, attempt: AttemptRef): boolean {
+  return isStudent(user) && user.id === attempt.studentId;
 }
