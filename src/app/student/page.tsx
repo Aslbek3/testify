@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { StatTile } from "@/components/StatTile";
+import { Button } from "@/components/Button";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
 import {
   Table,
@@ -43,12 +45,17 @@ export default async function StudentPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-text">O&apos;quvchi paneli</h1>
-        <p className="mt-1 text-sm text-text-muted">
-          O&apos;zingizning tayyorgarlik darajangiz, mavzular bo&apos;yicha bilim
-          darajasi va urinishlar tarixi shu yerda.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-text">O&apos;quvchi paneli</h1>
+          <p className="mt-1 text-sm text-text-muted">
+            O&apos;zingizning tayyorgarlik darajangiz, mavzular bo&apos;yicha bilim
+            darajasi va urinishlar tarixi shu yerda.
+          </p>
+        </div>
+        <Link href="/student/boshlash">
+          <Button type="button">Test boshlash</Button>
+        </Link>
       </div>
 
       <Card>

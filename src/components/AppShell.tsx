@@ -17,7 +17,10 @@ const NAV_ITEMS: Record<Role, NavItem[]> = {
   ],
   DIRECTOR: [{ label: "Umumiy", href: "/director" }],
   TUTOR: [{ label: "Umumiy", href: "/tutor" }],
-  STUDENT: [{ label: "Umumiy", href: "/student" }],
+  STUDENT: [
+    { label: "Umumiy", href: "/student" },
+    { label: "Test yechish", href: "/student/boshlash" },
+  ],
 };
 
 const ROLE_LABEL: Record<Role, string> = {
