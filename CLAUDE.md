@@ -105,11 +105,32 @@ production'ga hech qachon shu holicha ko'chirilmaydi.
   kuni 03:00 da, 14 kunlik saqlash. Loglar: `logs/backup.log`. Qo'lda
   ishga tushirilib tekshirilgan (2026-09-06).
 - **Batafsil**: `docs/deploy.md` — o'rnatish, yangilash, Nginx, backup/restore.
-- ⚠️ **GIT HOLATI (2026-09-06)**: Yuqoridagi productionga tayyorlash
-  ishining (health check, logger, backup.sh, ecosystem.config.js,
-  docs/deploy.md, docs/nginx.conf.example va bir nechta route
-  tuzatishlari) HECH BIRI hali GitHub'ga (`Aslbek3/testify`) commit/push
-  QILINMAGAN — faqat VPS'dagi working directory'da bor. Hozirgi holatda
-  `git clone` qilingan nusxa productiondan butunlay farq qiladi va
-  ishlamaydi (logger.ts, health route, backup.sh yo'q bo'ladi). Birinchi
-  imkoniyatda commit+push qilish kerak.
+- **Hisob bloklash + sessiyani bekor qilish (2026-09-06)**: `User.isActive`
+  va `User.sessionVersion` bor. `requireRole()` (`src/lib/auth.ts`) har
+  sahifa yuklanishida bazadagi haqiqiy holatni tekshiradi — bloklangan
+  yoki `sessionVersion` mos kelmagan foydalanuvchi JWT muddati
+  (1 hafta) tugashini kutmasdan darhol chiqarib yuboriladi. Direktor
+  o'z ustozini (`canManageTutor`), Ustoz o'z o'quvchisini
+  (`canManageStudent`) `PATCH /api/tutors/[id]` /
+  `PATCH /api/tutor/students/[id]` orqali bloklaydi/tiklaydi
+  (`RosterTable.tsx`, `TutorRankingTable.tsx`). Tashkilot tarifi
+  `EXPIRED` bo'lsa login `403` bilan rad etiladi
+  (`OrganizationExpiredError`).
+- **Login rate-limit IP fix (2026-09-06)**: `getClientIp()`
+  (`src/lib/rateLimit.ts`) `X-Forwarded-For`ning oxirgi (Nginx qo'shgan)
+  qiymatini oladi, birinchisini emas — birinchi qiymat mijoz tomonidan
+  soxtalashtirilishi mumkin edi va 10-urinish cheklovini butunlay
+  chetlab o'tar edi. Bu fix ⚠️ bilan Nginx konfiguratsiyasiga bog'liq:
+  proxy yo'lida bittadan ortiq bo'lmasa ishlaydi (`docs/deploy.md`
+  3-bo'limiga qara).
+- ⚠️ **2026-09-06 kechqurun git divergensiya voqeasi**: production
+  papkasi (shu joy) va boshqa bir sessiya/nusxa parallel ravishda bir
+  xil narsa (isActive/sessionVersion/blocking) ustida ishlagan — boshqa
+  nusxa GitHub'ga oldinroq push qilgan, bu papka esa pull qilmasdan
+  turib alohida commit qilgan edi. `git merge` bilan birlashtirildi
+  (conflict faqat `auth/login/route.ts` va `services/users.ts`da,
+  qo'lda hal qilindi), keyin `npx prisma migrate deploy` +
+  rebuild + `pm2 reload` bilan productionga qo'llanildi va
+  tekshirildi. **Xulosa**: kelajakda katta o'zgarishdan oldin har doim
+  avval `git fetch && git log HEAD..origin/main` bilan uzoq
+  branch oldinda emasligini tekshir.
