@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { Plan, OrganizationStatus } from "@prisma/client";
+import type { Plan, OrganizationStatus, Prisma } from "@prisma/client";
 
 export type OrganizationWithCounts = {
   id: string;
@@ -12,15 +12,50 @@ export type OrganizationWithCounts = {
   studentCount: number;
 };
 
-export async function listOrganizations(): Promise<OrganizationWithCounts[]> {
+// "studentCount" Prisma ustuni emas (users munosabatidan JS'da hisoblanadi),
+// shuning uchun uni saralash faqat olingan massiv ustida amalga oshiriladi —
+// "name" va "createdAt" uchun esa haqiqiy Prisma ustuni bo'lgani sababli
+// orderBy'da saralanadi.
+export type OrganizationSortField = "name" | "studentCount" | "createdAt";
+export type OrganizationSortDirection = "asc" | "desc";
+
+export type ListOrganizationsParams = {
+  q?: string;
+  status?: OrganizationStatus;
+  sortField?: OrganizationSortField;
+  sortDirection?: OrganizationSortDirection;
+};
+
+export async function listOrganizations(
+  params: ListOrganizationsParams = {}
+): Promise<OrganizationWithCounts[]> {
+  const { q, status, sortField = "createdAt", sortDirection = "desc" } = params;
+
+  const where: Prisma.OrganizationWhereInput = {};
+  if (q) {
+    where.OR = [
+      { name: { contains: q, mode: "insensitive" } },
+      { city: { contains: q, mode: "insensitive" } },
+    ];
+  }
+  if (status) {
+    where.status = status;
+  }
+
   const organizations = await prisma.organization.findMany({
-    orderBy: { createdAt: "desc" },
+    where,
+    orderBy:
+      sortField === "name"
+        ? { name: sortDirection }
+        : sortField === "createdAt"
+          ? { createdAt: sortDirection }
+          : { createdAt: "desc" },
     include: {
       users: { select: { role: true } },
     },
   });
 
-  return organizations.map((org) => ({
+  const mapped = organizations.map((org) => ({
     id: org.id,
     name: org.name,
     city: org.city,
@@ -30,6 +65,16 @@ export async function listOrganizations(): Promise<OrganizationWithCounts[]> {
     tutorCount: org.users.filter((u) => u.role === "TUTOR").length,
     studentCount: org.users.filter((u) => u.role === "STUDENT").length,
   }));
+
+  if (sortField === "studentCount") {
+    mapped.sort((a, b) =>
+      sortDirection === "asc"
+        ? a.studentCount - b.studentCount
+        : b.studentCount - a.studentCount
+    );
+  }
+
+  return mapped;
 }
 
 export async function createOrganization(input: {
