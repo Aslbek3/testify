@@ -27,6 +27,11 @@ enum OrganizationStatus {
   EXPIRED
 }
 
+enum AttemptMode {
+  PRACTICE
+  EXAM
+}
+
 model Organization {
   id        String             @id @default(cuid())
   name      String
@@ -66,6 +71,7 @@ model Group {
   tutor        User             @relation("GroupTutor", fields: [tutorId], references: [id])
   organization Organization     @relation(fields: [organizationId], references: [id])
   students     StudentProfile[]
+  attempts     Attempt[]
 
   @@index([organizationId])
   @@index([tutorId])
@@ -90,11 +96,14 @@ model Topic {
 }
 
 model Question {
-  id                 String @id @default(cuid())
+  id                 String  @id @default(cuid())
   topicId            String
   text               String
   options            Json
   correctOptionIndex Int
+  imageUrl           String?
+  explanation        String?
+  category           String?
 
   topic   Topic           @relation(fields: [topicId], references: [id])
   answers AttemptAnswer[]
@@ -103,24 +112,29 @@ model Question {
 }
 
 model Attempt {
-  id         String    @id @default(cuid())
+  id         String      @id @default(cuid())
   studentId  String
-  startedAt  DateTime  @default(now())
+  startedAt  DateTime    @default(now())
   finishedAt DateTime?
   score      Int?
+  mode       AttemptMode @default(EXAM)
+  groupId    String?
 
   student User            @relation(fields: [studentId], references: [id])
+  group   Group?          @relation(fields: [groupId], references: [id])
   answers AttemptAnswer[]
 
   @@index([studentId])
+  @@index([groupId])
 }
 
 model AttemptAnswer {
-  id                  String  @id @default(cuid())
+  id                  String   @id @default(cuid())
   attemptId           String
   questionId          String
   selectedOptionIndex Int
   isCorrect           Boolean
+  answeredAt          DateTime @default(now())
 
   attempt  Attempt  @relation(fields: [attemptId], references: [id])
   question Question @relation(fields: [questionId], references: [id])
