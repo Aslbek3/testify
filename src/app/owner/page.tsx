@@ -22,8 +22,6 @@ export default async function OwnerPage() {
   await requireRole("OWNER");
   const organizations = await listOrganizations();
 
-  const totalTutors = organizations.reduce((sum, o) => sum + o.tutorCount, 0);
-  const totalStudents = organizations.reduce((sum, o) => sum + o.studentCount, 0);
   const activeCount = organizations.filter((o) => o.status === "ACTIVE").length;
   const activeStudents = organizations
     .filter((o) => o.status === "ACTIVE")
@@ -52,63 +50,61 @@ export default async function OwnerPage() {
         </div>
       </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <StatTile
-            emphasis="primary"
-            label="Jami faol o'quvchilar"
-            value={activeStudents}
-            sub="Faol tashkilotlardagi o'quvchilar"
-          />
-          <StatTile label="Jami tashkilotlar" value={organizations.length} />
-          <StatTile label="Faol tashkilotlar" value={activeCount} />
-          <StatTile label="Jami ustozlar" value={totalTutors} />
-          <StatTile label="Jami o'quvchilar" value={totalStudents} />
-        </div>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <StatTile
+          emphasis="primary"
+          label="Jami faol o'quvchilar"
+          value={activeStudents}
+          sub="Faol tashkilotlardagi o'quvchilar"
+        />
+        <StatTile label="Jami tashkilotlar" value={organizations.length} />
+        <StatTile label="Faol tashkilotlar" value={activeCount} />
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Tashkilotlar</CardTitle>
-            <span className="text-sm text-text-muted">
-              {organizations.length} ta tashkilot
-            </span>
-          </CardHeader>
+      <Card>
+        <CardHeader>
+          <CardTitle>Tashkilotlar</CardTitle>
+          <span className="text-sm text-text-muted">
+            {organizations.length} ta tashkilot
+          </span>
+        </CardHeader>
 
-          {organizations.length === 0 ? (
-            <p className="text-sm text-text-muted">
-              Hozircha birorta tashkilot qo&apos;shilmagan.
-            </p>
-          ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeaderCell>Tashkilot</TableHeaderCell>
-                  <TableHeaderCell>Shahar</TableHeaderCell>
-                  <TableHeaderCell>Reja</TableHeaderCell>
-                  <TableHeaderCell>Holat</TableHeaderCell>
-                  <TableHeaderCell align="right">Ustozlar</TableHeaderCell>
-                  <TableHeaderCell align="right">O&apos;quvchilar</TableHeaderCell>
-                  <TableHeaderCell>Ro&apos;yxatdan o&apos;tgan</TableHeaderCell>
+        {organizations.length === 0 ? (
+          <p className="text-sm text-text-muted">
+            Hozircha birorta tashkilot qo&apos;shilmagan.
+          </p>
+        ) : (
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeaderCell>Tashkilot</TableHeaderCell>
+                <TableHeaderCell>Shahar</TableHeaderCell>
+                <TableHeaderCell>Reja</TableHeaderCell>
+                <TableHeaderCell>Holat</TableHeaderCell>
+                <TableHeaderCell align="right">Ustozlar</TableHeaderCell>
+                <TableHeaderCell align="right">O&apos;quvchilar</TableHeaderCell>
+                <TableHeaderCell>Ro&apos;yxatdan o&apos;tgan</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {organizations.map((org) => (
+                <TableRow key={org.id}>
+                  <TableCell className="font-medium">{org.name}</TableCell>
+                  <TableCell>{org.city}</TableCell>
+                  <TableCell>{PLAN_LABEL[org.plan]}</TableCell>
+                  <TableCell>
+                    <Badge variant={ORG_STATUS_VARIANT[org.status]}>
+                      {ORG_STATUS_LABEL[org.status]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell align="right">{org.tutorCount}</TableCell>
+                  <TableCell align="right">{org.studentCount}</TableCell>
+                  <TableCell>{formatDate(org.createdAt)}</TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {organizations.map((org) => (
-                  <TableRow key={org.id}>
-                    <TableCell className="font-medium">{org.name}</TableCell>
-                    <TableCell>{org.city}</TableCell>
-                    <TableCell>{PLAN_LABEL[org.plan]}</TableCell>
-                    <TableCell>
-                      <Badge variant={ORG_STATUS_VARIANT[org.status]}>
-                        {ORG_STATUS_LABEL[org.status]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell align="right">{org.tutorCount}</TableCell>
-                    <TableCell align="right">{org.studentCount}</TableCell>
-                    <TableCell>{formatDate(org.createdAt)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </Card>
     </div>
   );

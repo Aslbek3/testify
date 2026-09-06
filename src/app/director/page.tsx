@@ -58,89 +58,88 @@ export default async function DirectorPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <StatTile
-            emphasis="primary"
-            label="O'rtacha ball"
-            value={overview.averageScore === null ? "—" : `${overview.averageScore}%`}
-            sub={overview.averageScore === null ? "Ma'lumot yo'q" : undefined}
-          />
-          <StatTile label="Jami guruhlar" value={overview.groupCount} />
-          <StatTile label="Jami ustozlar" value={overview.tutorCount} />
-          <StatTile label="Jami o'quvchilar" value={overview.studentCount} />
-        </div>
+        <StatTile
+          emphasis="primary"
+          label="O'rtacha ball"
+          value={overview.averageScore === null ? "—" : `${overview.averageScore}%`}
+          sub={overview.averageScore === null ? "Ma'lumot yo'q" : undefined}
+        />
+        <StatTile label="Jami guruhlar" value={overview.groupCount} />
+        <StatTile label="Jami ustozlar" value={overview.tutorCount} />
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Ustozlar reytingi</CardTitle>
-            <span className="text-sm text-text-muted">
-              {tutorRanking.length} ta ustoz
-            </span>
-          </CardHeader>
+      <Card>
+        <CardHeader>
+          <CardTitle>Ustozlar reytingi</CardTitle>
+          <span className="text-sm text-text-muted">
+            {tutorRanking.length} ta ustoz
+          </span>
+        </CardHeader>
 
-          {tutorRanking.length === 0 ? (
-            <p className="text-sm text-text-muted">Hozircha ustozlar yo&apos;q.</p>
-          ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeaderCell>#</TableHeaderCell>
-                  <TableHeaderCell>Ustoz</TableHeaderCell>
-                  <TableHeaderCell>Guruh</TableHeaderCell>
-                  <TableHeaderCell align="right">O&apos;quvchilar</TableHeaderCell>
-                  <TableHeaderCell align="right">O&apos;rtacha ball</TableHeaderCell>
+        {tutorRanking.length === 0 ? (
+          <p className="text-sm text-text-muted">Hozircha ustozlar yo&apos;q.</p>
+        ) : (
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeaderCell>#</TableHeaderCell>
+                <TableHeaderCell>Ustoz</TableHeaderCell>
+                <TableHeaderCell>Guruh</TableHeaderCell>
+                <TableHeaderCell align="right">O&apos;quvchilar</TableHeaderCell>
+                <TableHeaderCell align="right">O&apos;rtacha ball</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {tutorRanking.map((row, index) => (
+                <TableRow key={row.tutorId}>
+                  <TableCell className="font-mono">{index + 1}</TableCell>
+                  <TableCell className="font-medium">{row.tutorName}</TableCell>
+                  <TableCell>{row.groupName}</TableCell>
+                  <TableCell align="right">{row.studentCount}</TableCell>
+                  <TableCell align="right">
+                    {row.averageScore === null ? "—" : `${row.averageScore}%`}
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {tutorRanking.map((row, index) => (
-                  <TableRow key={row.tutorId}>
-                    <TableCell className="font-mono">{index + 1}</TableCell>
-                    <TableCell className="font-medium">{row.tutorName}</TableCell>
-                    <TableCell>{row.groupName}</TableCell>
-                    <TableCell align="right">{row.studentCount}</TableCell>
-                    <TableCell align="right">
-                      {row.averageScore === null ? "—" : `${row.averageScore}%`}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </Card>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Guruhlar</CardTitle>
-            <span className="text-sm text-text-muted">{groups.length} ta guruh</span>
-          </CardHeader>
+      <Card>
+        <CardHeader>
+          <CardTitle>Guruhlar</CardTitle>
+          <span className="text-sm text-text-muted">{groups.length} ta guruh</span>
+        </CardHeader>
 
-          {groups.length === 0 ? (
-            <p className="text-sm text-text-muted">Hozircha guruhlar yo&apos;q.</p>
-          ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeaderCell>Guruh</TableHeaderCell>
-                  <TableHeaderCell>Ustoz</TableHeaderCell>
-                  <TableHeaderCell align="right">O&apos;quvchilar</TableHeaderCell>
-                  <TableHeaderCell>So&apos;nggi faollik</TableHeaderCell>
+        {groups.length === 0 ? (
+          <p className="text-sm text-text-muted">Hozircha guruhlar yo&apos;q.</p>
+        ) : (
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeaderCell>Guruh</TableHeaderCell>
+                <TableHeaderCell>Ustoz</TableHeaderCell>
+                <TableHeaderCell align="right">O&apos;quvchilar</TableHeaderCell>
+                <TableHeaderCell>So&apos;nggi faollik</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {groups.map((group) => (
+                <TableRow key={group.groupId}>
+                  <TableCell className="font-medium">{group.groupName}</TableCell>
+                  <TableCell>{group.tutorName}</TableCell>
+                  <TableCell align="right">{group.studentCount}</TableCell>
+                  <TableCell>
+                    {group.lastActivityAt
+                      ? formatDate(group.lastActivityAt)
+                      : "Faollik yo'q"}
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {groups.map((group) => (
-                  <TableRow key={group.groupId}>
-                    <TableCell className="font-medium">{group.groupName}</TableCell>
-                    <TableCell>{group.tutorName}</TableCell>
-                    <TableCell align="right">{group.studentCount}</TableCell>
-                    <TableCell>
-                      {group.lastActivityAt
-                        ? formatDate(group.lastActivityAt)
-                        : "Faollik yo'q"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-      )}
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </Card>
     </div>
   );

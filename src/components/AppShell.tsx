@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Role } from "@prisma/client";
@@ -27,6 +27,8 @@ const ROLE_LABEL: Record<Role, string> = {
   STUDENT: "O'quvchi",
 };
 
+const SIDEBAR_ID = "app-sidebar";
+
 /** Ichma-ich yo'llar (masalan /owner/questions/[id]) uchun eng mos bandni topadi. */
 function getActiveHref(pathname: string, items: NavItem[]): string | undefined {
   return items
@@ -46,8 +48,59 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true);
   const items = NAV_ITEMS[role];
   const activeHref = getActiveHref(pathname, items);
+
+  const hamburgerRef = useRef<HTMLButtonElement>(null);
+  const firstNavLinkRef = useRef<HTMLAnchorElement>(null);
+  const didMount = useRef(false);
+
+  // Desktop kengligini kuzatamiz — "inert" faqat mobil kenglikda va yopiq
+  // holatda qo'llanishi kerak, aks holda desktop'da sidebar butunlay
+  // ishlamay qolardi.
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  // Ochilganda birinchi menyu bandiga, yopilganda hamburger tugmaga fokus.
+  useEffect(() => {
+    if (!didMount.current) {
+      didMount.current = true;
+      return;
+    }
+    if (mobileOpen) {
+      firstNavLinkRef.current?.focus();
+    } else {
+      hamburgerRef.current?.focus();
+    }
+  }, [mobileOpen]);
+
+  // ESC bosilganda yopiladi.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMobileOpen(false);
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [mobileOpen]);
+
+  // Ochiq holatda orqa fon scroll qilinmasin.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [mobileOpen]);
+
+  const sidebarInert = !isDesktop && !mobileOpen;
 
   return (
     <div className="flex min-h-screen bg-bg-subtle">
@@ -59,8 +112,10 @@ export function AppShell({
       )}
 
       <aside
+        id={SIDEBAR_ID}
+        inert={sidebarInert}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-sidebar transition-transform duration-200 md:static md:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-white/5 bg-sidebar transition-transform duration-200 md:static md:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -72,11 +127,12 @@ export function AppShell({
         </div>
 
         <nav className="flex-1 space-y-1 px-3">
-          {items.map((item) => {
+          {items.map((item, index) => {
             const isActive = item.href === activeHref;
             return (
               <Link
                 key={item.href}
+                ref={index === 0 ? firstNavLinkRef : undefined}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
@@ -93,11 +149,13 @@ export function AppShell({
         </nav>
 
         <div className="space-y-3 border-t border-white/10 px-5 py-4">
-          <div>
-            <p className="truncate text-sm font-medium text-white">{userName}</p>
-            <p className="text-xs text-white/50">{ROLE_LABEL[role]}</p>
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-white">{userName}</p>
+              <p className="text-xs text-white/50">{ROLE_LABEL[role]}</p>
+            </div>
+            <ThemeToggle />
           </div>
-          <ThemeToggle />
           <LogoutButton variant="ghost-dark" />
         </div>
       </aside>
@@ -105,9 +163,12 @@ export function AppShell({
       <div className="flex min-h-screen flex-1 flex-col md:min-w-0">
         <header className="flex items-center gap-3 border-b border-border bg-bg px-4 py-3 md:hidden">
           <button
+            ref={hamburgerRef}
             type="button"
             onClick={() => setMobileOpen(true)}
             aria-label="Menyuni ochish"
+            aria-expanded={mobileOpen}
+            aria-controls={SIDEBAR_ID}
             className="rounded-md p-1.5 text-text hover:bg-bg-subtle"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
