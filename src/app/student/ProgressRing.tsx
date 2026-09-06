@@ -1,7 +1,9 @@
 /**
  * Sof CSS conic-gradient asosidagi progress ring — chart kutubxonasisiz.
- * `score` null bo'lsa (hali urinish yo'q), 0% to'ldirilgan halqa "hali yo'q"
- * matni bilan ko'rsatiladi — bu "0% ball oldingiz" degani emas.
+ * `score` FAQAT imtihon (EXAM) urinishlaridan hisoblanadi (mashq ballari
+ * bilan aralashtirilmaydi). Hali birorta imtihon topshirilmagan bo'lsa
+ * `score` null bo'ladi — bunda 0% to'ldirilgan halqa "Imtihon
+ * topshirilmagan" matni bilan ko'rsatiladi, "0% ball oldingiz" emas.
  */
 export function ProgressRing({ score }: { score: number | null }) {
   const pct = score ?? 0;
@@ -15,7 +17,9 @@ export function ProgressRing({ score }: { score: number | null }) {
     >
       <div className="flex h-28 w-28 flex-col items-center justify-center rounded-full bg-bg">
         {score === null ? (
-          <span className="text-lg font-semibold text-text-muted">Hali yo&apos;q</span>
+          <span className="text-center text-sm font-semibold text-text-muted">
+            Imtihon topshirilmagan
+          </span>
         ) : (
           <span className="font-mono text-3xl font-semibold tracking-tight text-text">
             {score}%

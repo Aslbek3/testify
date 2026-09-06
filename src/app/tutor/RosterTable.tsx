@@ -54,7 +54,8 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
       <TableHead>
         <TableRow>
           <TableHeaderCell>O&apos;quvchi</TableHeaderCell>
-          <TableHeaderCell align="right">Urinishlar</TableHeaderCell>
+          <TableHeaderCell align="right">Imtihonlar</TableHeaderCell>
+          <TableHeaderCell align="right">Mashqlar</TableHeaderCell>
           <TableHeaderCell>Oxirgi faollik</TableHeaderCell>
           <TableHeaderCell align="right">O&apos;rtacha ball</TableHeaderCell>
           <TableHeaderCell>Holat</TableHeaderCell>
@@ -71,12 +72,13 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
             <Fragment key={student.studentId}>
               <TableRow clickable onClick={() => handleRowClick(student.studentId)}>
                 <TableCell className="font-medium">{student.name}</TableCell>
-                <TableCell align="right">{student.attemptCount}</TableCell>
+                <TableCell align="right">{student.examAttemptCount}</TableCell>
+                <TableCell align="right">{student.practiceAttemptCount}</TableCell>
                 <TableCell>
                   {student.lastActivityAt ? formatDate(student.lastActivityAt) : "—"}
                 </TableCell>
                 <TableCell align="right">
-                  {student.averageScore !== null ? `${student.averageScore}%` : "—"}
+                  {student.averageScore !== null ? `${student.averageScore}%` : "Imtihon topshirilmagan"}
                 </TableCell>
                 <TableCell>
                   <Badge variant={student.status.variant}>{student.status.label}</Badge>
@@ -85,7 +87,7 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
 
               {isExpanded && (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-4">
+                  <TableCell colSpan={6} className="py-4">
                     {isLoading && (
                       <p className="text-sm text-text-muted">Yuklanmoqda...</p>
                     )}
@@ -135,10 +137,13 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
                               {detail.attempts.map((a) => (
                                 <li
                                   key={a.id}
-                                  className="flex items-center justify-between text-sm"
+                                  className="flex items-center justify-between gap-2 text-sm"
                                 >
-                                  <span className="text-text-muted">
+                                  <span className="flex items-center gap-2 text-text-muted">
                                     {formatDate(new Date(a.date))}
+                                    <Badge variant={a.mode === "EXAM" ? "brand" : "neutral"}>
+                                      {a.mode === "EXAM" ? "Imtihon" : "Mashq"}
+                                    </Badge>
                                   </span>
                                   <span className="font-mono tabular-nums text-text">
                                     {a.score !== null ? `${a.score}%` : "—"}

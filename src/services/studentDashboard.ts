@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { AttemptMode } from "@prisma/client";
 
 export type StudentOverview = {
   overallScore: number | null;
@@ -17,6 +18,7 @@ export type AttemptHistoryItem = {
   date: Date;
   score: number | null;
   questionCount: number;
+  mode: AttemptMode;
 };
 
 /**
@@ -33,13 +35,20 @@ export async function getStudentGroupId(studentId: string): Promise<string | nul
 }
 
 /**
- * O'quvchining umumiy ko'rsatkichlari: tugallangan urinishlar bo'yicha
- * o'rtacha ball, jami urinishlar soni va guruh nomi.
+ * O'quvchining umumiy ko'rsatkichlari: tayyorgarlik foizi FAQAT imtihon
+ * (EXAM) urinishlari bo'yicha hisoblanadi — mashqda javob darhol
+ * ko'rsatilgani uchun mashq ballari sun'iy yuqori bo'ladi va aralashtirilsa
+ * haqiqiy tayyorgarlikni noto'g'ri ko'rsatadi. Jami urinishlar soni esa
+ * umumiy faollik ko'rsatkichi sifatida ikkala rejimni ham o'z ichiga oladi.
  */
 export async function getStudentOverview(studentId: string): Promise<StudentOverview> {
-  const [attempts, profile] = await Promise.all([
+  const [attempts, examAttempts, profile] = await Promise.all([
     prisma.attempt.findMany({
       where: { studentId },
+      select: { score: true },
+    }),
+    prisma.attempt.findMany({
+      where: { studentId, mode: "EXAM" },
       select: { score: true },
     }),
     prisma.studentProfile.findUnique({
@@ -48,14 +57,16 @@ export async function getStudentOverview(studentId: string): Promise<StudentOver
     }),
   ]);
 
-  const finishedScores = attempts
+  const finishedExamScores = examAttempts
     .map((a) => a.score)
     .filter((score): score is number => score !== null);
 
   const overallScore =
-    finishedScores.length === 0
+    finishedExamScores.length === 0
       ? null
-      : Math.round(finishedScores.reduce((sum, s) => sum + s, 0) / finishedScores.length);
+      : Math.round(
+          finishedExamScores.reduce((sum, s) => sum + s, 0) / finishedExamScores.length
+        );
 
   return {
     overallScore,
@@ -114,6 +125,7 @@ export async function getAttemptHistory(studentId: string): Promise<AttemptHisto
       id: true,
       startedAt: true,
       score: true,
+      mode: true,
       _count: { select: { answers: true } },
     },
   });
@@ -123,5 +135,6 @@ export async function getAttemptHistory(studentId: string): Promise<AttemptHisto
     date: attempt.startedAt,
     score: attempt.score,
     questionCount: attempt._count.answers,
+    mode: attempt.mode,
   }));
 }

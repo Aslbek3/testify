@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { BadgeVariant } from "@/components/Badge";
+import type { AttemptMode } from "@prisma/client";
 
 export type TutorGroup = { id: string; name: string };
 
@@ -21,7 +22,8 @@ export type RosterStatus = { label: string; variant: BadgeVariant };
 export type RosterEntry = {
   studentId: string;
   name: string;
-  attemptCount: number;
+  examAttemptCount: number;
+  practiceAttemptCount: number;
   lastActivityAt: Date | null;
   averageScore: number | null;
   status: RosterStatus;
@@ -35,7 +37,7 @@ export type StudentGroupContext = {
 export type StudentDetail = {
   name: string;
   masteryByTopic: { topicName: string; masteryPercent: number }[];
-  attempts: { id: string; date: string; score: number | null }[];
+  attempts: { id: string; date: string; score: number | null; mode: AttemptMode }[];
 };
 
 /** Ustozga biriktirilgan guruhlar ro'yxati. */
@@ -144,13 +146,19 @@ export async function getMostMissedQuestions(
 }
 
 function statusFromScore(averageScore: number | null): RosterStatus {
-  if (averageScore === null) return { label: "Hali boshlamagan", variant: "neutral" };
+  if (averageScore === null) return { label: "Imtihon topshirilmagan", variant: "neutral" };
   if (averageScore >= 85) return { label: "Tayyor", variant: "success" };
   if (averageScore >= 65) return { label: "Deyarli tayyor", variant: "warning" };
   return { label: "Yordam kerak", variant: "danger" };
 }
 
-/** Guruhdagi har bir o'quvchi bo'yicha urinishlar, o'rtacha ball va holat. */
+/**
+ * Guruhdagi har bir o'quvchi bo'yicha urinishlar, o'rtacha ball va holat.
+ * O'rtacha ball va holat FAQAT imtihon (EXAM) urinishlaridan hisoblanadi —
+ * mashqda javob darhol ko'rsatilgani uchun mashq ballari sun'iy yuqori
+ * bo'ladi va aralashtirilsa ustozga noto'g'ri manzara beradi. Oxirgi
+ * faollik esa ikkala rejimni ham hisobga oladi (haqiqiy faollik ko'rsatkichi).
+ */
 export async function getRosterForGroup(groupId: string): Promise<RosterEntry[]> {
   const profiles = await prisma.studentProfile.findMany({
     where: { groupId },
@@ -162,7 +170,7 @@ export async function getRosterForGroup(groupId: string): Promise<RosterEntry[]>
   const attempts = await prisma.attempt.findMany({
     where: { studentId: { in: studentIds } },
     orderBy: { startedAt: "desc" },
-    select: { studentId: true, startedAt: true, finishedAt: true, score: true },
+    select: { studentId: true, startedAt: true, finishedAt: true, score: true, mode: true },
   });
 
   const attemptsByStudent = new Map<string, typeof attempts>();
@@ -174,12 +182,16 @@ export async function getRosterForGroup(groupId: string): Promise<RosterEntry[]>
 
   return profiles.map((p) => {
     const studentAttempts = attemptsByStudent.get(p.userId) ?? [];
-    const finishedScores = studentAttempts
+    const examAttempts = studentAttempts.filter((a) => a.mode === "EXAM");
+    const practiceAttempts = studentAttempts.filter((a) => a.mode === "PRACTICE");
+    const finishedExamScores = examAttempts
       .filter((a) => a.score !== null)
       .map((a) => a.score as number);
     const averageScore =
-      finishedScores.length > 0
-        ? Math.round(finishedScores.reduce((sum, s) => sum + s, 0) / finishedScores.length)
+      finishedExamScores.length > 0
+        ? Math.round(
+            finishedExamScores.reduce((sum, s) => sum + s, 0) / finishedExamScores.length
+          )
         : null;
     const lastActivityAt =
       studentAttempts.length > 0
@@ -189,7 +201,8 @@ export async function getRosterForGroup(groupId: string): Promise<RosterEntry[]>
     return {
       studentId: p.userId,
       name: p.user.name,
-      attemptCount: studentAttempts.length,
+      examAttemptCount: examAttempts.length,
+      practiceAttemptCount: practiceAttempts.length,
       lastActivityAt,
       averageScore,
       status: statusFromScore(averageScore),
@@ -263,13 +276,14 @@ export async function getStudentDetailForTutor(
   const attemptRows = await prisma.attempt.findMany({
     where: { studentId, finishedAt: { not: null } },
     orderBy: { finishedAt: "desc" },
-    select: { id: true, finishedAt: true, score: true },
+    select: { id: true, finishedAt: true, score: true, mode: true },
   });
 
   const attempts = attemptRows.map((a) => ({
     id: a.id,
     date: (a.finishedAt as Date).toISOString(),
     score: a.score,
+    mode: a.mode,
   }));
 
   return { name: user.name, masteryByTopic, attempts };

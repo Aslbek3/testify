@@ -918,12 +918,17 @@ async function main() {
       const startedAt = new Date(Date.now() - daysAgo * 86400000);
       const finishedAt = new Date(startedAt.getTime() + 12 * 60000);
 
+      // Har bir o'quvchiga bittadan EXAM va bittadan PRACTICE urinish —
+      // aks holda (mode ko'rsatilmasa, standart PRACTICE bo'lgani uchun)
+      // demo bazada birorta ham EXAM urinish bo'lmay qolar edi, bu esa
+      // "faqat EXAM'dan hisoblash" mantig'ini ko'rsatib bo'lmas edi.
       const attempt = await prisma.attempt.create({
         data: {
           studentId: student.id,
           startedAt,
           finishedAt,
           score: 0,
+          mode: a === 0 ? "EXAM" : "PRACTICE",
         },
       });
 

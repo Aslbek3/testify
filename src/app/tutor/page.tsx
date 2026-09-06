@@ -62,7 +62,10 @@ export default async function TutorPage({
             studentsWithScore.length
         )
       : null;
-  const totalAttempts = roster.reduce((sum, r) => sum + r.attemptCount, 0);
+  const totalAttempts = roster.reduce(
+    (sum, r) => sum + r.examAttemptCount + r.practiceAttemptCount,
+    0
+  );
 
   return (
     <div className="space-y-6">

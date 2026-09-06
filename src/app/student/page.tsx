@@ -111,6 +111,7 @@ export default async function StudentPage() {
               <TableHead>
                 <TableRow>
                   <TableHeaderCell>Sana</TableHeaderCell>
+                  <TableHeaderCell>Rejim</TableHeaderCell>
                   <TableHeaderCell align="right">Savollar soni</TableHeaderCell>
                   <TableHeaderCell align="right">Ball</TableHeaderCell>
                 </TableRow>
@@ -119,6 +120,11 @@ export default async function StudentPage() {
                 {history.map((attempt) => (
                   <TableRow key={attempt.id}>
                     <TableCell>{formatDate(attempt.date)}</TableCell>
+                    <TableCell>
+                      <Badge variant={attempt.mode === "EXAM" ? "brand" : "neutral"}>
+                        {attempt.mode === "EXAM" ? "Imtihon" : "Mashq"}
+                      </Badge>
+                    </TableCell>
                     <TableCell align="right">{attempt.questionCount}</TableCell>
                     <TableCell align="right">
                       {attempt.score === null ? (
