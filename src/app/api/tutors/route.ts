@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { isDirector } from "@/lib/permissions";
+import { logError } from "@/lib/logger";
 import { createTutor } from "@/services/users";
 import { RegistrationError } from "@/services/auth";
 
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
     if (error instanceof RegistrationError) {
       return NextResponse.json({ error: error.message }, { status: 409 });
     }
+    logError(error, { path: "/api/tutors", userId: user.id });
     throw error;
   }
 }

@@ -1,0 +1,49 @@
+# Testify — Nginx reverse proxy namunasi.
+#
+# Nusxalash: /etc/nginx/sites-available/testify ga ko'chiring, so'ng
+#   ln -s /etc/nginx/sites-available/testify /etc/nginx/sites-enabled/testify
+#   nginx -t && systemctl reload nginx
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name testif.gt.tc;
+
+    # Bitta so'rov tanasi hajmi chegarasi. Standart (1m) juda kichik —
+    # savol banki uchun rasm yuklash yoki boshqa fayl yuborish qo'shilsa,
+    # standart chegara "413 Request Entity Too Large" beradi. Hozircha
+    # katta fayl yuklash yo'q, lekin ehtiyot chorasi sifatida oshirilgan.
+    client_max_body_size 10m;
+
+    location / {
+        proxy_pass http://127.0.0.1:3214;
+
+        # WebSocket/HMR va umuman "Connection: Upgrade" so'rovlarini
+        # to'g'ri uzatish uchun shart (Next.js dev rejimida ishlatadi;
+        # productionda kerak bo'lmasa ham, zarar keltirmaydi).
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_set_header Host $host;
+
+        # MUHIM: src/app/api/auth/login/route.ts login urinishlarini IP
+        # bo'yicha cheklash uchun X-Real-IP sarlavhasiga ishonadi. Agar bu
+        # ikki qator bo'lmasa (yoki Nginx ularni MAJBURAN qayta yozmasa),
+        # hujumchi so'rovga o'zi X-Real-IP/X-Forwarded-For qo'yib, rate
+        # limitni butunlay chetlab o'tishi mumkin — Nginx bu qiymatlarni
+        # doim $remote_addr asosida QAYTA YOZISHI shart, mijozdan kelgan
+        # qiymatni to'g'ridan-to'g'ri o'tkazib yubormasligi kerak.
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# HTTPS qo'shish (birinchi o'rnatishdan keyin, DNS to'g'ri yo'naltirilgach):
+#
+#   certbot --nginx -d testif.gt.tc
+#
+# Certbot yuqoridagi server blokini o'zi tahrirlab, listen 443 ssl,
+# sertifikat yo'llari va (odatda) 80-portdan 443-ga avtomatik
+# yo'naltirishni qo'shadi — qo'lda HTTPS server bloki yozish shart emas.

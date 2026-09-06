@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { verifyCredentials } from "@/services/auth";
 import { setSessionCookie } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { logError } from "@/lib/logger";
 
 // Ochiq endpoint — hali sessiyasi yo'q foydalanuvchi murojaat qiladi,
 // shuning uchun permissions.ts orqali tekshiruv talab qilinmaydi.
@@ -34,14 +35,20 @@ export async function POST(request: Request) {
     );
   }
 
-  const user = await verifyCredentials(email, password);
-  if (!user) {
-    return NextResponse.json(
-      { error: "Email yoki parol noto'g'ri" },
-      { status: 401 }
-    );
-  }
+  try {
+    const user = await verifyCredentials(email, password);
+    if (!user) {
+      return NextResponse.json(
+        { error: "Email yoki parol noto'g'ri" },
+        { status: 401 }
+      );
+    }
 
-  await setSessionCookie(user);
-  return NextResponse.json({ role: user.role });
+    await setSessionCookie(user);
+    return NextResponse.json({ role: user.role });
+  } catch (error) {
+    // userId yo'q — sessiya hali yaratilmagan, foydalanuvchi hali tanilmagan.
+    logError(error, { path: "/api/auth/login" });
+    throw error;
+  }
 }

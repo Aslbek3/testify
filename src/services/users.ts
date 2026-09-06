@@ -56,6 +56,34 @@ export function createTutor(input: {
   return createStaffUser({ ...input, role: "TUTOR" });
 }
 
+/** Bitta marta ishlaydigan create-owner skripti uchun — tashkilotga bog'lanmaydi. */
+export async function createOwner(input: {
+  name: string;
+  email: string;
+  password: string;
+}) {
+  const existing = await prisma.user.findUnique({ where: { email: input.email } });
+  if (existing) {
+    throw new RegistrationError("Bu email allaqachon mavjud");
+  }
+
+  const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
+  return prisma.user.create({
+    data: {
+      name: input.name,
+      email: input.email,
+      passwordHash,
+      role: "OWNER",
+      organizationId: null,
+    },
+  });
+}
+
+/** create-owner skriptida bazada allaqachon Owner bor-yo'qligini ogohlantirish uchun. */
+export async function countOwners(): Promise<number> {
+  return prisma.user.count({ where: { role: "OWNER" } });
+}
+
 /** AppShell sidebar footerida foydalanuvchi ismini ko'rsatish uchun. */
 export async function getUserName(id: string): Promise<string | null> {
   const user = await prisma.user.findUnique({ where: { id }, select: { name: true } });

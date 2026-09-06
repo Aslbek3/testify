@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { isStudent } from "@/lib/permissions";
+import { logError } from "@/lib/logger";
 import { startAttempt, AttemptError } from "@/services/attempts";
 import { getStudentGroupId } from "@/services/studentDashboard";
 import type { AttemptMode } from "@prisma/client";
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
     if (error instanceof AttemptError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
+    logError(error, { path: "/api/attempts", userId: user.id });
     throw error;
   }
 }

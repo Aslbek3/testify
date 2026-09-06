@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { isDirector } from "@/lib/permissions";
+import { logError } from "@/lib/logger";
 import { createGroup, DirectorActionError } from "@/services/directorDashboard";
 
 export async function POST(request: Request) {
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
     if (error instanceof DirectorActionError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+    logError(error, { path: "/api/groups", userId: user.id });
     throw error;
   }
 }

@@ -57,3 +57,59 @@ Parol hammasida bir xil: **testify123**
 
 Bular faqat rivojlantirish (Neon dev) bazasidagi test ma'lumotlari — 
 production'ga hech qachon shu holicha ko'chirilmaydi.
+
+## Production (VPS deploy holati)
+
+- **Papka**: `/root/vps/projects/web/testify/` (VPS'dagi asosiy `CLAUDE.md`
+  jadvaliga qo'shilgan)
+- **PM2 nomi**: `testify` — `ecosystem.config.js` orqali, FORK rejimida
+  (sabab: `src/lib/rateLimit.ts` xotirada ishlaydi)
+- **Ishga tushirish usuli (2026-09-06 kechqurun o'zgartirildi)**: PM2
+  `script: "npm", args: "start -- -H 127.0.0.1"` orqali oddiy `next start`
+  ishlatadi — eski `.next/standalone/server.js` + qo'lda public/static
+  nusxalash usuli olib tashlandi (`next.config.ts`dagi `output:
+  "standalone"` ham olib tashlandi), chunki kod serverning o'zida build
+  qilinadi, boshqa joyga ko'chirilmaydi. ⚠️ `-H 127.0.0.1` MAJBURIY —
+  aks holda `next start` `0.0.0.0`ga bog'lanib, portni UFW whitelist
+  qilingan admin IP'lariga bevosita (Nginx'ni chetlab o'tib) ochib
+  qo'yadi.
+- **Port**: `127.0.0.1:3214` (3000, 3210-3213 boshqa loyihalarda band)
+- **Node**: tizim standart Node'i (v12) juda eski — Node 20+ shart.
+  `ecosystem.config.js` `nvm` orqali o'rnatilgan Node 22 binariga aniq
+  yo'l bilan ishga tushirilgan (`pm2 start ecosystem.config.js
+  --interpreter $(which node)`, nvm v22.23.1 muhitida). Agar `pm2
+  resurrect`/reboot'dan keyin `testify` crash-loop qilsa — birinchi
+  sabab shu (interpreter yo'li noto'g'ri bo'lib qolishi).
+- **Domen**: `testif.gt.tc`, Nginx site: `/etc/nginx/sites-available/testify`
+  (2026-09-06 da yoqilgan, faqat HTTP/80 — HTTPS/certbot hali yo'q).
+  Namuna: `docs/nginx.conf.example` (izohlar bilan — nima uchun
+  `X-Real-IP`ni Nginx qayta yozishi shart, `client_max_body_size`,
+  certbot).
+  ⚠️ **DNS mos emas**: `testif.gt.tc` hozircha `185.27.134.212` ga
+  ko'rsatadi, bu VPS esa `161.97.105.98` — domen A-yozuvi shu VPS'ga
+  ko'rsatilmaguncha tashqaridan ochilmaydi. Tuzatilgach: `certbot
+  --nginx -d testif.gt.tc` bilan HTTPS qo'shiladi.
+- **Baza**: mahalliy PostgreSQL, DB `testify_prod`, user `testify_prod`
+  (parol faqat serverdagi `.env` da, git'ga tushmaydi).
+- **App Owner hisobi**: `owner@testif.gt.tc` (2026-09-06 da yaratilgan —
+  parol faqat o'sha paytda Aslbekka Telegram/terminal orqali bir marta
+  ko'rsatilgan, hech qayerda saqlanmagan; unutilsa DB'da bevosita
+  `passwordHash` yangilanadi). Qo'shimcha owner kerak bo'lsa:
+  `npm run create-owner` (`scripts/create-owner.ts`, `OWNER_EMAIL` /
+  `OWNER_NAME` / `OWNER_PASSWORD` orqali).
+- **Health check**: `GET /api/health` — sessiya talab qilmaydi.
+- **Xato logging**: `src/lib/logger.ts` — barcha API route va `error.tsx`
+  xatolari structured JSON qatorida PM2 logiga yoziladi, parol/token
+  avtomatik `[REDACTED]`.
+- **Zaxira**: `scripts/backup.sh`, cron'ga qo'shilgan (`crontab -l`) — har
+  kuni 03:00 da, 14 kunlik saqlash. Loglar: `logs/backup.log`. Qo'lda
+  ishga tushirilib tekshirilgan (2026-09-06).
+- **Batafsil**: `docs/deploy.md` — o'rnatish, yangilash, Nginx, backup/restore.
+- ⚠️ **GIT HOLATI (2026-09-06)**: Yuqoridagi productionga tayyorlash
+  ishining (health check, logger, backup.sh, ecosystem.config.js,
+  docs/deploy.md, docs/nginx.conf.example va bir nechta route
+  tuzatishlari) HECH BIRI hali GitHub'ga (`Aslbek3/testify`) commit/push
+  QILINMAGAN — faqat VPS'dagi working directory'da bor. Hozirgi holatda
+  `git clone` qilingan nusxa productiondan butunlay farq qiladi va
+  ishlamaydi (logger.ts, health route, backup.sh yo'q bo'ladi). Birinchi
+  imkoniyatda commit+push qilish kerak.

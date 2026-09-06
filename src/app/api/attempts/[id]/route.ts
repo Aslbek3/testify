@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
+import { logError } from "@/lib/logger";
 import { saveAnswer, AttemptError } from "@/services/attempts";
 
 export async function PATCH(
@@ -39,6 +40,7 @@ export async function PATCH(
     if (error instanceof AttemptError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
+    logError(error, { path: "/api/attempts/[id]", userId: user.id });
     throw error;
   }
 }

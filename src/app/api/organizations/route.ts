@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { canManageOrganizations } from "@/lib/permissions";
+import { logError } from "@/lib/logger";
 import { createOrganization } from "@/services/organizations";
 import type { Plan, OrganizationStatus } from "@prisma/client";
 
@@ -28,6 +29,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const organization = await createOrganization({ name, city, plan, status });
-  return NextResponse.json(organization, { status: 201 });
+  try {
+    const organization = await createOrganization({ name, city, plan, status });
+    return NextResponse.json(organization, { status: 201 });
+  } catch (error) {
+    logError(error, { path: "/api/organizations", userId: user.id });
+    throw error;
+  }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { canManageQuestionBank } from "@/lib/permissions";
+import { logError } from "@/lib/logger";
 import {
   createTopic,
   listTopicsWithQuestionCount,
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
     if (error instanceof QuestionBankError) {
       return NextResponse.json({ error: error.message }, { status: 409 });
     }
+    logError(error, { path: "/api/topics", userId: user.id });
     throw error;
   }
 }

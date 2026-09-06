@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { canManageQuestionBank } from "@/lib/permissions";
+import { logError } from "@/lib/logger";
 import {
   deleteQuestion,
   updateQuestion,
@@ -40,6 +41,7 @@ export async function PATCH(
     if (error instanceof QuestionBankError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+    logError(error, { path: "/api/questions/[id]", userId: user.id });
     throw error;
   }
 }
@@ -62,6 +64,7 @@ export async function DELETE(
     if (error instanceof QuestionBankError) {
       return NextResponse.json({ error: error.message }, { status: 409 });
     }
+    logError(error, { path: "/api/questions/[id]", userId: user.id });
     throw error;
   }
 }

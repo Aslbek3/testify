@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
+import { logError } from "@/lib/logger";
 
 export default function OwnerError({
   error,
@@ -12,7 +13,7 @@ export default function OwnerError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    logError(error, { path: window.location.pathname });
   }, [error]);
 
   return (

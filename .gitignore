@@ -37,6 +37,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# production runtime (PM2 logs, DB backups) — VPS'da yaratiladi
+/logs
+/backups
+
 # local npm config (dev-machine cache path override)
 .npmrc-local
 
