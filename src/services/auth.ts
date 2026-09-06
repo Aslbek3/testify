@@ -5,11 +5,24 @@ import type { SessionUser } from "@/types/auth";
 
 const SALT_ROUNDS = 10;
 
+/**
+ * Parol to'g'ri, lekin tashkilotning tarif muddati tugagan — bu holat
+ * "Email yoki parol noto'g'ri"dan farqli ravishda tushunarli xabar bilan
+ * ko'rsatiladi, chunki bu xabarni faqat parolini to'g'ri kiritgan haqiqiy
+ * foydalanuvchi ko'radi (xavfsizlik nuqtai nazaridan hech narsa oshkor
+ * qilinmaydi — parolni taxmin qilayotgan kimsa bu xabarga hech qachon
+ * yetib bormaydi).
+ */
+export class OrganizationExpiredError extends Error {}
+
 export async function verifyCredentials(
   email: string,
   password: string
 ): Promise<SessionUser | null> {
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: { organization: { select: { status: true } } },
+  });
   if (!user) return null;
 
   const passwordMatches = await bcrypt.compare(password, user.passwordHash);
@@ -18,6 +31,14 @@ export async function verifyCredentials(
   // Bloklangan hisob — "Email yoki parol noto'g'ri" bilan bir xil umumiy
   // rad javobi (hisob holatini oshkor qilmaslik uchun alohida xabar yo'q).
   if (!user.isActive) return null;
+
+  // OWNER'ning tashkiloti yo'q (organizationId null), shuning uchun bu
+  // tekshiruv tabiiy ravishda faqat tashkilotga bog'liq rollarga tegadi.
+  if (user.organization?.status === "EXPIRED") {
+    throw new OrganizationExpiredError(
+      "Tashkilotingizning tarif muddati tugagan. Iltimos, administratoringiz bilan bog'laning."
+    );
+  }
 
   return {
     id: user.id,

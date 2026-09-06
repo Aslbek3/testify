@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { verifyCredentials } from "@/services/auth";
+import { verifyCredentials, OrganizationExpiredError } from "@/services/auth";
 import { setSessionCookie } from "@/lib/auth";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 // Ochiq endpoint — hali sessiyasi yo'q foydalanuvchi murojaat qiladi,
 // shuning uchun permissions.ts orqali tekshiruv talab qilinmaydi.
@@ -9,8 +9,7 @@ export async function POST(request: Request) {
   // Parolni "brute force" qilishning oldini olish uchun IP bo'yicha
   // urinishlar sonini cheklaymiz — bu bazaga murojaat qilishdan oldin
   // tekshiriladi.
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  const ip = forwardedFor?.split(",")[0]?.trim() || "unknown";
+  const ip = getClientIp(request);
 
   const rateLimit = checkRateLimit(ip);
   if (!rateLimit.allowed) {
@@ -34,7 +33,16 @@ export async function POST(request: Request) {
     );
   }
 
-  const user = await verifyCredentials(email, password);
+  let user;
+  try {
+    user = await verifyCredentials(email, password);
+  } catch (error) {
+    if (error instanceof OrganizationExpiredError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+    throw error;
+  }
+
   if (!user) {
     return NextResponse.json(
       { error: "Email yoki parol noto'g'ri" },
