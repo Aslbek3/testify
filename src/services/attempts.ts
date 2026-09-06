@@ -190,6 +190,109 @@ export async function saveAnswer(input: {
   };
 }
 
+export type ResumeAnswerState = {
+  questionId: string;
+  selectedOptionIndex: number;
+  // Faqat PRACTICE rejimida to'ldiriladi — EXAM'da urinish tugamaguncha
+  // to'g'ri/xato ma'lumoti hech qachon qaytarilmaydi, hatto qayta
+  // ochilganda ham.
+  isCorrect?: boolean;
+  correctOptionIndex?: number;
+  explanation?: string | null;
+};
+
+export type ResumableAttempt = {
+  attemptId: string;
+  mode: AttemptMode;
+  startedAt: Date;
+  finishedAt: Date | null;
+  questions: AttemptQuestionForClient[];
+  answers: ResumeAnswerState[];
+};
+
+/**
+ * Sahifa yangilansa yoki keyinroq qaytilsa urinishni davom ettirish uchun —
+ * boshlanishda tanlangan savollarni AYNI o'sha tartibda va hozirgi
+ * progressni qaytaradi.
+ */
+export async function getAttemptForResume(input: {
+  user: SessionUser;
+  attemptId: string;
+}): Promise<ResumableAttempt> {
+  const attempt = await prisma.attempt.findUnique({
+    where: { id: input.attemptId },
+    select: {
+      studentId: true,
+      mode: true,
+      startedAt: true,
+      finishedAt: true,
+      questionIds: true,
+    },
+  });
+  if (!attempt) throw new AttemptError("Urinish topilmadi", 404);
+  if (!canTakeAttempt(input.user, attempt)) {
+    throw new AttemptError("Bu urinish sizga tegishli emas", 403);
+  }
+
+  const [questions, savedAnswers] = await Promise.all([
+    prisma.question.findMany({
+      where: { id: { in: attempt.questionIds } },
+      select: {
+        id: true,
+        text: true,
+        options: true,
+        imageUrl: true,
+        topicId: true,
+        topic: { select: { name: true } },
+        ...(attempt.mode === "PRACTICE"
+          ? { correctOptionIndex: true, explanation: true }
+          : {}),
+      },
+    }),
+    prisma.attemptAnswer.findMany({
+      where: { attemptId: input.attemptId },
+      select: { questionId: true, selectedOptionIndex: true, isCorrect: true },
+    }),
+  ]);
+
+  const byId = new Map(questions.map((q) => [q.id, q]));
+  const orderedQuestions = attempt.questionIds
+    .map((id) => byId.get(id))
+    .filter((q): q is NonNullable<typeof q> => q !== undefined);
+
+  const answers: ResumeAnswerState[] = savedAnswers.map((a) => {
+    if (attempt.mode !== "PRACTICE") {
+      return { questionId: a.questionId, selectedOptionIndex: a.selectedOptionIndex };
+    }
+    const question = byId.get(a.questionId) as
+      | { correctOptionIndex?: number; explanation?: string | null }
+      | undefined;
+    return {
+      questionId: a.questionId,
+      selectedOptionIndex: a.selectedOptionIndex,
+      isCorrect: a.isCorrect,
+      correctOptionIndex: question?.correctOptionIndex,
+      explanation: question?.explanation ?? null,
+    };
+  });
+
+  return {
+    attemptId: input.attemptId,
+    mode: attempt.mode,
+    startedAt: attempt.startedAt,
+    finishedAt: attempt.finishedAt,
+    questions: orderedQuestions.map((q) => ({
+      id: q.id,
+      text: q.text,
+      options: toStringArray(q.options),
+      imageUrl: q.imageUrl,
+      topicId: q.topicId,
+      topicName: q.topic.name,
+    })),
+    answers,
+  };
+}
+
 export async function finishAttempt(input: {
   user: SessionUser;
   attemptId: string;
