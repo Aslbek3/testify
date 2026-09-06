@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
+import { Modal } from "@/components/Modal";
 import { cn } from "@/lib/cn";
 import type { ResumableAttempt } from "@/services/attempts";
 
@@ -54,6 +55,7 @@ export function TestRunner({
   });
   const [savingId, setSavingId] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
+  const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const finishTriggered = useRef(false);
 
   // Boshlang'ich qiymat DOIM statik (Date.now() ishlatilmaydi) — aks holda
@@ -69,6 +71,9 @@ export function TestRunner({
   const currentAnswer = answers[currentQuestion.id];
   const isLast = currentIndex === total - 1;
   const practiceLocked = mode === "PRACTICE" && currentAnswer !== undefined;
+  const unansweredQuestions = questions
+    .map((q, i) => ({ q, i }))
+    .filter(({ q }) => !answers[q.id]);
 
   const handleFinish = useCallback(async () => {
     if (finishTriggered.current) return;
@@ -147,19 +152,29 @@ export function TestRunner({
 
   const goNext = useCallback(() => {
     if (isLast) {
-      handleFinish();
+      // To'g'ridan-to'g'ri yakunlanmaydi — chunki qaytarib bo'lmaydi.
+      // Avval tasdiqlash modali ko'rsatiladi (pastdagi confirmFinish orqali).
+      setShowFinishConfirm(true);
       return;
     }
     setCurrentIndex((i) => Math.min(i + 1, total - 1));
-  }, [isLast, handleFinish, total]);
+  }, [isLast, total]);
+
+  const confirmFinish = useCallback(() => {
+    setShowFinishConfirm(false);
+    handleFinish();
+  }, [handleFinish]);
 
   const goBack = useCallback(() => {
     setCurrentIndex((i) => Math.max(i - 1, 0));
   }, []);
 
-  // Klaviatura: 1-4 variant tanlaydi, Enter keyingisiga o'tadi.
+  // Klaviatura: 1-4 variant tanlaydi, Enter keyingisiga o'tadi. Tasdiqlash
+  // modali ochiq bo'lsa hech narsa qilmaydi — aks holda fonda javob
+  // o'zgarib ketishi yoki modal qayta ochilib ketishi mumkin edi.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (showFinishConfirm) return;
       if (event.key >= "1" && event.key <= "4") {
         const idx = Number(event.key) - 1;
         if (idx < currentQuestion.options.length) {
@@ -174,7 +189,7 @@ export function TestRunner({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentQuestion.id, practiceLocked, goNext]);
+  }, [currentQuestion.id, practiceLocked, goNext, showFinishConfirm]);
 
   const modeLabel = mode === "EXAM" ? "Imtihon rejimi" : "Mashq rejimi";
   const isDanger = secondsLeft !== null && secondsLeft <= DANGER_THRESHOLD_SECONDS;
@@ -312,6 +327,48 @@ export function TestRunner({
           {finishing ? "Yakunlanmoqda..." : isLast ? "Yakunlash" : "Keyingisi"}
         </Button>
       </div>
+
+      <Modal
+        open={showFinishConfirm}
+        onClose={() => setShowFinishConfirm(false)}
+        title={mode === "EXAM" ? "Imtihonni yakunlash" : "Mashqni yakunlash"}
+      >
+        <div className="space-y-4">
+          {unansweredQuestions.length > 0 ? (
+            <>
+              <p className="text-sm text-text">
+                {unansweredQuestions.length} ta savol javobsiz qoldi.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {unansweredQuestions.map(({ i }) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      setCurrentIndex(i);
+                      setShowFinishConfirm(false);
+                    }}
+                    className="rounded-md border border-border px-3 py-1.5 text-sm text-text hover:bg-bg-subtle"
+                  >
+                    {i + 1}-savol
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-text">Barcha savollarga javob berdingiz.</p>
+          )}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="secondary" onClick={() => setShowFinishConfirm(false)}>
+              Bekor qilish
+            </Button>
+            <Button type="button" onClick={confirmFinish} disabled={finishing}>
+              {finishing ? "Yakunlanmoqda..." : "Ha, yakunlash"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
