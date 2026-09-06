@@ -325,3 +325,125 @@ export async function finishAttempt(input: {
 
   return { score, correctCount, totalCount };
 }
+
+/** EXAM uchun o'tish balli: 20 tadan 18 to'g'ri = 90%. */
+const EXAM_PASS_THRESHOLD = 90;
+
+export type TopicBreakdownRow = {
+  topicId: string;
+  topicName: string;
+  correct: number;
+  total: number;
+};
+
+export type MissedQuestion = {
+  questionId: string;
+  text: string;
+  selectedOptionText: string | null;
+  correctOptionText: string;
+  explanation: string | null;
+};
+
+export type AttemptResult = {
+  attemptId: string;
+  mode: AttemptMode;
+  score: number;
+  correctCount: number;
+  totalCount: number;
+  /** PRACTICE uchun null — "o'tish/o'tmaslik" tushunchasi faqat EXAM'ga tegishli. */
+  passed: boolean | null;
+  topicBreakdown: TopicBreakdownRow[];
+  missedQuestions: MissedQuestion[];
+};
+
+export async function getAttemptResult(input: {
+  user: SessionUser;
+  attemptId: string;
+}): Promise<AttemptResult> {
+  const attempt = await prisma.attempt.findUnique({
+    where: { id: input.attemptId },
+    select: {
+      studentId: true,
+      mode: true,
+      finishedAt: true,
+      score: true,
+      questionIds: true,
+    },
+  });
+  if (!attempt) throw new AttemptError("Urinish topilmadi", 404);
+  if (!canTakeAttempt(input.user, attempt)) {
+    throw new AttemptError("Bu urinish sizga tegishli emas", 403);
+  }
+  if (!attempt.finishedAt) {
+    throw new AttemptError("Bu urinish hali yakunlanmagan", 409);
+  }
+
+  const [questions, savedAnswers] = await Promise.all([
+    prisma.question.findMany({
+      where: { id: { in: attempt.questionIds } },
+      select: {
+        id: true,
+        text: true,
+        options: true,
+        correctOptionIndex: true,
+        explanation: true,
+        topicId: true,
+        topic: { select: { name: true } },
+      },
+    }),
+    prisma.attemptAnswer.findMany({
+      where: { attemptId: input.attemptId },
+      select: { questionId: true, selectedOptionIndex: true, isCorrect: true },
+    }),
+  ]);
+
+  const questionById = new Map(questions.map((q) => [q.id, q]));
+  const answerByQuestionId = new Map(savedAnswers.map((a) => [a.questionId, a]));
+
+  const topicMap = new Map<string, TopicBreakdownRow>();
+  for (const qid of attempt.questionIds) {
+    const question = questionById.get(qid);
+    if (!question) continue;
+    const entry = topicMap.get(question.topicId) ?? {
+      topicId: question.topicId,
+      topicName: question.topic.name,
+      correct: 0,
+      total: 0,
+    };
+    entry.total += 1;
+    if (answerByQuestionId.get(qid)?.isCorrect) entry.correct += 1;
+    topicMap.set(question.topicId, entry);
+  }
+
+  const missedQuestions: MissedQuestion[] = attempt.questionIds
+    .map((qid) => questionById.get(qid))
+    .filter((q): q is NonNullable<typeof q> => q !== undefined)
+    .filter((q) => !answerByQuestionId.get(q.id)?.isCorrect)
+    .map((q) => {
+      const options = toStringArray(q.options);
+      const answer = answerByQuestionId.get(q.id);
+      return {
+        questionId: q.id,
+        text: q.text,
+        selectedOptionText:
+          answer !== undefined ? (options[answer.selectedOptionIndex] ?? null) : null,
+        correctOptionText: options[q.correctOptionIndex] ?? "",
+        explanation: q.explanation,
+      };
+    });
+
+  const totalCount = attempt.questionIds.length;
+  const correctCount = savedAnswers.filter((a) => a.isCorrect).length;
+  const score = attempt.score ?? 0;
+
+  return {
+    attemptId: input.attemptId,
+    mode: attempt.mode,
+    score,
+    correctCount,
+    totalCount,
+    passed: attempt.mode === "EXAM" ? score >= EXAM_PASS_THRESHOLD : null,
+    topicBreakdown: Array.from(topicMap.values()),
+    missedQuestions,
+  };
+}
