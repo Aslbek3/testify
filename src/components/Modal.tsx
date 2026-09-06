@@ -25,9 +25,18 @@ export function Modal({
       if (event.key === "Escape") onClose();
     }
     document.addEventListener("keydown", handleKeyDown);
-    dialogRef.current?.focus();
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
+
+  // Fokusni faqat modal HAQIQATAN ochilganda o'ziga oladi — `open`dan
+  // boshqa narsaga bog'liq emas. Aks holda (masalan `onClose` har render
+  // sayin yangi funksiya bo'lgani uchun) forma ichida harf kiritilganda
+  // effekt qayta ishga tushib, fokusni input'dan tortib olar edi.
+  useEffect(() => {
+    if (open) {
+      dialogRef.current?.focus();
+    }
+  }, [open]);
 
   if (!open) return null;
 
