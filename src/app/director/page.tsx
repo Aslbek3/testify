@@ -8,6 +8,7 @@ import {
 } from "@/services/directorDashboard";
 import { NewTutorModal } from "./NewTutorModal";
 import { NewGroupModal } from "./NewGroupModal";
+import { TutorRankingTable } from "./TutorRankingTable";
 import { StatTile } from "@/components/StatTile";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
 import {
@@ -79,30 +80,7 @@ export default async function DirectorPage() {
         {tutorRanking.length === 0 ? (
           <p className="text-sm text-text-muted">Hozircha ustozlar yo&apos;q.</p>
         ) : (
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeaderCell>#</TableHeaderCell>
-                <TableHeaderCell>Ustoz</TableHeaderCell>
-                <TableHeaderCell>Guruh</TableHeaderCell>
-                <TableHeaderCell align="right">O&apos;quvchilar</TableHeaderCell>
-                <TableHeaderCell align="right">O&apos;rtacha ball</TableHeaderCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {tutorRanking.map((row, index) => (
-                <TableRow key={row.tutorId}>
-                  <TableCell className="font-mono">{index + 1}</TableCell>
-                  <TableCell className="font-medium">{row.tutorName}</TableCell>
-                  <TableCell>{row.groupName}</TableCell>
-                  <TableCell align="right">{row.studentCount}</TableCell>
-                  <TableCell align="right">
-                    {row.averageScore === null ? "—" : `${row.averageScore}%`}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <TutorRankingTable rows={tutorRanking} />
         )}
       </Card>
 

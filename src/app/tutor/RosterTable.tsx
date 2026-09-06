@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableHead,
@@ -10,14 +11,31 @@ import {
   TableCell,
 } from "@/components/Table";
 import { Badge } from "@/components/Badge";
+import { Button } from "@/components/Button";
 import { formatDate } from "@/lib/format";
 import type { RosterEntry, StudentDetail } from "@/services/tutorDashboard";
 
 export function RosterTable({ roster }: { roster: RosterEntry[] }) {
+  const router = useRouter();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [details, setDetails] = useState<Record<string, StudentDetail>>({});
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [errorId, setErrorId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  async function handleToggleActive(studentId: string, nextActive: boolean) {
+    setTogglingId(studentId);
+    try {
+      const res = await fetch(`/api/tutor/students/${studentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: nextActive }),
+      });
+      if (res.ok) router.refresh();
+    } finally {
+      setTogglingId(null);
+    }
+  }
 
   async function handleRowClick(studentId: string) {
     if (expandedId === studentId) {
@@ -59,6 +77,8 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
           <TableHeaderCell>Oxirgi faollik</TableHeaderCell>
           <TableHeaderCell align="right">O&apos;rtacha ball</TableHeaderCell>
           <TableHeaderCell>Holat</TableHeaderCell>
+          <TableHeaderCell>Hisob</TableHeaderCell>
+          <TableHeaderCell>Amallar</TableHeaderCell>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -67,6 +87,7 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
           const detail = details[student.studentId];
           const isLoading = loadingId === student.studentId;
           const hasError = errorId === student.studentId;
+          const isToggling = togglingId === student.studentId;
 
           return (
             <Fragment key={student.studentId}>
@@ -83,11 +104,29 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
                 <TableCell>
                   <Badge variant={student.status.variant}>{student.status.label}</Badge>
                 </TableCell>
+                <TableCell>
+                  <Badge variant={student.isActive ? "success" : "danger"}>
+                    {student.isActive ? "Faol" : "Bloklangan"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={isToggling}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleActive(student.studentId, !student.isActive);
+                    }}
+                  >
+                    {isToggling ? "..." : student.isActive ? "Bloklash" : "Tiklash"}
+                  </Button>
+                </TableCell>
               </TableRow>
 
               {isExpanded && (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-4">
+                  <TableCell colSpan={8} className="py-4">
                     {isLoading && (
                       <p className="text-sm text-text-muted">Yuklanmoqda...</p>
                     )}

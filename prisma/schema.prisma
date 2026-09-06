@@ -53,6 +53,11 @@ model User {
   role           Role
   organizationId String?
   createdAt      DateTime @default(now())
+  // Parol/rol o'zgarganda yoki hisob bloklanganda oshiriladi — JWT ichidagi
+  // qiymat bilan mos kelmasa, requireRole sessiyani darhol bekor qiladi
+  // (token muddati hali tugamagan bo'lsa ham).
+  sessionVersion Int      @default(0)
+  isActive       Boolean  @default(true)
 
   organization   Organization?   @relation(fields: [organizationId], references: [id])
   tutorOfGroups  Group[]         @relation("GroupTutor")

@@ -22,6 +22,7 @@ export type RosterStatus = { label: string; variant: BadgeVariant };
 export type RosterEntry = {
   studentId: string;
   name: string;
+  isActive: boolean;
   examAttemptCount: number;
   practiceAttemptCount: number;
   lastActivityAt: Date | null;
@@ -162,7 +163,7 @@ function statusFromScore(averageScore: number | null): RosterStatus {
 export async function getRosterForGroup(groupId: string): Promise<RosterEntry[]> {
   const profiles = await prisma.studentProfile.findMany({
     where: { groupId },
-    select: { userId: true, user: { select: { name: true } } },
+    select: { userId: true, user: { select: { name: true, isActive: true } } },
   });
   if (profiles.length === 0) return [];
 
@@ -201,6 +202,7 @@ export async function getRosterForGroup(groupId: string): Promise<RosterEntry[]>
     return {
       studentId: p.userId,
       name: p.user.name,
+      isActive: p.user.isActive,
       examAttemptCount: examAttempts.length,
       practiceAttemptCount: practiceAttempts.length,
       lastActivityAt,

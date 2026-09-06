@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import type { SessionUser } from "@/types/auth";
 import type { Role } from "@prisma/client";
 import { ROLE_HOME } from "@/lib/roles";
+import { getUserSessionState } from "@/services/auth";
 
 function requireJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
@@ -64,11 +65,31 @@ export async function clearSessionCookie() {
 /**
  * Dashboard sahifalarida takrorlanadigan tekshiruv: sessiyasiz /login ga,
  * boshqa rolda o'ziga tegishli sahifaga qaytaradi. proxy.ts allaqachon
- * himoya qiladi — bu server komponent darajasidagi qo'shimcha himoya.
+ * himoya qiladi (Edge'da, faqat imzo/rol) — bu server komponent
+ * darajasidagi CHUQUR tekshiruv: bazadagi haqiqiy holat bilan solishtiradi,
+ * shunda o'chirilgan/bloklangan yoki paroli/roli o'zgargan foydalanuvchi
+ * JWT muddati tugagunga (1 hafta) qadar kirib turishining oldi olinadi.
  */
 export async function requireRole(role: Role): Promise<SessionUser> {
   const user = await getSessionUser();
   if (!user) redirect("/login");
-  if (user.role !== role) redirect(ROLE_HOME[user.role]);
-  return user;
+
+  const state = await getUserSessionState(user.id);
+  if (!state || state.sessionVersion !== user.sessionVersion || !state.isActive) {
+    // Eskirgan cookie'ni shu yerda o'chirib bo'lmaydi — cookies().delete()
+    // faqat Server Action/Route Handler'da ishlaydi, Server komponent
+    // render'ida emas. Shunga qaramay xavfsiz: bu cookie boshqa hech qanday
+    // sahifada tasdiqlanmaydi (har doim shu tekshiruvdan o'tmaydi), keyingi
+    // muvaffaqiyatli kirishda esa setSessionCookie uni ustidan yozadi.
+    redirect("/login");
+  }
+
+  if (state.role !== role) redirect(ROLE_HOME[state.role]);
+
+  return {
+    id: user.id,
+    role: state.role,
+    organizationId: state.organizationId,
+    sessionVersion: state.sessionVersion,
+  };
 }
