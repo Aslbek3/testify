@@ -21,27 +21,6 @@ export async function verifyCredentials(
   };
 }
 
-export type GroupOption = {
-  id: string;
-  label: string;
-};
-
-/** Register sahifasidagi guruh tanlash ro'yxati uchun. */
-export async function listGroupsForRegistration(): Promise<GroupOption[]> {
-  const groups = await prisma.group.findMany({
-    include: {
-      organization: { select: { name: true } },
-      tutor: { select: { name: true } },
-    },
-    orderBy: { name: "asc" },
-  });
-
-  return groups.map((g) => ({
-    id: g.id,
-    label: `${g.organization.name} — ${g.name} (${g.tutor.name})`,
-  }));
-}
-
 export class RegistrationError extends Error {}
 
 export async function registerStudent(input: {

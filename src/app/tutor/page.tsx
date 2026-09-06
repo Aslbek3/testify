@@ -9,6 +9,7 @@ import {
 } from "@/services/tutorDashboard";
 import { GroupSelect } from "./GroupSelect";
 import { RosterTable } from "./RosterTable";
+import { NewStudentModal } from "./NewStudentModal";
 
 function severityClass(errorRatePercent: number): string {
   if (errorRatePercent < 15) return "bg-success";
@@ -73,9 +74,12 @@ export default async function TutorPage({
             o&apos;quvchining progressini shu yerdan kuzatasiz.
           </p>
         </div>
-        {groups.length > 1 && (
-          <GroupSelect groups={groups} selectedId={selectedGroup.id} />
-        )}
+        <div className="flex flex-wrap items-end gap-2">
+          {groups.length > 1 && (
+            <GroupSelect groups={groups} selectedId={selectedGroup.id} />
+          )}
+          <NewStudentModal groups={groups} />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
