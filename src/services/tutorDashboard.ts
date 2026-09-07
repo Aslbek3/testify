@@ -56,6 +56,20 @@ async function getGroupStudentIds(groupId: string): Promise<string[]> {
   return profiles.map((p) => p.userId);
 }
 
+/** So'nggi `days` kun ichida guruhda boshlangan EXAM urinishlari soni. */
+export async function getRecentExamAttemptCount(
+  groupId: string,
+  days = 7
+): Promise<number> {
+  const studentIds = await getGroupStudentIds(groupId);
+  if (studentIds.length === 0) return 0;
+
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  return prisma.attempt.count({
+    where: { studentId: { in: studentIds }, mode: "EXAM", startedAt: { gte: since } },
+  });
+}
+
 type GroupAnswer = {
   isCorrect: boolean;
   questionId: string;

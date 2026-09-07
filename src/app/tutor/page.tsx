@@ -1,4 +1,5 @@
 import { requireRole } from "@/lib/auth";
+import { cn } from "@/lib/cn";
 import { StatTile } from "@/components/StatTile";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
 import {
@@ -6,6 +7,7 @@ import {
   getTopicErrorRates,
   getMostMissedQuestions,
   getRosterForGroup,
+  getRecentExamAttemptCount,
 } from "@/services/tutorDashboard";
 import { GroupSelect } from "./GroupSelect";
 import { RosterTable } from "./RosterTable";
@@ -37,10 +39,19 @@ export default async function TutorPage({
             o&apos;quvchining progressini shu yerdan kuzatasiz.
           </p>
         </div>
-        <Card>
-          <p className="text-sm text-text-muted">
-            Sizga hali guruh biriktirilmagan.
-          </p>
+        <Card className="flex flex-col items-center gap-4 py-16 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-border text-xl text-text-muted">
+            —
+          </div>
+          <div className="space-y-1">
+            <p className="text-base font-semibold text-text">
+              Guruh biriktirilmagan
+            </p>
+            <p className="max-w-sm text-sm leading-relaxed text-text-muted">
+              Sizga hali o&apos;quvchilar guruhi biriktirilmagan. Statistikani
+              ko&apos;rish uchun direktoringiz sizga guruh biriktirishi kerak.
+            </p>
+          </div>
         </Card>
       </div>
     );
@@ -48,10 +59,11 @@ export default async function TutorPage({
 
   const selectedGroup = groups.find((g) => g.id === groupParam) ?? groups[0];
 
-  const [topicErrorRates, missedQuestions, roster] = await Promise.all([
+  const [topicErrorRates, missedQuestions, roster, recentExamCount] = await Promise.all([
     getTopicErrorRates(selectedGroup.id),
     getMostMissedQuestions(selectedGroup.id),
     getRosterForGroup(selectedGroup.id),
+    getRecentExamAttemptCount(selectedGroup.id),
   ]);
 
   const studentsWithScore = roster.filter((r) => r.averageScore !== null);
@@ -62,6 +74,7 @@ export default async function TutorPage({
             studentsWithScore.length
         )
       : null;
+  const activeStudentCount = roster.filter((r) => r.isActive).length;
   const totalAttempts = roster.reduce(
     (sum, r) => sum + r.examAttemptCount + r.practiceAttemptCount,
     0
@@ -85,13 +98,15 @@ export default async function TutorPage({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <StatTile
-          emphasis="primary"
-          label="O'rtacha ball"
-          value={averageScore !== null ? `${averageScore}%` : "—"}
-        />
-        <StatTile label="Guruhdagi o'quvchilar" value={roster.length} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1.6fr_1fr_1fr]">
+        <div className="rounded-lg border border-border bg-bg p-6">
+          <p className="text-sm text-text-muted">Guruh o&apos;rtacha bali</p>
+          <p className="mt-1.5 font-mono text-[52px] font-semibold leading-none text-brand">
+            {averageScore !== null ? `${averageScore}%` : "—"}
+          </p>
+        </div>
+        <StatTile label="Faol o'quvchilar" value={activeStudentCount} />
+        <StatTile label="So'nggi hafta imtihonlar" value={recentExamCount} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -108,16 +123,16 @@ export default async function TutorPage({
               {topicErrorRates.map((t) => (
                 <div
                   key={t.topicId}
-                  className="grid grid-cols-[140px_1fr_44px] items-center gap-3"
+                  className="grid grid-cols-[140px_1fr_36px] items-center gap-3"
                 >
-                  <span className="truncate text-sm text-text-muted">{t.topicName}</span>
-                  <div className="h-4 rounded bg-bg-subtle">
+                  <span className="truncate text-xs text-text-muted">{t.topicName}</span>
+                  <div className="h-1.5 rounded-full bg-bg-subtle">
                     <div
-                      className={`h-4 rounded ${severityClass(t.errorRatePercent)}`}
+                      className={cn("h-1.5 rounded-full", severityClass(t.errorRatePercent))}
                       style={{ width: `${t.errorRatePercent}%` }}
                     />
                   </div>
-                  <span className="text-right font-mono text-sm tabular-nums text-text-muted">
+                  <span className="text-right font-mono text-xs text-text">
                     {t.errorRatePercent}%
                   </span>
                 </div>
