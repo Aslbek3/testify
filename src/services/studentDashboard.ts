@@ -126,7 +126,7 @@ export async function getAttemptHistory(studentId: string): Promise<AttemptHisto
       startedAt: true,
       score: true,
       mode: true,
-      _count: { select: { answers: true } },
+      questionIds: true,
     },
   });
 
@@ -134,7 +134,11 @@ export async function getAttemptHistory(studentId: string): Promise<AttemptHisto
     id: attempt.id,
     date: attempt.startedAt,
     score: attempt.score,
-    questionCount: attempt._count.answers,
+    // Urinishdagi SAVOLLAR soni — berilgan javoblar soni emas. Ball ham
+    // aynan questionIds.length'dan hisoblanadi (javobsiz qolgan savol xato
+    // deb sanaladi), shuning uchun javoblar sonini ko'rsatish jadvalda
+    // "12 savol / 50%" kabi o'zaro zid qatorlar hosil qilardi.
+    questionCount: attempt.questionIds.length,
     mode: attempt.mode,
   }));
 }

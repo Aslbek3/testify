@@ -40,8 +40,13 @@ export async function getOrganizationOverview(
     prisma.group.count({ where: { organizationId } }),
     prisma.user.count({ where: { organizationId, role: "TUTOR" } }),
     prisma.user.count({ where: { organizationId, role: "STUDENT" } }),
+    // FAQAT imtihon (EXAM) — mashqda javob darhol ko'rsatilgani uchun
+    // mashq ballari sun'iy yuqori bo'ladi. Bu plitka pastdagi o'quvchilar
+    // jadvali bilan bir xil qoidada hisoblanishi shart, aks holda bitta
+    // sahifada bir-biriga zid ikkita raqam chiqadi.
     prisma.attempt.findMany({
       where: {
+        mode: "EXAM",
         score: { not: null },
         student: {
           studentProfile: { group: { organizationId } },
@@ -80,8 +85,10 @@ export async function getTutorRanking(
             select: {
               user: {
                 select: {
+                  // FAQAT imtihon — tutorDashboard'dagi getRosterForGroup
+                  // bilan bir xil qoida (mashq ballari sun'iy yuqori).
                   attempts: {
-                    where: { score: { not: null } },
+                    where: { mode: "EXAM", score: { not: null } },
                     select: { score: true },
                   },
                 },
@@ -96,11 +103,21 @@ export async function getTutorRanking(
   const rows: TutorRankingRow[] = tutors.map((tutor) => {
     const groupName = tutor.tutorOfGroups.map((g) => g.name).join(", ") || "—";
     const students = tutor.tutorOfGroups.flatMap((g) => g.students);
-    const scores = students.flatMap((s) =>
-      s.user.attempts
-        .map((a) => a.score)
-        .filter((sc): sc is number => sc !== null)
-    );
+
+    // Avval HAR BIR O'QUVCHINING o'rtachasi, keyin o'quvchilar o'rtachasi.
+    // Barcha urinishlarni bitta ro'yxatga qo'shib yuborish (urinish bo'yicha
+    // o'rtachalash) noto'g'ri edi: ko'p imtihon topshirgan bitta o'quvchi
+    // butun guruh ko'rsatkichini o'ziga tortib ketardi. Ustoz jadvalidagi
+    // hisob ham aynan shu — o'quvchi bo'yicha — usulda ishlaydi.
+    const studentAverages = students
+      .map((s) =>
+        average(
+          s.user.attempts
+            .map((a) => a.score)
+            .filter((sc): sc is number => sc !== null)
+        )
+      )
+      .filter((avg): avg is number => avg !== null);
 
     return {
       tutorId: tutor.id,
@@ -108,7 +125,7 @@ export async function getTutorRanking(
       isActive: tutor.isActive,
       groupName,
       studentCount: students.length,
-      averageScore: average(scores),
+      averageScore: average(studentAverages),
     };
   });
 
@@ -257,8 +274,11 @@ export async function listStudentsForOrganization(
           group: { select: { id: true, name: true, tutor: { select: { name: true } } } },
         },
       },
+      // Faqat yakunlangan imtihonlar — tutorDashboard'dagi getRosterForGroup
+      // bilan bir xil qoida (tashlab ketilgan urinish na ballga, na "imtihonlar"
+      // ustuniga kirmaydi).
       attempts: {
-        where: { mode: "EXAM" },
+        where: { mode: "EXAM", finishedAt: { not: null } },
         select: { score: true },
       },
     },

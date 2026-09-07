@@ -188,8 +188,15 @@ export async function getRosterForGroup(groupId: string): Promise<RosterEntry[]>
 
   return profiles.map((p) => {
     const studentAttempts = attemptsByStudent.get(p.userId) ?? [];
-    const examAttempts = studentAttempts.filter((a) => a.mode === "EXAM");
-    const practiceAttempts = studentAttempts.filter((a) => a.mode === "PRACTICE");
+    // Faqat YAKUNLANGAN urinishlar sanaladi — tashlab ketilgani (score null)
+    // o'rtacha ballga ham kirmaydi, shuning uchun uni ustunda ko'rsatish
+    // "5 imtihon · Imtihon topshirilmagan" kabi o'zaro zid qator hosil qilardi.
+    const examAttempts = studentAttempts.filter(
+      (a) => a.mode === "EXAM" && a.finishedAt !== null
+    );
+    const practiceAttempts = studentAttempts.filter(
+      (a) => a.mode === "PRACTICE" && a.finishedAt !== null
+    );
     const finishedExamScores = examAttempts
       .filter((a) => a.score !== null)
       .map((a) => a.score as number);
@@ -199,10 +206,16 @@ export async function getRosterForGroup(groupId: string): Promise<RosterEntry[]>
             finishedExamScores.reduce((sum, s) => sum + s, 0) / finishedExamScores.length
           )
         : null;
+    // Eng so'nggi faollik — barcha urinishlarning ham boshlanish, ham
+    // yakunlanish vaqtlari ichidan eng kattasi. Faqat `[0]` ni olish
+    // noto'g'ri edi: ro'yxat startedAt bo'yicha saralangani uchun keyinroq
+    // yakunlangan eski urinish e'tibordan chetda qolib, ko'rsatilgan vaqt
+    // orqaga siljib ketishi mumkin edi.
+    const activityTimes = studentAttempts.flatMap((a) =>
+      a.finishedAt ? [a.startedAt.getTime(), a.finishedAt.getTime()] : [a.startedAt.getTime()]
+    );
     const lastActivityAt =
-      studentAttempts.length > 0
-        ? studentAttempts[0].finishedAt ?? studentAttempts[0].startedAt
-        : null;
+      activityTimes.length > 0 ? new Date(Math.max(...activityTimes)) : null;
 
     return {
       studentId: p.userId,
@@ -271,12 +284,20 @@ export async function getStudentDetailForTutor(
     statsByTopic.set(a.question.topicId, entry);
   }
 
+  // FAQAT o'quvchi tegib ko'rgan mavzular. Ilgari barcha mavzular olinib,
+  // ma'lumot yo'qlari 0% deb belgilanardi va ro'yxat o'sish bo'yicha
+  // saralangani uchun "hech urinilmagan" mavzular "eng zaif" bo'lib
+  // ro'yxat boshini to'ldirib tashlardi — ustoz haqiqiy zaif mavzuni
+  // ko'rmay qolardi. studentDashboard'dagi getMasteryByTopic ham aynan
+  // shu qoidada ishlaydi.
   const masteryByTopic = topics
+    .filter((t) => (statsByTopic.get(t.id)?.total ?? 0) > 0)
     .map((t) => {
-      const stats = statsByTopic.get(t.id);
-      const masteryPercent =
-        stats && stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
-      return { topicName: t.name, masteryPercent };
+      const stats = statsByTopic.get(t.id)!;
+      return {
+        topicName: t.name,
+        masteryPercent: Math.round((stats.correct / stats.total) * 100),
+      };
     })
     .sort((a, b) => a.masteryPercent - b.masteryPercent);
 

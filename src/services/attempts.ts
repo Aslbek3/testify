@@ -17,16 +17,18 @@ export class AttemptError extends Error {
   }
 }
 
-const QUESTION_COUNT: Record<AttemptMode, number> = {
-  PRACTICE: 10,
-  EXAM: 20,
-};
+// Imtihon qoidalari (savollar soni, vaqt, ruxsat etilgan xato) yagona
+// manbada — `lib/examRules.ts`. Tayyorgarlik chegarasi (`lib/readiness.ts`)
+// ham o'sha yerdan kelib chiqadi, shunda yorliq va haqiqiy o'tish balli
+// bir-biridan ajralib ketmaydi.
+import {
+  QUESTION_COUNT,
+  EXAM_DURATION_SECONDS,
+  EXAM_MAX_WRONG,
+} from "@/lib/examRules";
 
-/** Bitta joyda — TestRunner klient komponenti buni props orqali oladi. */
-export const EXAM_DURATION_SECONDS = 25 * 60;
-
-/** EXAM uchun o'tish sharti: 20 tadan ko'pi bilan 2 tasi xato bo'lishi mumkin. */
-const EXAM_MAX_WRONG = 2;
+/** TestRunner klient komponenti buni props orqali oladi. */
+export { EXAM_DURATION_SECONDS };
 
 export type AttemptQuestionForClient = {
   id: string;
@@ -359,10 +361,18 @@ export async function finishAttempt(input: {
   const correctCount = validAnswers.filter((a) => a.isCorrect).length;
   const score = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
 
-  await prisma.attempt.update({
-    where: { id: input.attemptId },
+  // Shartli (atomik) yangilanish: yuqoridagi `finishedAt` tekshiruvi bilan
+  // shu yozuv orasida boshqa so'rov urinishni yakunlab ulgurishi mumkin
+  // (masalan taymer avtomatik yakunlashi va foydalanuvchining "Yakunlash"
+  // tugmasi deyarli bir vaqtda ishlaganda). `finishedAt: null` shartini
+  // WHERE'ga qo'shsak, faqat birinchi so'rov yozadi.
+  const updated = await prisma.attempt.updateMany({
+    where: { id: input.attemptId, finishedAt: null },
     data: { finishedAt: new Date(), score },
   });
+  if (updated.count === 0) {
+    throw new AttemptError("Bu urinish allaqachon yakunlangan", 409);
+  }
 
   return { score, correctCount, totalCount };
 }
@@ -405,6 +415,7 @@ export async function getAttemptResult(input: {
     select: {
       studentId: true,
       mode: true,
+      startedAt: true,
       finishedAt: true,
       score: true,
       questionIds: true,
@@ -418,7 +429,7 @@ export async function getAttemptResult(input: {
     throw new AttemptError("Bu urinish hali yakunlanmagan", 409);
   }
 
-  const [questions, savedAnswers] = await Promise.all([
+  const [questions, allSavedAnswers] = await Promise.all([
     prisma.question.findMany({
       where: { id: { in: attempt.questionIds } },
       select: {
@@ -433,9 +444,28 @@ export async function getAttemptResult(input: {
     }),
     prisma.attemptAnswer.findMany({
       where: { attemptId: input.attemptId, questionId: { in: attempt.questionIds } },
-      select: { questionId: true, selectedOptionIndex: true, isCorrect: true },
+      select: {
+        questionId: true,
+        selectedOptionIndex: true,
+        isCorrect: true,
+        answeredAt: true,
+      },
     }),
   ]);
+
+  // finishAttempt ballni hisoblashda EXAM vaqti tugagandan keyin kelgan
+  // javoblarni chiqarib tashlaydi. Bu yerda ham AYNI filtr qo'llanishi
+  // shart — aks holda saqlangan ball (filtrlangan) bilan shu sahifada
+  // qayta hisoblangan correctCount/passed (filtrlanmagan) bir-biriga zid
+  // bo'lib qolardi: masalan 75% ball ustida "O'TDI" yozuvi chiqishi mumkin edi.
+  const savedAnswers =
+    attempt.mode === "EXAM"
+      ? allSavedAnswers.filter(
+          (a) =>
+            (a.answeredAt.getTime() - attempt.startedAt.getTime()) / 1000 <=
+            EXAM_DURATION_SECONDS
+        )
+      : allSavedAnswers;
 
   const questionById = new Map(questions.map((q) => [q.id, q]));
   const answerByQuestionId = new Map(savedAnswers.map((a) => [a.questionId, a]));
