@@ -128,6 +128,33 @@ export async function createQuestion(input: {
   });
 }
 
+/**
+ * Savolga allaqachon javob berilgan bo'lsa, bahoni belgilaydigan qismlar
+ * (to'g'ri javob indeksi va variantlar ro'yxati) MUZLATILADI.
+ *
+ * Sabab: `AttemptAnswer.isCorrect` javob berilgan paytda hisoblanib
+ * saqlanadi, natija sahifasi esa "to'g'ri javob" matnini savolning
+ * HOZIRGI holatidan oladi. Ular ajralib ketsa, eski natijada o'quvchining
+ * tanlagan varianti bilan "to'g'ri javob" bir xil matn bo'lib turadi-yu,
+ * savol baribir "Xato qilingan savollar" ro'yxatida qoladi; saqlangan ball
+ * ham qayta hisoblanmagani uchun ball bilan tafsilot bir-biriga zid bo'ladi.
+ *
+ * Matn, izoh va rasm tavsifini o'zgartirish esa har doim ochiq —
+ * imlo xatosini tuzatish bloklanmasligi kerak.
+ */
+function isGradingChanged(
+  existing: { options: string[]; correctOptionIndex: number },
+  incoming: { options: string[]; correctOptionIndex: number }
+): boolean {
+  if (existing.correctOptionIndex !== incoming.correctOptionIndex) return true;
+  if (existing.options.length !== incoming.options.length) return true;
+  // Tartib muhim: variantlar o'rni almashsa ham saqlangan
+  // `selectedOptionIndex` boshqa matnga ishora qilib qoladi.
+  return existing.options.some(
+    (option, index) => option.trim() !== incoming.options[index].trim()
+  );
+}
+
 export async function updateQuestion(
   id: string,
   input: {
@@ -138,6 +165,34 @@ export async function updateQuestion(
   }
 ) {
   validateQuestionInput(input);
+
+  const existing = await prisma.question.findUnique({
+    where: { id },
+    select: { options: true, correctOptionIndex: true },
+  });
+  if (!existing) {
+    throw new QuestionBankError("Savol topilmadi");
+  }
+
+  const answerCount = await prisma.attemptAnswer.count({
+    where: { questionId: id },
+  });
+
+  if (
+    answerCount > 0 &&
+    isGradingChanged(
+      {
+        options: toStringArray(existing.options),
+        correctOptionIndex: existing.correctOptionIndex,
+      },
+      { options: input.options, correctOptionIndex: input.correctOptionIndex }
+    )
+  ) {
+    throw new QuestionBankError(
+      "Bu savolga allaqachon javob berilgan — to'g'ri javobni yoki variantlarni " +
+        "o'zgartirib bo'lmaydi, chunki eski natijalar buziladi. Yangi savol yarating."
+    );
+  }
 
   return prisma.question.update({
     where: { id },

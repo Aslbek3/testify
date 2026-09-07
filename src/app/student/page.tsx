@@ -20,6 +20,7 @@ import {
   getMasteryByTopic,
   getAttemptHistory,
 } from "@/services/studentDashboard";
+import { finalizeExpiredAttempts } from "@/services/attempts";
 import { ProgressRing } from "./ProgressRing";
 
 function masteryVariant(pct: number): BadgeVariant {
@@ -36,6 +37,14 @@ function masteryBarColor(pct: number): string {
 
 export default async function StudentPage() {
   const user = await requireRole("STUDENT");
+
+  // Yorliq yopilib tashlab ketilgan imtihonlarni server tomonda hech kim
+  // yopmaydi — shuning uchun panel yuklanishida "yalqov" yakunlaymiz.
+  // Statistikani o'qishdan OLDIN turishi shart, aks holda endigina yopilgan
+  // urinish shu sahifada hali ko'rinmay qoladi. Yakunlash faqat o'quvchining
+  // o'zi ilovaga kirganda sodir bo'ladi: ustoz uni shu paytgacha
+  // statistikada ko'rmasligi mumkin.
+  await finalizeExpiredAttempts(user.id);
 
   const [overview, mastery, history] = await Promise.all([
     getStudentOverview(user.id),

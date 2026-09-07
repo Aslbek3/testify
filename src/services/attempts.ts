@@ -245,6 +245,14 @@ export async function getAttemptForResume(input: {
   user: SessionUser;
   attemptId: string;
 }): Promise<ResumableAttempt> {
+  // Urinishni ochishdan OLDIN o'quvchining vaqti tugagan imtihonlarini
+  // yakunlaymiz — shunda ancha oldin tashlab ketilgan imtihonga qaytilganda
+  // o'lik taymer emas, natija sahifasi ochiladi (sahifa `finishedAt`
+  // to'ldirilgan bo'lsa `/natija`ga yo'naltiradi).
+  if (input.user.role === "STUDENT") {
+    await finalizeExpiredAttempts(input.user.id);
+  }
+
   const attempt = await prisma.attempt.findUnique({
     where: { id: input.attemptId },
     select: {
@@ -321,26 +329,23 @@ export async function getAttemptForResume(input: {
   };
 }
 
-export async function finishAttempt(input: {
-  user: SessionUser;
-  attemptId: string;
+/**
+ * Urinishning ballini hisoblaydi — bu YAGONA hisoblash joyi.
+ *
+ * `finishAttempt` (o'quvchi/taymer yakunlagan holat) ham,
+ * `finalizeExpiredAttempts` (tashlab ketilgan imtihon) ham shu funksiyani
+ * chaqiradi, shunda ikki yo'l hech qachon boshqacha ball bermaydi.
+ */
+async function scoreAttempt(attempt: {
+  id: string;
+  mode: AttemptMode;
+  startedAt: Date;
+  questionIds: string[];
 }): Promise<{ score: number; correctCount: number; totalCount: number }> {
-  const attempt = await prisma.attempt.findUnique({
-    where: { id: input.attemptId },
-    select: { studentId: true, mode: true, startedAt: true, finishedAt: true, questionIds: true },
-  });
-  if (!attempt) throw new AttemptError("Urinish topilmadi", 404);
-  if (!canTakeAttempt(input.user, attempt)) {
-    throw new AttemptError("Bu urinish sizga tegishli emas", 403);
-  }
-  if (attempt.finishedAt) {
-    throw new AttemptError("Bu urinish allaqachon yakunlangan", 409);
-  }
-
   // questionId filtri — urinishga tegishli bo'lmagan javoblar (masalan eski
   // ma'lumot yoki chetlab o'tilgan tekshiruv) ballga qo'shilmasin.
   const answers = await prisma.attemptAnswer.findMany({
-    where: { attemptId: input.attemptId, questionId: { in: attempt.questionIds } },
+    where: { attemptId: attempt.id, questionId: { in: attempt.questionIds } },
     select: { isCorrect: true, answeredAt: true },
   });
 
@@ -360,6 +365,86 @@ export async function finishAttempt(input: {
   const totalCount = attempt.questionIds.length;
   const correctCount = validAnswers.filter((a) => a.isCorrect).length;
   const score = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+
+  return { score, correctCount, totalCount };
+}
+
+/**
+ * Vaqti tugagan, lekin yakunlanmay qolgan imtihonlarni yopadi.
+ *
+ * Muammo: brauzer yorlig'i ochiq turganda `TestRunner` taymeri imtihonni
+ * o'zi yakunlaydi, lekin o'quvchi yorliqni imtihon o'rtasida yopib qo'ysa,
+ * server tomonda hech narsa uni yopmaydi — urinish abadiy
+ * `finishedAt: null`, `score: null` bo'lib qoladi va barcha statistikadan
+ * bildirmay tushib qoladi. Bu yerda o'sha urinishlar AYNI taymer
+ * qoidalari bo'yicha (qisman ball bilan) yakunlanadi.
+ *
+ * ⚠️ Bu "yalqov" (lazy) yakunlash: hech qanday cron yo'q, faqat o'quvchi
+ * ilovani keyingi marta ochganda ishlaydi. Ya'ni ustoz tashlab ketilgan
+ * urinishni o'quvchi ilovaga qaytmaguncha statistikada ko'rmasligi mumkin.
+ *
+ * @returns nechta urinish yopilgani.
+ */
+export async function finalizeExpiredAttempts(studentId: string): Promise<number> {
+  const expiryCutoff = new Date(Date.now() - EXAM_DURATION_SECONDS * 1000);
+
+  const expired = await prisma.attempt.findMany({
+    where: {
+      studentId,
+      mode: "EXAM",
+      finishedAt: null,
+      startedAt: { lt: expiryCutoff },
+    },
+    select: { id: true, mode: true, startedAt: true, questionIds: true },
+  });
+
+  let closedCount = 0;
+  for (const attempt of expired) {
+    const { score } = await scoreAttempt(attempt);
+
+    // Shartli (atomik) yangilanish — shu payt o'quvchi boshqa yorliqda
+    // urinishni haqiqiy "Yakunlash" tugmasi bilan yopayotgan bo'lishi
+    // mumkin; `finishedAt: null` sharti tufayli faqat bittasi yozadi.
+    const updated = await prisma.attempt.updateMany({
+      where: { id: attempt.id, finishedAt: null },
+      // Yakunlanish vaqti — imtihon muddati tugagan lahza, hozirgi vaqt
+      // emas: urinish aslida o'shanda tugagan, o'quvchi ilovani bir oydan
+      // keyin ochgani tarixni siljitmasligi kerak.
+      data: {
+        finishedAt: new Date(
+          attempt.startedAt.getTime() + EXAM_DURATION_SECONDS * 1000
+        ),
+        score,
+      },
+    });
+    closedCount += updated.count;
+  }
+
+  return closedCount;
+}
+
+export async function finishAttempt(input: {
+  user: SessionUser;
+  attemptId: string;
+}): Promise<{ score: number; correctCount: number; totalCount: number }> {
+  const attempt = await prisma.attempt.findUnique({
+    where: { id: input.attemptId },
+    select: { studentId: true, mode: true, startedAt: true, finishedAt: true, questionIds: true },
+  });
+  if (!attempt) throw new AttemptError("Urinish topilmadi", 404);
+  if (!canTakeAttempt(input.user, attempt)) {
+    throw new AttemptError("Bu urinish sizga tegishli emas", 403);
+  }
+  if (attempt.finishedAt) {
+    throw new AttemptError("Bu urinish allaqachon yakunlangan", 409);
+  }
+
+  const { score, correctCount, totalCount } = await scoreAttempt({
+    id: input.attemptId,
+    mode: attempt.mode,
+    startedAt: attempt.startedAt,
+    questionIds: attempt.questionIds,
+  });
 
   // Shartli (atomik) yangilanish: yuqoridagi `finishedAt` tekshiruvi bilan
   // shu yozuv orasida boshqa so'rov urinishni yakunlab ulgurishi mumkin
