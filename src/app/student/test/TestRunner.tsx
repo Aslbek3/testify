@@ -268,183 +268,219 @@ export function TestRunner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestion.id, practiceLocked, goNext, showFinishConfirm]);
 
-  const modeLabel = mode === "EXAM" ? "Imtihon rejimi" : "Mashq rejimi";
+  const modeLabel = mode === "EXAM" ? "Imtihon" : "Mashq";
   const isDanger = secondsLeft !== null && secondsLeft <= DANGER_THRESHOLD_SECONDS;
+  const currentStatus = saveStatus[currentQuestion.id];
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-text-muted">{modeLabel}</p>
-          <p className="font-mono text-lg font-semibold text-text">
-            {currentIndex + 1} / {total}
-          </p>
-        </div>
-        {secondsLeft !== null && (
-          <div
-            className={cn(
-              "rounded-md border px-3 py-1.5 font-mono text-lg font-semibold",
-              isDanger
-                ? "border-danger/30 bg-danger/10 text-danger"
-                : "border-border bg-bg text-text"
-            )}
-          >
-            {formatTime(secondsLeft)}
-          </div>
-        )}
-      </div>
-
-      <nav className="flex flex-wrap gap-1.5" aria-label="Savollar holati">
-        {questions.map((q, i) => {
-          const isCurrent = i === currentIndex;
-          const isAnswered = Boolean(answers[q.id]);
-          const status = saveStatus[q.id];
-          const barColor = isCurrent
-            ? "bg-text"
-            : status === "failed"
-              ? "bg-danger"
-              : status === "retrying" || status === "saving"
-                ? "bg-warning"
-                : isAnswered
-                  ? "bg-brand"
-                  : "bg-border";
-          return (
-            <button
-              key={q.id}
-              type="button"
-              onClick={() => setCurrentIndex(i)}
-              aria-label={`${i + 1}-savol${isAnswered ? ", javob berilgan" : ""}${
-                status === "failed" ? ", saqlanmadi" : ""
-              }`}
-              aria-current={isCurrent ? "step" : undefined}
-              className="flex min-h-[24px] min-w-[10px] flex-1 items-center rounded-full"
+    <div className="mx-auto max-w-3xl space-y-6">
+      <Card className="overflow-hidden p-0">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <span
+              className={cn(
+                "rounded-md px-2.5 py-1 text-xs font-semibold",
+                mode === "EXAM" ? "bg-brand-soft text-brand" : "bg-success/15 text-success"
+              )}
             >
-              <span className={cn("block h-2 w-full rounded-full transition-colors", barColor)} />
-            </button>
-          );
-        })}
-      </nav>
+              {modeLabel}
+            </span>
+            <span className="font-mono text-base font-semibold text-text">
+              {currentIndex + 1} / {total}
+            </span>
+          </div>
+          {secondsLeft !== null ? (
+            <span
+              className={cn(
+                "font-mono text-base font-semibold",
+                isDanger ? "text-danger" : "text-text"
+              )}
+            >
+              {formatTime(secondsLeft)}
+            </span>
+          ) : (
+            <span className="font-mono text-base font-semibold text-text-muted">
+              Cheklovsiz
+            </span>
+          )}
+        </div>
 
-      <Card>
-        {currentQuestion.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={currentQuestion.imageUrl}
-            alt={currentQuestion.imageAlt ?? ""}
-            className="mb-4 max-h-64 w-full rounded-md object-contain"
-          />
-        )}
-        <p className="text-lg font-medium leading-relaxed text-text">
-          {currentQuestion.text}
-        </p>
-
-        <div className="mt-6 space-y-3">
-          {currentQuestion.options.map((option, i) => {
-            const isSelected = currentAnswer?.selectedOptionIndex === i;
-            const currentStatus = saveStatus[currentQuestion.id];
-            const showUnsavedWarning =
-              isSelected && (currentStatus === "retrying" || currentStatus === "failed");
-            // `correctOptionIndex` faqat server javob qaytargandan keyin
-            // keladi — shundan oldin ham "currentAnswer" mavjud bo'ladi
-            // (optimistik selectedOptionIndex bilan), shuning uchun aynan
-            // shu maydonni tekshiramiz, aks holda javob "xato" bo'lib bir
-            // lahzaga miltillab ketardi.
-            const showCorrectness =
-              mode === "PRACTICE" && currentAnswer?.correctOptionIndex !== undefined;
-            const isTheCorrectOne =
-              showCorrectness && currentAnswer?.correctOptionIndex === i;
-            const isWrongSelected = showCorrectness && isSelected && !isTheCorrectOne;
-
+        <nav
+          className="flex gap-1 border-b border-border px-5 py-3.5 sm:px-6"
+          aria-label="Savollar holati"
+        >
+          {questions.map((q, i) => {
+            const isCurrent = i === currentIndex;
+            const isAnswered = Boolean(answers[q.id]);
+            const status = saveStatus[q.id];
+            const fillColor =
+              status === "failed"
+                ? "bg-danger"
+                : status === "retrying" || status === "saving"
+                  ? "bg-warning"
+                  : isAnswered
+                    ? "bg-brand"
+                    : "bg-border";
             return (
               <button
-                key={i}
+                key={q.id}
                 type="button"
-                disabled={practiceLocked}
-                onClick={() => handleSelect(i)}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-lg border p-4 text-left transition-colors",
-                  isTheCorrectOne
-                    ? "border-success bg-success/25"
-                    : isWrongSelected
-                      ? "border-danger bg-danger/25"
-                      : isSelected
-                        ? "border-brand bg-brand-soft"
-                        : "border-border bg-bg hover:bg-bg-subtle",
-                  practiceLocked && !isSelected && !isTheCorrectOne && "opacity-60"
-                )}
+                onClick={() => setCurrentIndex(i)}
+                aria-label={`${i + 1}-savol${isAnswered ? ", javob berilgan" : ""}${
+                  status === "failed" ? ", saqlanmadi" : ""
+                }`}
+                aria-current={isCurrent ? "step" : undefined}
+                className="flex min-h-[24px] min-w-[10px] flex-1 items-center rounded-full"
               >
                 <span
                   className={cn(
-                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border font-mono text-sm font-semibold",
-                    isSelected || isTheCorrectOne
-                      ? "border-transparent bg-brand text-white"
-                      : "border-border text-text-muted"
+                    "block w-full rounded-full transition-all",
+                    isCurrent ? "h-2 border-2 border-text" : "h-1.5",
+                    fillColor
                   )}
-                >
-                  {i + 1}
-                </span>
-                <span className="text-text">{option}</span>
-                {showUnsavedWarning && (
-                  <WarningIcon
-                    className={cn(
-                      "ml-auto h-4 w-4 shrink-0",
-                      currentStatus === "failed" ? "text-danger" : "text-warning"
-                    )}
-                  />
-                )}
+                />
               </button>
             );
           })}
-        </div>
+        </nav>
 
-        {mode === "PRACTICE" && currentAnswer?.isCorrect !== undefined && (
-          <div
-            className={cn(
-              "mt-4 rounded-md p-3 text-sm",
-              currentAnswer.isCorrect ? "bg-success/25 text-success" : "bg-danger/25 text-danger"
-            )}
-          >
-            <p className="font-medium">
-              {currentAnswer.isCorrect ? "To'g'ri!" : "Xato."}
+        <div
+          className={cn(
+            "gap-6 p-5 sm:p-6 md:p-8",
+            currentQuestion.imageUrl
+              ? "grid md:grid-cols-[minmax(0,420px)_1fr] md:gap-8"
+              : "flex flex-col"
+          )}
+        >
+          {currentQuestion.imageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={currentQuestion.imageUrl}
+              alt={currentQuestion.imageAlt ?? ""}
+              className="h-56 w-full rounded-lg object-cover md:h-[280px]"
+            />
+          )}
+
+          <div className="flex flex-col gap-5">
+            <p className="text-lg font-semibold leading-relaxed text-text">
+              {currentQuestion.text}
             </p>
-            {currentAnswer.explanation && (
-              <p className="mt-1 text-text">{currentAnswer.explanation}</p>
+
+            {currentStatus === "retrying" && (
+              <p className="flex items-center gap-1.5 rounded-md border border-warning bg-warning/10 px-4 py-3 text-sm text-warning">
+                <WarningIcon className="h-4 w-4 shrink-0" />
+                Saqlanmadi, qayta urinilmoqda...
+              </p>
             )}
-          </div>
-        )}
+            {currentStatus === "failed" && (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-danger bg-danger/10 px-4 py-3">
+                <p className="text-sm text-danger">
+                  Javobingiz saqlanmadi — internet aloqasi uzilgan bo&apos;lishi
+                  mumkin.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => retrySave(currentQuestion.id)}
+                  className="shrink-0 rounded-md bg-danger px-3.5 py-1.5 text-xs font-semibold text-white"
+                >
+                  Qayta urinish
+                </button>
+              </div>
+            )}
 
-        {saveStatus[currentQuestion.id] === "saving" && (
-          <p className="mt-2 text-xs text-text-muted">Saqlanmoqda...</p>
-        )}
-        {saveStatus[currentQuestion.id] === "retrying" && (
-          <p className="mt-2 flex items-center gap-1.5 text-xs text-warning">
-            <WarningIcon className="h-3.5 w-3.5" />
-            Saqlanmadi, qayta urinilmoqda...
-          </p>
-        )}
-        {saveStatus[currentQuestion.id] === "failed" && (
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-danger">
-            <WarningIcon className="h-3.5 w-3.5" />
-            <span>Javobingiz saqlanmadi. Internet aloqasini tekshiring.</span>
-            <button
-              type="button"
-              onClick={() => retrySave(currentQuestion.id)}
-              className="font-medium underline"
-            >
-              Qayta urinish
-            </button>
+            <div className="flex flex-col gap-2.5">
+              {currentQuestion.options.map((option, i) => {
+                const isSelected = currentAnswer?.selectedOptionIndex === i;
+                const showUnsaved =
+                  isSelected && (currentStatus === "retrying" || currentStatus === "failed");
+                // `correctOptionIndex` faqat server javob qaytargandan keyin
+                // keladi — shundan oldin ham "currentAnswer" mavjud bo'ladi
+                // (optimistik selectedOptionIndex bilan), shuning uchun aynan
+                // shu maydonni tekshiramiz, aks holda javob "xato" bo'lib bir
+                // lahzaga miltillab ketardi.
+                const showCorrectness =
+                  mode === "PRACTICE" && currentAnswer?.correctOptionIndex !== undefined;
+                const isTheCorrectOne =
+                  showCorrectness && currentAnswer?.correctOptionIndex === i;
+                const isWrongSelected = showCorrectness && isSelected && !isTheCorrectOne;
+
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    disabled={practiceLocked}
+                    onClick={() => handleSelect(i)}
+                    className={cn(
+                      "flex w-full items-center gap-3 rounded-lg border p-3.5 text-left transition-colors",
+                      isTheCorrectOne
+                        ? "border-success bg-success/10"
+                        : isWrongSelected
+                          ? "border-danger bg-danger/10"
+                          : showUnsaved
+                            ? cn(
+                                "border-dashed",
+                                currentStatus === "failed" ? "border-danger" : "border-warning"
+                              )
+                            : isSelected
+                              ? "border-brand bg-brand-soft"
+                              : "border-border bg-bg hover:bg-bg-subtle",
+                      practiceLocked && !isSelected && !isTheCorrectOne && "opacity-50"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "w-4 shrink-0 font-mono text-sm font-semibold",
+                        isTheCorrectOne
+                          ? "text-success"
+                          : showUnsaved
+                            ? currentStatus === "failed"
+                              ? "text-danger"
+                              : "text-warning"
+                            : "text-text-muted"
+                      )}
+                    >
+                      {i + 1}
+                    </span>
+                    <span
+                      className={cn(
+                        "text-sm text-text",
+                        (isSelected || isTheCorrectOne) && "font-medium"
+                      )}
+                    >
+                      {option}
+                    </span>
+                    {isTheCorrectOne && (
+                      <span className="ml-auto text-sm font-semibold text-success">✓</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {mode === "PRACTICE" && currentAnswer?.explanation && (
+              <div className="flex flex-col gap-1 rounded-md bg-brand-soft px-4 py-3.5">
+                <p className="text-xs font-semibold text-brand">Izoh</p>
+                <p className="text-sm leading-relaxed text-text">
+                  {currentAnswer.explanation}
+                </p>
+              </div>
+            )}
+
+            {currentStatus === "saving" && (
+              <p className="text-xs text-text-muted">Saqlanmoqda...</p>
+            )}
+
+            <div className="mt-1 flex items-center justify-between">
+              <Button variant="secondary" onClick={goBack} disabled={currentIndex === 0}>
+                Orqaga
+              </Button>
+              <Button onClick={goNext} disabled={finishing}>
+                {finishing ? "Yakunlanmoqda..." : isLast ? "Yakunlash" : "Keyingisi"}
+              </Button>
+            </div>
           </div>
-        )}
+        </div>
       </Card>
-
-      <div className="flex items-center justify-between">
-        <Button variant="secondary" onClick={goBack} disabled={currentIndex === 0}>
-          Orqaga
-        </Button>
-        <Button onClick={goNext} disabled={finishing}>
-          {finishing ? "Yakunlanmoqda..." : isLast ? "Yakunlash" : "Keyingisi"}
-        </Button>
-      </div>
 
       <Modal
         open={showFinishConfirm}

@@ -2,8 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { getAttemptResult, AttemptError } from "@/services/attempts";
-import { Card, CardHeader, CardTitle } from "@/components/Card";
-import { Badge } from "@/components/Badge";
+import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { cn } from "@/lib/cn";
 
@@ -35,89 +34,89 @@ export default async function AttemptResultPage({
     throw error;
   }
 
-  const modeLabel = result.mode === "EXAM" ? "Imtihon" : "Mashq";
-
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-text">{modeLabel} natijasi</h1>
-      </div>
-
-      <Card>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-sm text-text-muted">Natija</p>
-            <p className="font-mono text-4xl font-semibold text-text">
-              {result.totalCount} tadan {result.correctCount} tasi to&apos;g&apos;ri
-            </p>
-            <p className="mt-1 font-mono text-sm text-text-muted">{result.score}%</p>
-          </div>
+      <Card className="flex flex-col gap-7 p-8">
+        <div className="flex flex-col items-center gap-2 py-3 text-center">
           {result.passed !== null && (
-            <Badge variant={result.passed ? "success" : "danger"}>
-              {result.passed ? "O'tdi" : "O'tmadi"}
-            </Badge>
+            <p
+              className={cn(
+                "text-sm font-semibold tracking-wide",
+                result.passed ? "text-success" : "text-danger"
+              )}
+            >
+              {result.passed ? "O'TDI" : "YIQILDI"}
+            </p>
+          )}
+          <p className="font-mono text-[44px] font-semibold leading-none text-text">
+            {result.correctCount}
+            <span className="text-2xl text-text-muted">/{result.totalCount}</span>
+          </p>
+          <p className="text-sm text-text-muted">
+            {result.totalCount} tadan {result.correctCount} tasi to&apos;g&apos;ri
+            {result.passed === false && result.passThreshold !== null && (
+              <> — kamida {result.passThreshold} ta kerak</>
+            )}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-semibold text-text">Mavzular bo&apos;yicha taqsimot</p>
+          <div className="flex flex-col gap-2.5">
+            {result.topicBreakdown.map((topic) => {
+              const percent = Math.round((topic.correct / topic.total) * 100);
+              return (
+                <div key={topic.topicId} className="flex flex-col gap-1">
+                  <div className="flex items-center justify-between text-sm text-text">
+                    <span>{topic.topicName}</span>
+                    <span className="font-mono text-text-muted">
+                      {topic.correct}/{topic.total}
+                    </span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-bg-subtle">
+                    <div
+                      className={cn("h-1.5 rounded-full", topicBarColor(percent))}
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-semibold text-text">Xato qilingan savollar</p>
+          {result.missedQuestions.length === 0 ? (
+            <p className="text-sm text-text-muted">
+              Barcha savollarga to&apos;g&apos;ri javob berdingiz!
+            </p>
+          ) : (
+            <div className="flex flex-col divide-y divide-border overflow-hidden rounded-md border border-border">
+              {result.missedQuestions.map((question, index) => (
+                <div key={question.questionId} className="flex flex-col gap-1.5 p-4">
+                  <p className="text-sm text-text">
+                    {index + 1}. {question.text}
+                  </p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                    <span className="text-danger">
+                      Sizning javobingiz:{" "}
+                      {question.selectedOptionText ?? "Javob berilmagan"}
+                    </span>
+                    <span className="text-success">
+                      To&apos;g&apos;ri javob: {question.correctOptionText}
+                    </span>
+                  </div>
+                  {question.explanation && (
+                    <p className="text-xs leading-relaxed text-text-muted">
+                      {question.explanation}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Mavzular bo&apos;yicha taqsimot</CardTitle>
-        </CardHeader>
-        <div className="space-y-3">
-          {result.topicBreakdown.map((topic) => {
-            const percent = Math.round((topic.correct / topic.total) * 100);
-            return (
-              <div key={topic.topicId} className="flex items-center gap-4">
-                <span className="w-40 shrink-0 truncate text-sm text-text">
-                  {topic.topicName}
-                </span>
-                <div className="h-2 flex-1 rounded-full bg-bg-subtle">
-                  <div
-                    className={cn("h-2 rounded-full", topicBarColor(percent))}
-                    style={{ width: `${percent}%` }}
-                  />
-                </div>
-                <span className="font-mono text-sm text-text-muted">
-                  {topic.correct}/{topic.total}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Xato qilingan savollar</CardTitle>
-          <span className="text-sm text-text-muted">
-            {result.missedQuestions.length} ta
-          </span>
-        </CardHeader>
-
-        {result.missedQuestions.length === 0 ? (
-          <p className="text-sm text-text-muted">
-            Barcha savollarga to&apos;g&apos;ri javob berdingiz!
-          </p>
-        ) : (
-          <ul className="space-y-4">
-            {result.missedQuestions.map((question) => (
-              <li key={question.questionId} className="rounded-md border border-border p-4">
-                <p className="font-medium text-text">{question.text}</p>
-                <p className="mt-2 text-sm text-danger">
-                  Sizning javobingiz:{" "}
-                  {question.selectedOptionText ?? "Javob berilmagan"}
-                </p>
-                <p className="text-sm text-success">
-                  To&apos;g&apos;ri javob: {question.correctOptionText}
-                </p>
-                {question.explanation && (
-                  <p className="mt-2 text-sm text-text-muted">{question.explanation}</p>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
       </Card>
 
       <div className="flex flex-wrap gap-2">

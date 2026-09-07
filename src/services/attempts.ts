@@ -390,6 +390,8 @@ export type AttemptResult = {
   totalCount: number;
   /** PRACTICE uchun null — "o'tish/o'tmaslik" tushunchasi faqat EXAM'ga tegishli. */
   passed: boolean | null;
+  /** O'tish uchun kerakli eng kam to'g'ri javoblar soni — faqat EXAM uchun. */
+  passThreshold: number | null;
   topicBreakdown: TopicBreakdownRow[];
   missedQuestions: MissedQuestion[];
 };
@@ -482,6 +484,7 @@ export async function getAttemptResult(input: {
     correctCount,
     totalCount,
     passed: attempt.mode === "EXAM" ? wrongCount <= EXAM_MAX_WRONG : null,
+    passThreshold: attempt.mode === "EXAM" ? totalCount - EXAM_MAX_WRONG : null,
     topicBreakdown: Array.from(topicMap.values()),
     missedQuestions,
   };
