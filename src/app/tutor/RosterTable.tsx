@@ -12,6 +12,7 @@ import {
 } from "@/components/Table";
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
+import { ResetPasswordModal } from "@/components/ResetPasswordModal";
 import { formatDate } from "@/lib/format";
 import type { RosterEntry, StudentDetail } from "@/services/tutorDashboard";
 
@@ -22,6 +23,7 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [errorId, setErrorId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [resetPasswordFor, setResetPasswordFor] = useState<RosterEntry | null>(null);
 
   async function handleToggleActive(studentId: string, nextActive: boolean) {
     setTogglingId(studentId);
@@ -68,6 +70,7 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
   }
 
   return (
+    <>
     <Table>
       <TableHead>
         <TableRow>
@@ -110,17 +113,29 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    disabled={isToggling}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleActive(student.studentId, !student.isActive);
-                    }}
-                  >
-                    {isToggling ? "..." : student.isActive ? "Bloklash" : "Tiklash"}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={isToggling}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleActive(student.studentId, !student.isActive);
+                      }}
+                    >
+                      {isToggling ? "..." : student.isActive ? "Bloklash" : "Tiklash"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setResetPasswordFor(student);
+                      }}
+                    >
+                      Parolni tiklash
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
 
@@ -202,5 +217,15 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
         })}
       </TableBody>
     </Table>
+
+    {resetPasswordFor && (
+      <ResetPasswordModal
+        open={true}
+        onClose={() => setResetPasswordFor(null)}
+        endpoint={`/api/tutor/students/${resetPasswordFor.studentId}/password`}
+        userName={resetPasswordFor.name}
+      />
+    )}
+    </>
   );
 }

@@ -113,3 +113,16 @@ export async function setUserActive(userId: string, isActive: boolean) {
     data: isActive ? { isActive: true } : { isActive: false, sessionVersion: { increment: 1 } },
   });
 }
+
+/**
+ * Foydalanuvchi parolini boshqa birov (ustoz o'z o'quvchisiga, direktor
+ * o'z ustoziga) tiklaydi. sessionVersion oshiriladi — eski parol bilan
+ * ochilgan har qanday joriy sessiya requireRole orqali darhol bekor bo'ladi.
+ */
+export async function resetUserPassword(userId: string, newPassword: string) {
+  const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  return prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash, sessionVersion: { increment: 1 } },
+  });
+}

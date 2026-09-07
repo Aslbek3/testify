@@ -12,11 +12,13 @@ import {
 } from "@/components/Table";
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
+import { ResetPasswordModal } from "@/components/ResetPasswordModal";
 import type { TutorRankingRow } from "@/services/directorDashboard";
 
 export function TutorRankingTable({ rows }: { rows: TutorRankingRow[] }) {
   const router = useRouter();
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [resetPasswordFor, setResetPasswordFor] = useState<TutorRankingRow | null>(null);
 
   async function handleToggleActive(tutorId: string, nextActive: boolean) {
     setTogglingId(tutorId);
@@ -33,6 +35,7 @@ export function TutorRankingTable({ rows }: { rows: TutorRankingRow[] }) {
   }
 
   return (
+    <>
     <Table>
       <TableHead>
         <TableRow>
@@ -63,19 +66,38 @@ export function TutorRankingTable({ rows }: { rows: TutorRankingRow[] }) {
                 </Badge>
               </TableCell>
               <TableCell>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={isToggling}
-                  onClick={() => handleToggleActive(row.tutorId, !row.isActive)}
-                >
-                  {isToggling ? "..." : row.isActive ? "Bloklash" : "Tiklash"}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={isToggling}
+                    onClick={() => handleToggleActive(row.tutorId, !row.isActive)}
+                  >
+                    {isToggling ? "..." : row.isActive ? "Bloklash" : "Tiklash"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => setResetPasswordFor(row)}
+                  >
+                    Parolni tiklash
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           );
         })}
       </TableBody>
     </Table>
+
+    {resetPasswordFor && (
+      <ResetPasswordModal
+        open={true}
+        onClose={() => setResetPasswordFor(null)}
+        endpoint={`/api/tutors/${resetPasswordFor.tutorId}/password`}
+        userName={resetPasswordFor.tutorName}
+      />
+    )}
+    </>
   );
 }
