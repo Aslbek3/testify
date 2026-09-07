@@ -42,11 +42,12 @@ export async function getStudentGroupId(studentId: string): Promise<string | nul
  * umumiy faollik ko'rsatkichi sifatida ikkala rejimni ham o'z ichiga oladi.
  */
 export async function getStudentOverview(studentId: string): Promise<StudentOverview> {
-  const [attempts, examAttempts, profile] = await Promise.all([
-    prisma.attempt.findMany({
+  const [attemptCount, examAttempts, profile] = await Promise.all([
+    // Faqat son kerak — qatorlarni yuklamasdan bazaning o'zi sanaydi.
+    prisma.attempt.count({
       where: { studentId },
-      select: { score: true },
     }),
+    // Bu yerda esa ballarning o'zi kerak (o'rtachani hisoblash uchun).
     prisma.attempt.findMany({
       where: { studentId, mode: "EXAM" },
       select: { score: true },
@@ -70,7 +71,7 @@ export async function getStudentOverview(studentId: string): Promise<StudentOver
 
   return {
     overallScore,
-    attemptCount: attempts.length,
+    attemptCount,
     groupName: profile?.group.name ?? null,
   };
 }
@@ -80,32 +81,31 @@ export async function getStudentOverview(studentId: string): Promise<StudentOver
  * to'g'ri javob foizi. O'quvchi umuman tegmagan mavzular chiqarib tashlanadi.
  */
 export async function getMasteryByTopic(studentId: string): Promise<TopicMastery[]> {
-  const answers = await prisma.attemptAnswer.findMany({
-    where: { attempt: { studentId } },
-    select: {
-      isCorrect: true,
-      question: { select: { topicId: true, topic: { select: { name: true } } } },
-    },
-  });
+  // Agregatsiya bazada bajariladi — o'quvchining har bir javob qatorini
+  // Node'ga tortib olib JS'da yig'ish o'rniga, mavzu boshiga bitta qator
+  // qaytadi. Prisma'ning groupBy'i bog'langan jadval ustuni (question.topicId)
+  // bo'yicha guruhlay olmagani uchun bu yerda $queryRaw ishlatilgan.
+  // COUNT natijalari BigInt bo'lib kelmasligi uchun ::int ga keltirilgan.
+  const rows = await prisma.$queryRaw<
+    { topicId: string; topicName: string; correct: number; total: number }[]
+  >`
+    SELECT
+      t."id"   AS "topicId",
+      t."name" AS "topicName",
+      COUNT(*) FILTER (WHERE aa."isCorrect")::int AS "correct",
+      COUNT(*)::int                               AS "total"
+    FROM "AttemptAnswer" aa
+    JOIN "Attempt"  a ON a."id" = aa."attemptId"
+    JOIN "Question" q ON q."id" = aa."questionId"
+    JOIN "Topic"    t ON t."id" = q."topicId"
+    WHERE a."studentId" = ${studentId}
+    GROUP BY t."id", t."name"
+  `;
 
-  const byTopic = new Map<string, { name: string; correct: number; total: number }>();
-
-  for (const answer of answers) {
-    const topicId = answer.question.topicId;
-    const entry = byTopic.get(topicId) ?? {
-      name: answer.question.topic.name,
-      correct: 0,
-      total: 0,
-    };
-    entry.total += 1;
-    if (answer.isCorrect) entry.correct += 1;
-    byTopic.set(topicId, entry);
-  }
-
-  const result: TopicMastery[] = Array.from(byTopic.entries()).map(([topicId, entry]) => ({
-    topicId,
-    topicName: entry.name,
-    masteryPercent: Math.round((entry.correct / entry.total) * 100),
+  const result: TopicMastery[] = rows.map((row) => ({
+    topicId: row.topicId,
+    topicName: row.topicName,
+    masteryPercent: Math.round((row.correct / row.total) * 100),
   }));
 
   result.sort((a, b) => a.masteryPercent - b.masteryPercent);

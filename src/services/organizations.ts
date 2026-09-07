@@ -12,7 +12,7 @@ export type OrganizationWithCounts = {
   studentCount: number;
 };
 
-// "studentCount" Prisma ustuni emas (users munosabatidan JS'da hisoblanadi),
+// "studentCount" Prisma ustuni emas (alohida groupBy so'rovi bilan sanaladi),
 // shuning uchun uni saralash faqat olingan massiv ustida amalga oshiriladi —
 // "name" va "createdAt" uchun esa haqiqiy Prisma ustuni bo'lgani sababli
 // orderBy'da saralanadi.
@@ -50,10 +50,31 @@ export async function listOrganizations(
         : sortField === "createdAt"
           ? { createdAt: sortDirection }
           : { createdAt: "desc" },
-    include: {
-      users: { select: { role: true } },
-    },
   });
+
+  // Ustoz/o'quvchi sonlari bazaning o'zida sanaladi: har bir tashkilotning
+  // barcha user qatorlarini yuklab, JS'da filter qilish o'rniga bitta
+  // groupBy — natijada tashkilot boshiga ko'pi bilan ikkita qator qaytadi.
+  const counts =
+    organizations.length === 0
+      ? []
+      : await prisma.user.groupBy({
+          by: ["organizationId", "role"],
+          where: {
+            organizationId: { in: organizations.map((org) => org.id) },
+            role: { in: ["TUTOR", "STUDENT"] },
+          },
+          _count: { _all: true },
+        });
+
+  const countByOrg = new Map<string, { tutorCount: number; studentCount: number }>();
+  for (const row of counts) {
+    if (!row.organizationId) continue;
+    const entry = countByOrg.get(row.organizationId) ?? { tutorCount: 0, studentCount: 0 };
+    if (row.role === "TUTOR") entry.tutorCount = row._count._all;
+    else entry.studentCount = row._count._all;
+    countByOrg.set(row.organizationId, entry);
+  }
 
   const mapped = organizations.map((org) => ({
     id: org.id,
@@ -62,8 +83,8 @@ export async function listOrganizations(
     plan: org.plan,
     status: org.status,
     createdAt: org.createdAt,
-    tutorCount: org.users.filter((u) => u.role === "TUTOR").length,
-    studentCount: org.users.filter((u) => u.role === "STUDENT").length,
+    tutorCount: countByOrg.get(org.id)?.tutorCount ?? 0,
+    studentCount: countByOrg.get(org.id)?.studentCount ?? 0,
   }));
 
   if (sortField === "studentCount") {
