@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import type { BadgeVariant } from "@/components/Badge";
 import type { AttemptMode } from "@prisma/client";
+import { readinessFromScore, type ReadinessStatus } from "@/lib/readiness";
 
 export type TutorGroup = { id: string; name: string };
 
@@ -17,8 +17,6 @@ export type MissedQuestion = {
   missPercent: number;
 };
 
-export type RosterStatus = { label: string; variant: BadgeVariant };
-
 export type RosterEntry = {
   studentId: string;
   name: string;
@@ -27,7 +25,7 @@ export type RosterEntry = {
   practiceAttemptCount: number;
   lastActivityAt: Date | null;
   averageScore: number | null;
-  status: RosterStatus;
+  status: ReadinessStatus;
 };
 
 export type StudentGroupContext = {
@@ -146,13 +144,6 @@ export async function getMostMissedQuestions(
   return questions.slice(0, limit);
 }
 
-function statusFromScore(averageScore: number | null): RosterStatus {
-  if (averageScore === null) return { label: "Imtihon topshirilmagan", variant: "neutral" };
-  if (averageScore >= 85) return { label: "Tayyor", variant: "success" };
-  if (averageScore >= 65) return { label: "Deyarli tayyor", variant: "warning" };
-  return { label: "Yordam kerak", variant: "danger" };
-}
-
 /**
  * Guruhdagi har bir o'quvchi bo'yicha urinishlar, o'rtacha ball va holat.
  * O'rtacha ball va holat FAQAT imtihon (EXAM) urinishlaridan hisoblanadi —
@@ -207,7 +198,7 @@ export async function getRosterForGroup(groupId: string): Promise<RosterEntry[]>
       practiceAttemptCount: practiceAttempts.length,
       lastActivityAt,
       averageScore,
-      status: statusFromScore(averageScore),
+      status: readinessFromScore(averageScore),
     };
   });
 }

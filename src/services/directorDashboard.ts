@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { readinessFromScore, type ReadinessStatus } from "@/lib/readiness";
 
 export class DirectorActionError extends Error {}
 
@@ -198,4 +199,94 @@ export async function createGroup(input: {
       organizationId: input.organizationId,
     },
   });
+}
+
+/** Guruh filtri va "guruhni o'zgartirish"/"yangi o'quvchi" tanlash ro'yxatlari uchun. */
+export async function listGroupsForOrganization(
+  organizationId: string
+): Promise<{ id: string; name: string }[]> {
+  return prisma.group.findMany({
+    where: { organizationId },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+export type OrganizationStudentRow = {
+  studentId: string;
+  name: string;
+  isActive: boolean;
+  groupId: string;
+  groupName: string;
+  tutorName: string;
+  examAttemptCount: number;
+  averageScore: number | null;
+  status: ReadinessStatus;
+};
+
+export type ListStudentsParams = {
+  q?: string;
+  groupId?: string;
+};
+
+/**
+ * Tashkilotdagi BARCHA o'quvchilar (guruhidan qat'iy nazar) — Direktor
+ * paneli uchun. O'rtacha ball FAQAT imtihon (EXAM) urinishlaridan
+ * hisoblanadi — tutorDashboard'dagi kabi sabab: mashqda javob darhol
+ * ko'rsatiladi, shu bois mashq ballari sun'iy yuqori bo'ladi.
+ */
+export async function listStudentsForOrganization(
+  organizationId: string,
+  params: ListStudentsParams = {}
+): Promise<OrganizationStudentRow[]> {
+  const { q, groupId } = params;
+
+  const students = await prisma.user.findMany({
+    where: {
+      organizationId,
+      role: "STUDENT",
+      ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
+      ...(groupId ? { studentProfile: { groupId } } : {}),
+    },
+    select: {
+      id: true,
+      name: true,
+      isActive: true,
+      studentProfile: {
+        select: {
+          group: { select: { id: true, name: true, tutor: { select: { name: true } } } },
+        },
+      },
+      attempts: {
+        where: { mode: "EXAM" },
+        select: { score: true },
+      },
+    },
+    orderBy: { name: "asc" },
+  });
+
+  return students
+    .filter((s) => s.studentProfile !== null)
+    .map((s) => {
+      const examAttempts = s.attempts;
+      const scores = examAttempts
+        .map((a) => a.score)
+        .filter((score): score is number => score !== null);
+      const averageScore =
+        scores.length > 0
+          ? Math.round(scores.reduce((sum, sc) => sum + sc, 0) / scores.length)
+          : null;
+
+      return {
+        studentId: s.id,
+        name: s.name,
+        isActive: s.isActive,
+        groupId: s.studentProfile!.group.id,
+        groupName: s.studentProfile!.group.name,
+        tutorName: s.studentProfile!.group.tutor.name,
+        examAttemptCount: examAttempts.length,
+        averageScore,
+        status: readinessFromScore(averageScore),
+      };
+    });
 }

@@ -101,6 +101,16 @@ export async function getTutorOrgContext(
   return tutor;
 }
 
+/** O'quvchini guruhga ko'chirish ruxsatini tekshirishda (canAssignStudentToGroup) kerak. */
+export async function getGroupPermissionContext(
+  groupId: string
+): Promise<{ tutorId: string; organizationId: string } | null> {
+  return prisma.group.findUnique({
+    where: { id: groupId },
+    select: { tutorId: true, organizationId: true },
+  });
+}
+
 /**
  * Hisobni bloklash/tiklash. Bloklaganda sessionVersion oshiriladi —
  * shunda foydalanuvchining joriy sessiyasi (token muddati hali
@@ -124,5 +134,32 @@ export async function resetUserPassword(userId: string, newPassword: string) {
   return prisma.user.update({
     where: { id: userId },
     data: { passwordHash, sessionVersion: { increment: 1 } },
+  });
+}
+
+export class UserActionError extends Error {}
+
+/**
+ * O'quvchini boshqa guruhga ko'chiradi. Maqsad guruh o'quvchi bilan bir
+ * tashkilotda ekani bu yerda, ruxsat tekshiruvidan mustaqil ravishda ham
+ * qayta tekshiriladi (himoyaning ikkinchi qatlami). Attempt yozuvlaridagi
+ * groupId — urinish boshlangan paytdagi guruh instantanasi — ataylab
+ * o'zgartirilmaydi, shuning uchun o'quvchining eski urinishlar tarixi
+ * o'sha paytdagi guruhni ko'rsatishda davom etadi.
+ */
+export async function moveStudentToGroup(studentId: string, targetGroupId: string) {
+  const [student, targetGroup] = await Promise.all([
+    prisma.user.findUnique({ where: { id: studentId }, select: { organizationId: true } }),
+    prisma.group.findUnique({ where: { id: targetGroupId }, select: { organizationId: true } }),
+  ]);
+  if (!student) throw new UserActionError("O'quvchi topilmadi");
+  if (!targetGroup) throw new UserActionError("Guruh topilmadi");
+  if (student.organizationId !== targetGroup.organizationId) {
+    throw new UserActionError("Maqsad guruh o'quvchi bilan bir tashkilotda emas");
+  }
+
+  return prisma.studentProfile.update({
+    where: { userId: studentId },
+    data: { groupId: targetGroupId },
   });
 }

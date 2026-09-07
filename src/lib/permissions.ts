@@ -68,11 +68,38 @@ export function canViewStudent(
 }
 
 /**
- * O'quvchi hisobini boshqarish (bloklash/tiklash, parolni tiklash):
- * hozircha faqat shu o'quvchi guruhi egasi bo'lgan Ustoz.
+ * O'quvchi hisobini boshqarish (bloklash/tiklash, parolni tiklash): shu
+ * o'quvchi guruhi egasi bo'lgan Ustoz, YOKI shu tashkilotning istalgan
+ * o'quvchisi uchun Direktor (guruhidan qat'iy nazar).
  */
 export function canManageStudent(user: SessionUser, group: GroupRef): boolean {
+  if (isDirector(user)) {
+    return user.organizationId !== null && user.organizationId === group.organizationId;
+  }
   return isTutor(user) && user.id === group.tutorId;
+}
+
+/**
+ * O'quvchini bir guruhdan boshqasiga ko'chirish: Direktor o'z tashkiloti
+ * ICHIDA istalgan guruhga (o'quvchi va maqsad guruh ikkalasi ham direktor
+ * tashkilotiga tegishli bo'lishi kerak); Ustoz esa faqat o'ZINING
+ * guruhiga (ya'ni ustoz uchun bu amaliyotda "guruh o'zgartirish" emas,
+ * faqat o'z guruhiga qo'shish degani — RosterTable'da bu imkoniyat
+ * ataylab ko'rsatilmaydi).
+ */
+export function canAssignStudentToGroup(
+  user: SessionUser,
+  student: StudentRef,
+  targetGroup: GroupRef
+): boolean {
+  if (isDirector(user)) {
+    return (
+      user.organizationId !== null &&
+      user.organizationId === student.organizationId &&
+      user.organizationId === targetGroup.organizationId
+    );
+  }
+  return isTutor(user) && user.id === targetGroup.tutorId;
 }
 
 /**

@@ -159,6 +159,10 @@ export default async function TutorPage({
             {totalAttempts} ta urinish · Qatorni bosing — to&apos;liq progress ochiladi
           </span>
         </CardHeader>
+        <p className="mb-3 text-sm text-text-muted">
+          O&apos;quvchining guruhini o&apos;zgartirish kerak bo&apos;lsa, direktorga
+          murojaat qiling.
+        </p>
         <RosterTable roster={roster} />
       </Card>
     </div>

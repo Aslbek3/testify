@@ -15,7 +15,10 @@ const NAV_ITEMS: Record<Role, NavItem[]> = {
     { label: "Umumiy", href: "/owner" },
     { label: "Savollar", href: "/owner/questions" },
   ],
-  DIRECTOR: [{ label: "Umumiy", href: "/director" }],
+  DIRECTOR: [
+    { label: "Umumiy", href: "/director" },
+    { label: "O'quvchilar", href: "/director/oquvchilar" },
+  ],
   TUTOR: [{ label: "Umumiy", href: "/tutor" }],
   STUDENT: [
     { label: "Umumiy", href: "/student" },
