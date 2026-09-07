@@ -1,11 +1,12 @@
 import type { InputHTMLAttributes, SelectHTMLAttributes, ReactNode } from "react";
+import { cn } from "@/lib/cn";
 
 type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
   id: string;
 };
 
-export function Field({ label, id, ...props }: FieldProps) {
+export function Field({ label, id, className, ...props }: FieldProps) {
   return (
     <div className="space-y-1">
       <label htmlFor={id} className="text-sm font-medium text-text">
@@ -13,7 +14,10 @@ export function Field({ label, id, ...props }: FieldProps) {
       </label>
       <input
         id={id}
-        className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm text-text"
+        className={cn(
+          "w-full rounded-md border border-border bg-bg px-3 py-2 text-sm text-text",
+          className
+        )}
         {...props}
       />
     </div>
