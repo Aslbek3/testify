@@ -1,8 +1,23 @@
 import bcrypt from "bcryptjs";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { normalizeEmail } from "@/lib/email";
 import { RegistrationError } from "@/services/auth";
 
 const SALT_ROUNDS = 10;
+
+/**
+ * findUnique + create orasida poyga bor: bir vaqtda kelgan ikki so'rov
+ * tekshiruvdan ikkalasi ham o'tib ketishi mumkin va yutqazgani xom
+ * P2002 (unique constraint) xatosi bilan 500 ga aylanib ketardi. Shuning
+ * uchun P2002 ni ham route kutayotgan RegistrationError (409) ga
+ * aylantiramiz.
+ */
+function isDuplicateEmailError(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002"
+  );
+}
 
 async function createStaffUser(input: {
   name: string;
@@ -11,7 +26,9 @@ async function createStaffUser(input: {
   role: "DIRECTOR" | "TUTOR";
   organizationId: string;
 }) {
-  const existing = await prisma.user.findUnique({ where: { email: input.email } });
+  const email = normalizeEmail(input.email);
+
+  const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     throw new RegistrationError("Bu email allaqachon mavjud");
   }
@@ -25,15 +42,22 @@ async function createStaffUser(input: {
   }
 
   const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
-  return prisma.user.create({
-    data: {
-      name: input.name,
-      email: input.email,
-      passwordHash,
-      role: input.role,
-      organizationId: input.organizationId,
-    },
-  });
+  try {
+    return await prisma.user.create({
+      data: {
+        name: input.name,
+        email,
+        passwordHash,
+        role: input.role,
+        organizationId: input.organizationId,
+      },
+    });
+  } catch (error) {
+    if (isDuplicateEmailError(error)) {
+      throw new RegistrationError("Bu email allaqachon mavjud");
+    }
+    throw error;
+  }
 }
 
 /** Owner tomonidan bir tashkilotga Direktor tayinlash uchun. */
@@ -62,21 +86,30 @@ export async function createOwner(input: {
   email: string;
   password: string;
 }) {
-  const existing = await prisma.user.findUnique({ where: { email: input.email } });
+  const email = normalizeEmail(input.email);
+
+  const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     throw new RegistrationError("Bu email allaqachon mavjud");
   }
 
   const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
-  return prisma.user.create({
-    data: {
-      name: input.name,
-      email: input.email,
-      passwordHash,
-      role: "OWNER",
-      organizationId: null,
-    },
-  });
+  try {
+    return await prisma.user.create({
+      data: {
+        name: input.name,
+        email,
+        passwordHash,
+        role: "OWNER",
+        organizationId: null,
+      },
+    });
+  } catch (error) {
+    if (isDuplicateEmailError(error)) {
+      throw new RegistrationError("Bu email allaqachon mavjud");
+    }
+    throw error;
+  }
 }
 
 /** create-owner skriptida bazada allaqachon Owner bor-yo'qligini ogohlantirish uchun. */
@@ -149,11 +182,19 @@ export class UserActionError extends Error {}
  */
 export async function moveStudentToGroup(studentId: string, targetGroupId: string) {
   const [student, targetGroup] = await Promise.all([
-    prisma.user.findUnique({ where: { id: studentId }, select: { organizationId: true } }),
+    prisma.user.findUnique({
+      where: { id: studentId },
+      select: { organizationId: true, studentProfile: { select: { id: true } } },
+    }),
     prisma.group.findUnique({ where: { id: targetGroupId }, select: { organizationId: true } }),
   ]);
   if (!student) throw new UserActionError("O'quvchi topilmadi");
   if (!targetGroup) throw new UserActionError("Guruh topilmadi");
+  // Profilsiz o'quvchi ham bo'lishi mumkin — bunda studentProfile.update
+  // P2025 tashlab, 500 bo'lib ketardi. Tushunarli 400 bilan qaytaramiz.
+  if (!student.studentProfile) {
+    throw new UserActionError("O'quvchi profili topilmadi");
+  }
   if (student.organizationId !== targetGroup.organizationId) {
     throw new UserActionError("Maqsad guruh o'quvchi bilan bir tashkilotda emas");
   }

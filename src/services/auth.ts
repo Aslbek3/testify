@@ -1,6 +1,8 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import type { Role } from "@prisma/client";
+import { normalizeEmail } from "@/lib/email";
 import type { SessionUser } from "@/types/auth";
 
 const SALT_ROUNDS = 10;
@@ -19,8 +21,11 @@ export async function verifyCredentials(
   email: string,
   password: string
 ): Promise<SessionUser | null> {
+  // Qidiruv ham hisob yaratishdagi kabi normallashtirilgan email bo'yicha
+  // ketadi — aks holda `Ali@x.com` deb yaratilgan hisob egasi `ali@x.com`
+  // deb kirganda hech qachon topilmas edi.
   const user = await prisma.user.findUnique({
-    where: { email },
+    where: { email: normalizeEmail(email) },
     include: { organization: { select: { status: true } } },
   });
   if (!user) return null;
@@ -79,8 +84,10 @@ export async function registerStudent(input: {
   phone?: string;
   groupId: string;
 }): Promise<SessionUser> {
+  const email = normalizeEmail(input.email);
+
   const existing = await prisma.user.findUnique({
-    where: { email: input.email },
+    where: { email },
   });
   if (existing) {
     throw new RegistrationError("Bu email allaqachon ro'yxatdan o'tgan");
@@ -96,19 +103,33 @@ export async function registerStudent(input: {
 
   const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
 
-  const user = await prisma.user.create({
-    data: {
-      name: input.name,
-      email: input.email,
-      passwordHash,
-      phone: input.phone,
-      role: "STUDENT",
-      organizationId: group.organizationId,
-      studentProfile: {
-        create: { groupId: input.groupId },
+  // findUnique + create orasidagi poyga: bir vaqtda kelgan ikki so'rov
+  // tekshiruvdan ikkalasi ham o'tishi mumkin — yutqazgani xom P2002 bilan
+  // 500 bo'lib ketmasligi uchun uni RegistrationError'ga (409) aylantiramiz.
+  let user;
+  try {
+    user = await prisma.user.create({
+      data: {
+        name: input.name,
+        email,
+        passwordHash,
+        phone: input.phone,
+        role: "STUDENT",
+        organizationId: group.organizationId,
+        studentProfile: {
+          create: { groupId: input.groupId },
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      throw new RegistrationError("Bu email allaqachon ro'yxatdan o'tgan");
+    }
+    throw error;
+  }
 
   return {
     id: user.id,
