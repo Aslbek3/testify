@@ -42,6 +42,7 @@ const TOPIC_DEFS = [
         correctOptionIndex: 0,
         explanation:
           "Bu taqiqlovchi belgi barcha transport turlariga ushbu yo'nalishda harakatlanishni butunlay man etadi.",
+        legalReference: "YHQ 1-ilovasi 3.1",
         imageUrl: "/questions/belgi-1.svg",
         imageAlt: "Qizil doira ichida oq gorizontal chiziqli \"Kirish taqiqlangan\" yo'l belgisi",
       },
@@ -93,6 +94,7 @@ const TOPIC_DEFS = [
         ],
         correctOptionIndex: 0,
         explanation: "\"Bosh yo'l\" belgisi ushbu yo'l kesishmalarda ustunlikka ega ekanini bildiradi.",
+        legalReference: "YHQ 1-ilovasi 2.1",
         imageUrl: "/questions/chorraha-1.svg",
         imageAlt: "To'rt tomonlama to'g'ri chorraha sxemasi, o'rtadan tepaga qarab strelka bilan",
       },
@@ -353,6 +355,7 @@ const TOPIC_DEFS = [
         correctOptionIndex: 1,
         explanation:
           "Boshqacha belgi qo'yilmagan bo'lsa, aholi punktlarida ruxsat etilgan standart yuqori tezlik chegarasi 60 km/soat.",
+        legalReference: "YHQ 21-bobi 128-bandiga asosan",
       },
       {
         text: "Yomon ob-havoda haydovchi tezlik va masofani qanday tanlashi kerak?",
@@ -762,6 +765,32 @@ const TOPIC_DEFS = [
         correctOptionIndex: 0,
         explanation:
           "Velosipedchi velosipeddan tushib, uni qo'lda yetaklab o'tsa, piyoda maqomida hisoblanadi va tegishli huquqlardan foydalanadi.",
+        legalReference: "YHQ 24-bobi 145-bandiga asosan",
+      },
+      // Quyidagi ikkita savol ATAYLAB 4 tadan farqli variant soniga ega —
+      // haqiqiy YHQ savollarida 2 tadan 5 tagacha variant uchraydi, shuning
+      // uchun dev bazada ham shu holat sinovdan o'tib turishi kerak.
+      {
+        text: "Piyodalar o'tish joyi oldida to'xtash majburiymi, agar piyoda allaqachon yo'lga qadam qo'ygan bo'lsa?",
+        options: ["Ha, majburiy", "Yo'q, majburiy emas"],
+        correctOptionIndex: 0,
+        explanation:
+          "Piyoda o'tish joyida harakatni boshlagan bo'lsa, haydovchi unga yo'l berishi va zarur bo'lsa to'xtashi shart.",
+        legalReference: "YHQ 24-bobi 145-bandining oltinchi xatboshisiga asosan",
+      },
+      {
+        text: "Piyodalar oqimi ko'p bo'lgan hududda haydovchi uchun eng xavfli vaziyat qaysi?",
+        options: [
+          "Turgan avtobus yonidan o'tish",
+          "Tor ko'chada mashinalar orasidan piyoda chiqishi",
+          "Maktab oldida bolalar to'plangan joy",
+          "Yomon yoritilgan o'tish joyi tunda",
+          "Yuqoridagilarning barchasi bir xil darajada xavfli",
+        ],
+        correctOptionIndex: 4,
+        explanation:
+          "Sanab o'tilgan vaziyatlarning har birida ko'rinish cheklangan va piyoda to'satdan paydo bo'lishi mumkin — hech biri boshqasidan kam xavfli emas.",
+        legalReference: "YHQ 2-ilovasi 1-bo'limining uchinchi xatboshisiga asosan",
       },
     ],
   },
@@ -862,6 +891,7 @@ async function main() {
         options: q.options,
         correctOptionIndex: q.correctOptionIndex,
         explanation: q.explanation,
+        legalReference: q.legalReference ?? null,
         imageUrl: q.imageUrl,
         imageAlt: q.imageAlt,
       };

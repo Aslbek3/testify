@@ -136,6 +136,8 @@ export type SaveAnswerResult =
       isCorrect: boolean;
       correctOptionIndex: number;
       explanation: string | null;
+      /** YHQ band raqami — izohning huquqiy asosi, masalan "YHQ 21-bobi 128-bandi". */
+      legalReference: string | null;
     };
 
 export async function saveAnswer(input: {
@@ -144,11 +146,10 @@ export async function saveAnswer(input: {
   questionId: string;
   selectedOptionIndex: number;
 }): Promise<SaveAnswerResult> {
-  if (
-    !Number.isInteger(input.selectedOptionIndex) ||
-    input.selectedOptionIndex < 0 ||
-    input.selectedOptionIndex > 3
-  ) {
+  // Yuqori chegara bu yerda tekshirilmaydi — u savolning O'ZIDAGI variantlar
+  // soniga bog'liq (savollarda 2 tadan 5 tagacha variant bo'lishi mumkin),
+  // shuning uchun savol o'qilgandan keyin, pastda tekshiriladi.
+  if (!Number.isInteger(input.selectedOptionIndex) || input.selectedOptionIndex < 0) {
     throw new AttemptError("Noto'g'ri variant tanlandi");
   }
 
@@ -177,9 +178,20 @@ export async function saveAnswer(input: {
 
   const question = await prisma.question.findUnique({
     where: { id: input.questionId },
-    select: { correctOptionIndex: true, explanation: true },
+    select: {
+      correctOptionIndex: true,
+      explanation: true,
+      legalReference: true,
+      options: true,
+    },
   });
   if (!question) throw new AttemptError("Savol topilmadi", 404);
+
+  // Yuqori chegara — aynan shu savoldagi variantlar soni. Qattiq `> 3`
+  // tekshiruvi 5 variantli savolda oxirgi ikkitasini rad etardi.
+  if (input.selectedOptionIndex >= toStringArray(question.options).length) {
+    throw new AttemptError("Noto'g'ri variant tanlandi");
+  }
 
   const isCorrect = input.selectedOptionIndex === question.correctOptionIndex;
 
@@ -213,6 +225,7 @@ export async function saveAnswer(input: {
     isCorrect,
     correctOptionIndex: question.correctOptionIndex,
     explanation: question.explanation,
+    legalReference: question.legalReference,
   };
 }
 
@@ -225,6 +238,7 @@ export type ResumeAnswerState = {
   isCorrect?: boolean;
   correctOptionIndex?: number;
   explanation?: string | null;
+  legalReference?: string | null;
 };
 
 export type ResumableAttempt = {
@@ -280,7 +294,7 @@ export async function getAttemptForResume(input: {
         topicId: true,
         topic: { select: { name: true } },
         ...(attempt.mode === "PRACTICE"
-          ? { correctOptionIndex: true, explanation: true }
+          ? { correctOptionIndex: true, explanation: true, legalReference: true }
           : {}),
       },
     }),
@@ -300,7 +314,11 @@ export async function getAttemptForResume(input: {
       return { questionId: a.questionId, selectedOptionIndex: a.selectedOptionIndex };
     }
     const question = byId.get(a.questionId) as
-      | { correctOptionIndex?: number; explanation?: string | null }
+      | {
+          correctOptionIndex?: number;
+          explanation?: string | null;
+          legalReference?: string | null;
+        }
       | undefined;
     return {
       questionId: a.questionId,
@@ -308,6 +326,7 @@ export async function getAttemptForResume(input: {
       isCorrect: a.isCorrect,
       correctOptionIndex: question?.correctOptionIndex,
       explanation: question?.explanation ?? null,
+      legalReference: question?.legalReference ?? null,
     };
   });
 
@@ -469,12 +488,33 @@ export type TopicBreakdownRow = {
   total: number;
 };
 
-export type MissedQuestion = {
+/**
+ * Savolning urinishdagi yakuniy holati.
+ *
+ * "Xato" va "javobsiz" ATAYLAB ajratilgan. Ball uchun ikkalasi ham bir xil
+ * (javobsiz ham to'g'ri emas), lekin ustoz uchun bular butunlay boshqa
+ * muammo: 18 tasiga noto'g'ri javob bergan o'quvchi bilimsiz, 18 tasiga
+ * ulgurmagan o'quvchi esa sekin. Birinchisiga mavzuni qayta tushuntirish,
+ * ikkinchisiga vaqtni boshqarishni o'rgatish kerak.
+ */
+export type ReviewQuestionStatus = "correct" | "wrong" | "unanswered";
+
+export type ReviewQuestion = {
   questionId: string;
+  /** Urinishdagi tartib raqami (1 dan) — test ekranidagi raqam bilan bir xil. */
+  order: number;
   text: string;
+  topicName: string;
+  status: ReviewQuestionStatus;
   selectedOptionText: string | null;
   correctOptionText: string;
   explanation: string | null;
+  /**
+   * YHQ band raqami. Ustoz o'quvchi bilan bahslashganda ("nega bu javob
+   * to'g'ri?") ko'rsatadigan huquqiy asos — B2B'da bu izohning o'zidan
+   * kam ahamiyatli emas.
+   */
+  legalReference: string | null;
 };
 
 export type AttemptResult = {
@@ -482,13 +522,18 @@ export type AttemptResult = {
   mode: AttemptMode;
   score: number;
   correctCount: number;
+  /** Javob berilgan, lekin noto'g'ri. */
+  wrongCount: number;
+  /** Umuman javob berilmagan (EXAM'da vaqt tugagach kelgan javoblar ham shu yerda). */
+  unansweredCount: number;
   totalCount: number;
   /** PRACTICE uchun null — "o'tish/o'tmaslik" tushunchasi faqat EXAM'ga tegishli. */
   passed: boolean | null;
   /** O'tish uchun kerakli eng kam to'g'ri javoblar soni — faqat EXAM uchun. */
   passThreshold: number | null;
   topicBreakdown: TopicBreakdownRow[];
-  missedQuestions: MissedQuestion[];
+  /** BARCHA savollar, urinishdagi tartibda — xato ham, to'g'ri ham, javobsiz ham. */
+  reviewQuestions: ReviewQuestion[];
 };
 
 export async function getAttemptResult(input: {
@@ -523,6 +568,7 @@ export async function getAttemptResult(input: {
         options: true,
         correctOptionIndex: true,
         explanation: true,
+        legalReference: true,
         topicId: true,
         topic: { select: { name: true } },
       },
@@ -570,26 +616,47 @@ export async function getAttemptResult(input: {
     topicMap.set(question.topicId, entry);
   }
 
-  const missedQuestions: MissedQuestion[] = attempt.questionIds
-    .map((qid) => questionById.get(qid))
-    .filter((q): q is NonNullable<typeof q> => q !== undefined)
-    .filter((q) => !answerByQuestionId.get(q.id)?.isCorrect)
-    .map((q) => {
-      const options = toStringArray(q.options);
-      const answer = answerByQuestionId.get(q.id);
+  // BARCHA savollar, urinishdagi tartibda. Sahifa shu ro'yxatdan ham
+  // "faqat xatolar", ham "hammasi" ko'rinishini yasaydi — ikkinchi so'rov
+  // kerak emas.
+  const reviewQuestions: ReviewQuestion[] = attempt.questionIds
+    .map((qid, index) => ({ question: questionById.get(qid), index }))
+    .filter(
+      (item): item is { question: NonNullable<typeof item.question>; index: number } =>
+        item.question !== undefined
+    )
+    .map(({ question, index }) => {
+      const options = toStringArray(question.options);
+      const answer = answerByQuestionId.get(question.id);
+      const status: ReviewQuestionStatus =
+        answer === undefined ? "unanswered" : answer.isCorrect ? "correct" : "wrong";
+
       return {
-        questionId: q.id,
-        text: q.text,
+        questionId: question.id,
+        order: index + 1,
+        text: question.text,
+        topicName: question.topic.name,
+        status,
         selectedOptionText:
           answer !== undefined ? (options[answer.selectedOptionIndex] ?? null) : null,
-        correctOptionText: options[q.correctOptionIndex] ?? "",
-        explanation: q.explanation,
+        correctOptionText: options[question.correctOptionIndex] ?? "",
+        explanation: question.explanation,
+        legalReference: question.legalReference,
       };
     });
 
   const totalCount = attempt.questionIds.length;
   const correctCount = savedAnswers.filter((a) => a.isCorrect).length;
-  const wrongCount = totalCount - correctCount;
+  // Javob berilgan, lekin noto'g'ri — "javobsiz"dan alohida sanaladi.
+  const wrongCount = savedAnswers.filter((a) => !a.isCorrect).length;
+  // Qoldig'i sifatida hisoblanadi, `savedAnswers.length` ayirmasi emas:
+  // urinishga tegishli bo'lmagan javob qatori bo'lib qolsa ham
+  // to'g'ri + xato + javobsiz = jami ayniyati buzilmaydi. Natija ekranida
+  // uchta raqam qo'shilib jamiga teng kelmasligi eng ko'zga tashlanadigan
+  // xatolik bo'lardi (raqobatchida aynan shu xato bor: imtihonni to'xtatgan
+  // uchinchi xato ularda "javobsiz" deb sanalib, sarlavhadagi "3 ta xato"
+  // bilan zid chiqadi).
+  const unansweredCount = Math.max(0, totalCount - correctCount - wrongCount);
   const score = attempt.score ?? 0;
 
   return {
@@ -597,10 +664,17 @@ export async function getAttemptResult(input: {
     mode: attempt.mode,
     score,
     correctCount,
+    wrongCount,
+    unansweredCount,
     totalCount,
-    passed: attempt.mode === "EXAM" ? wrongCount <= EXAM_MAX_WRONG : null,
+    // O'tish sharti: xato VA javobsizlar birgalikda ruxsat etilgan chegaradan
+    // oshmasligi kerak — javobsiz qoldirish "xato emas" degani emas.
+    passed:
+      attempt.mode === "EXAM"
+        ? totalCount - correctCount <= EXAM_MAX_WRONG
+        : null,
     passThreshold: attempt.mode === "EXAM" ? totalCount - EXAM_MAX_WRONG : null,
     topicBreakdown: Array.from(topicMap.values()),
-    missedQuestions,
+    reviewQuestions,
   };
 }

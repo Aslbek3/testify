@@ -3,17 +3,8 @@ import { requireRole } from "@/lib/auth";
 import { StatTile } from "@/components/StatTile";
 import { Button } from "@/components/Button";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
-import {
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableHeaderCell,
-  TableCell,
-} from "@/components/Table";
 import { Badge } from "@/components/Badge";
 import type { BadgeVariant } from "@/components/Badge";
-import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import {
   getStudentOverview,
@@ -22,6 +13,7 @@ import {
 } from "@/services/studentDashboard";
 import { finalizeExpiredAttempts } from "@/services/attempts";
 import { ProgressRing } from "./ProgressRing";
+import { AttemptHistoryTable } from "./AttemptHistoryTable";
 
 function masteryVariant(pct: number): BadgeVariant {
   if (pct >= 85) return "success";
@@ -116,36 +108,7 @@ export default async function StudentPage() {
           {history.length === 0 ? (
             <p className="text-sm text-text-muted">Hali urinish qilinmagan.</p>
           ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeaderCell>Sana</TableHeaderCell>
-                  <TableHeaderCell>Rejim</TableHeaderCell>
-                  <TableHeaderCell align="right">Savollar soni</TableHeaderCell>
-                  <TableHeaderCell align="right">Ball</TableHeaderCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {history.map((attempt) => (
-                  <TableRow key={attempt.id}>
-                    <TableCell>{formatDate(attempt.date)}</TableCell>
-                    <TableCell>
-                      <Badge variant={attempt.mode === "EXAM" ? "brand" : "neutral"}>
-                        {attempt.mode === "EXAM" ? "Imtihon" : "Mashq"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell align="right">{attempt.questionCount}</TableCell>
-                    <TableCell align="right">
-                      {attempt.score === null ? (
-                        <Badge variant="brand">Davom etmoqda</Badge>
-                      ) : (
-                        `${attempt.score}%`
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <AttemptHistoryTable history={history} />
           )}
         </Card>
     </div>

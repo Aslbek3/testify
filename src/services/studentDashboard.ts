@@ -19,6 +19,13 @@ export type AttemptHistoryItem = {
   score: number | null;
   questionCount: number;
   mode: AttemptMode;
+  /**
+   * Natija sahifasini faqat yakunlangan urinish uchun ochish mumkin
+   * (`getAttemptResult` yakunlanmaganiga 409 qaytaradi). Buni `score !== null`
+   * orqali taxmin qilish mumkin edi, lekin bu ikkita alohida ma'noni
+   * (ball bor / urinish tugagan) bir-biriga bog'lab qo'yardi.
+   */
+  isFinished: boolean;
 };
 
 /**
@@ -124,6 +131,7 @@ export async function getAttemptHistory(studentId: string): Promise<AttemptHisto
     select: {
       id: true,
       startedAt: true,
+      finishedAt: true,
       score: true,
       mode: true,
       questionIds: true,
@@ -134,6 +142,7 @@ export async function getAttemptHistory(studentId: string): Promise<AttemptHisto
     id: attempt.id,
     date: attempt.startedAt,
     score: attempt.score,
+    isFinished: attempt.finishedAt !== null,
     // Urinishdagi SAVOLLAR soni — berilgan javoblar soni emas. Ball ham
     // aynan questionIds.length'dan hisoblanadi (javobsiz qolgan savol xato
     // deb sanaladi), shuning uchun javoblar sonini ko'rsatish jadvalda

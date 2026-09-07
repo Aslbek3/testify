@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { toStringArray } from "@/lib/json";
+import { MIN_OPTIONS, MAX_OPTIONS, optionLetter } from "@/lib/questionOptions";
 
 /**
  * Savollar bazasi bilan bog'liq domen xatolari uchun maxsus xato turi.
@@ -26,6 +27,8 @@ export type QuestionListItem = {
   options: string[];
   correctOptionIndex: number;
   imageAlt: string | null;
+  explanation: string | null;
+  legalReference: string | null;
 };
 
 export async function listTopicsWithQuestionCount(): Promise<
@@ -79,7 +82,18 @@ export async function listQuestionsForTopic(
     options: toStringArray(question.options),
     correctOptionIndex: question.correctOptionIndex,
     imageAlt: question.imageAlt,
+    explanation: question.explanation,
+    legalReference: question.legalReference,
   }));
+}
+
+/**
+ * Bo'sh string'ni `null` ga aylantiradi — ixtiyoriy matn maydonlari (rasm
+ * tavsifi, YHQ havolasi) bazada "" bo'lib yotmasin, "yo'q" degani har doim
+ * bitta ko'rinishda (`null`) saqlansin.
+ */
+function normalizeOptionalText(value: string | null | undefined): string | null {
+  return value?.trim() || null;
 }
 
 function validateQuestionInput(input: {
@@ -91,19 +105,30 @@ function validateQuestionInput(input: {
   if (!text) {
     throw new QuestionBankError("Savol matni bo'sh bo'lishi mumkin emas");
   }
-  if (input.options.length !== 4) {
-    throw new QuestionBankError("Savolda aynan 4 ta variant bo'lishi kerak");
+  if (
+    input.options.length < MIN_OPTIONS ||
+    input.options.length > MAX_OPTIONS
+  ) {
+    throw new QuestionBankError(
+      `Savolda ${MIN_OPTIONS} tadan ${MAX_OPTIONS} tagacha variant bo'lishi kerak ` +
+        `(hozir ${input.options.length} ta)`
+    );
   }
-  if (input.options.some((option) => !option.trim())) {
-    throw new QuestionBankError("Barcha variantlar to'ldirilishi shart");
+  const emptyIndex = input.options.findIndex((option) => !option.trim());
+  if (emptyIndex !== -1) {
+    throw new QuestionBankError(
+      `${optionLetter(emptyIndex)} varianti bo'sh — barcha variantlar to'ldirilishi shart`
+    );
   }
+  // Chegara variantlar soniga bog'liq: 3 ta variantli savolda "D" javob
+  // bo'lishi mumkin emas.
   if (
     !Number.isInteger(input.correctOptionIndex) ||
     input.correctOptionIndex < 0 ||
-    input.correctOptionIndex > 3
+    input.correctOptionIndex >= input.options.length
   ) {
     throw new QuestionBankError(
-      "To'g'ri javob 1-4 variantlardan biri bo'lishi kerak"
+      `To'g'ri javob A–${optionLetter(input.options.length - 1)} variantlardan biri bo'lishi kerak`
     );
   }
 }
@@ -114,6 +139,8 @@ export async function createQuestion(input: {
   options: string[];
   correctOptionIndex: number;
   imageAlt?: string | null;
+  explanation?: string | null;
+  legalReference?: string | null;
 }) {
   validateQuestionInput(input);
 
@@ -123,7 +150,9 @@ export async function createQuestion(input: {
       text: input.text.trim(),
       options: input.options.map((option) => option.trim()),
       correctOptionIndex: input.correctOptionIndex,
-      imageAlt: input.imageAlt?.trim() || null,
+      imageAlt: normalizeOptionalText(input.imageAlt),
+      explanation: normalizeOptionalText(input.explanation),
+      legalReference: normalizeOptionalText(input.legalReference),
     },
   });
 }
@@ -139,8 +168,9 @@ export async function createQuestion(input: {
  * savol baribir "Xato qilingan savollar" ro'yxatida qoladi; saqlangan ball
  * ham qayta hisoblanmagani uchun ball bilan tafsilot bir-biriga zid bo'ladi.
  *
- * Matn, izoh va rasm tavsifini o'zgartirish esa har doim ochiq —
- * imlo xatosini tuzatish bloklanmasligi kerak.
+ * Matn, izoh, YHQ havolasi va rasm tavsifini o'zgartirish esa har doim ochiq —
+ * ular baholashga ta'sir qilmaydi, imlo xatosini tuzatish yoki qonun bandini
+ * keyinroq qo'shish bloklanmasligi kerak.
  */
 function isGradingChanged(
   existing: { options: string[]; correctOptionIndex: number },
@@ -162,6 +192,8 @@ export async function updateQuestion(
     options: string[];
     correctOptionIndex: number;
     imageAlt?: string | null;
+    explanation?: string | null;
+    legalReference?: string | null;
   }
 ) {
   validateQuestionInput(input);
@@ -200,7 +232,9 @@ export async function updateQuestion(
       text: input.text.trim(),
       options: input.options.map((option) => option.trim()),
       correctOptionIndex: input.correctOptionIndex,
-      imageAlt: input.imageAlt?.trim() || null,
+      imageAlt: normalizeOptionalText(input.imageAlt),
+      explanation: normalizeOptionalText(input.explanation),
+      legalReference: normalizeOptionalText(input.legalReference),
     },
   });
 }

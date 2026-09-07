@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
+import { QuestionImage } from "@/components/QuestionImage";
+import { optionLetter } from "@/lib/questionOptions";
 import { cn } from "@/lib/cn";
 import type { ResumableAttempt } from "@/services/attempts";
 
@@ -15,6 +17,7 @@ type LocalAnswer = {
   isCorrect?: boolean;
   correctOptionIndex?: number;
   explanation?: string | null;
+  legalReference?: string | null;
 };
 
 type SaveStatus = "saving" | "retrying" | "failed";
@@ -52,6 +55,7 @@ function initialAnswersMap(attempt: ResumableAttempt): Record<string, LocalAnswe
       isCorrect: a.isCorrect,
       correctOptionIndex: a.correctOptionIndex,
       explanation: a.explanation,
+      legalReference: a.legalReference,
     };
   }
   return map;
@@ -178,6 +182,7 @@ export function TestRunner({
             isCorrect: data.isCorrect,
             correctOptionIndex: data.correctOptionIndex,
             explanation: data.explanation,
+            legalReference: data.legalReference,
           },
         }));
       }
@@ -244,21 +249,28 @@ export function TestRunner({
     }
   }
 
-  // Klaviatura: 1-4 variant tanlaydi, Enter keyingisiga o'tadi. Tasdiqlash
-  // modali ochiq bo'lsa hech narsa qilmaydi — aks holda fonda javob
-  // o'zgarib ketishi yoki modal qayta ochilib ketishi mumkin edi.
+  // Klaviatura: raqamlar variant tanlaydi, ←/→ savollar orasida yuradi,
+  // Enter keyingisiga o'tadi. Tasdiqlash modali ochiq bo'lsa hech narsa
+  // qilmaydi — aks holda fonda javob o'zgarib ketishi yoki modal qayta
+  // ochilib ketishi mumkin edi.
+  //
+  // Raqamlar chegarasi AYNI savoldagi variantlar soniga bog'liq: qattiq
+  // `1`–`4` oralig'i 5 variantli savolda oxirgi variantni tanlab
+  // bo'lmaydigan qilib qo'yardi.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (showFinishConfirm) return;
       const target = event.target as HTMLElement | null;
       if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
-      if (event.key >= "1" && event.key <= "4") {
-        const idx = Number(event.key) - 1;
-        if (idx < currentQuestion.options.length) {
-          event.preventDefault();
-          handleSelect(idx);
-        }
-      } else if (event.key === "Enter") {
+
+      const digit = Number(event.key);
+      if (Number.isInteger(digit) && digit >= 1 && digit <= currentQuestion.options.length) {
+        event.preventDefault();
+        handleSelect(digit - 1);
+      } else if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        goBack();
+      } else if (event.key === "ArrowRight" || event.key === "Enter") {
         event.preventDefault();
         goNext();
       }
@@ -266,7 +278,7 @@ export function TestRunner({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentQuestion.id, practiceLocked, goNext, showFinishConfirm]);
+  }, [currentQuestion.id, practiceLocked, goNext, goBack, showFinishConfirm]);
 
   const modeLabel = mode === "EXAM" ? "Imtihon" : "Mashq";
   const isDanger = secondsLeft !== null && secondsLeft <= DANGER_THRESHOLD_SECONDS;
@@ -353,11 +365,10 @@ export function TestRunner({
           )}
         >
           {currentQuestion.imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <QuestionImage
               src={currentQuestion.imageUrl}
-              alt={currentQuestion.imageAlt ?? ""}
-              className="h-56 w-full rounded-lg object-cover md:h-[280px]"
+              alt={currentQuestion.imageAlt}
+              className="h-56 w-full md:h-[280px]"
             />
           )}
 
@@ -439,7 +450,7 @@ export function TestRunner({
                             : "text-text-muted"
                       )}
                     >
-                      {i + 1}
+                      {optionLetter(i)}
                     </span>
                     <span
                       className={cn(
@@ -457,14 +468,22 @@ export function TestRunner({
               })}
             </div>
 
-            {mode === "PRACTICE" && currentAnswer?.explanation && (
-              <div className="flex flex-col gap-1 rounded-md bg-brand-soft px-4 py-3.5">
-                <p className="text-xs font-semibold text-brand">Izoh</p>
-                <p className="text-sm leading-relaxed text-text">
-                  {currentAnswer.explanation}
-                </p>
-              </div>
-            )}
+            {mode === "PRACTICE" &&
+              (currentAnswer?.explanation || currentAnswer?.legalReference) && (
+                <div className="flex flex-col gap-1 rounded-md bg-brand-soft px-4 py-3.5">
+                  <p className="text-xs font-semibold text-brand">Izoh</p>
+                  {currentAnswer.explanation && (
+                    <p className="text-sm leading-relaxed text-text">
+                      {currentAnswer.explanation}
+                    </p>
+                  )}
+                  {currentAnswer.legalReference && (
+                    <p className="text-xs text-text-muted">
+                      {currentAnswer.legalReference}
+                    </p>
+                  )}
+                </div>
+              )}
 
             {currentStatus === "saving" && (
               <p className="text-xs text-text-muted">Saqlanmoqda...</p>
@@ -478,6 +497,21 @@ export function TestRunner({
                 {finishing ? "Yakunlanmoqda..." : isLast ? "Yakunlash" : "Keyingisi"}
               </Button>
             </div>
+
+            {/* Klaviatura allaqachon ishlardi, lekin bu haqda hech qayerda
+                yozilmagani uchun deyarli hech kim ishlatmasdi. Raqamlar
+                oralig'i shu savoldagi variantlar soniga qarab yoziladi —
+                4 ta variant bo'lsa "1–4", 2 ta bo'lsa "1–2". */}
+            <p className="hidden text-xs text-text-muted sm:block">
+              <span className="font-mono">←</span> oldingi ·{" "}
+              <span className="font-mono">→</span> keyingi ·{" "}
+              <span className="font-mono">
+                {currentQuestion.options.length > 1
+                  ? `1–${currentQuestion.options.length}`
+                  : "1"}
+              </span>{" "}
+              javob tanlash
+            </p>
           </div>
         </div>
       </Card>

@@ -101,15 +101,23 @@ model Topic {
 }
 
 model Question {
-  id                 String  @id @default(cuid())
-  topicId            String
-  text               String
+  id      String @id @default(cuid())
+  topicId String
+  text    String
+  // Variantlar ro'yxati (string[]). Soni qat'iy 4 ta emas — haqiqiy YHQ
+  // savollarida 2 tadan 5 tagacha variant uchraydi. Chegara
+  // `src/lib/questionOptions.ts` dagi MIN_OPTIONS/MAX_OPTIONS bilan
+  // belgilanadi va `services/questions.ts` da tekshiriladi.
   options            Json
   correctOptionIndex Int
   imageUrl           String?
   imageAlt           String?
   explanation        String?
-  category           String?
+  // YHQ (Yo'l harakati qoidalari) hujjatidagi band raqami — izohning huquqiy
+  // asosi. Masalan: "YHQ 21-bobi 128-bandiga asosan" yoki "YHQ 1-ilovasi 3.27".
+  // Ustoz o'quvchi bilan "nega bu javob to'g'ri?" deb bahslashganda aynan shu
+  // bandga ko'rsata oladi. Ixtiyoriy: barcha savolda ham havola bo'lavermaydi.
+  legalReference String?
 
   topic   Topic           @relation(fields: [topicId], references: [id])
   answers AttemptAnswer[]

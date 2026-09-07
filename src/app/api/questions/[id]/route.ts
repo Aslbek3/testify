@@ -26,6 +26,10 @@ export async function PATCH(
   const correctOptionIndex =
     typeof body?.correctOptionIndex === "number" ? body.correctOptionIndex : -1;
   const imageAlt = typeof body?.imageAlt === "string" ? body.imageAlt : null;
+  const explanation =
+    typeof body?.explanation === "string" ? body.explanation : null;
+  const legalReference =
+    typeof body?.legalReference === "string" ? body.legalReference : null;
 
   if (!text || options.length === 0) {
     return NextResponse.json(
@@ -35,7 +39,14 @@ export async function PATCH(
   }
 
   try {
-    const question = await updateQuestion(id, { text, options, correctOptionIndex, imageAlt });
+    const question = await updateQuestion(id, {
+      text,
+      options,
+      correctOptionIndex,
+      imageAlt,
+      explanation,
+      legalReference,
+    });
     return NextResponse.json(question);
   } catch (error) {
     if (error instanceof QuestionBankError) {

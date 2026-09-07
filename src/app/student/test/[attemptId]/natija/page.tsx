@@ -5,6 +5,7 @@ import { getAttemptResult, AttemptError } from "@/services/attempts";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { cn } from "@/lib/cn";
+import { ResultReview } from "./ResultReview";
 
 function topicBarColor(percent: number): string {
   if (percent >= 85) return "bg-success";
@@ -60,6 +61,30 @@ export default async function AttemptResultPage({
           </p>
         </div>
 
+        {/* Uchta raqam ATAYLAB alohida: "xato" va "javobsiz" ball uchun bir
+            xil bo'lsa-da, ustoz uchun butunlay boshqa muammo — birinchisi
+            bilim, ikkinchisi vaqtni boshqarish masalasi. Uchtasi qo'shilib
+            doim jamiga teng chiqadi (getAttemptResult buni kafolatlaydi). */}
+        <div className="grid grid-cols-3 gap-3">
+          {(
+            [
+              ["To'g'ri", result.correctCount, "text-success"],
+              ["Xato", result.wrongCount, "text-danger"],
+              ["Javobsiz", result.unansweredCount, "text-warning"],
+            ] as const
+          ).map(([label, value, colorClass]) => (
+            <div
+              key={label}
+              className="flex flex-col items-center gap-1 rounded-md border border-border py-4"
+            >
+              <span className={cn("font-mono text-2xl font-semibold", colorClass)}>
+                {value}
+              </span>
+              <span className="text-xs text-text-muted">{label}</span>
+            </div>
+          ))}
+        </div>
+
         <div className="flex flex-col gap-3">
           <p className="text-sm font-semibold text-text">Mavzular bo&apos;yicha taqsimot</p>
           <div className="flex flex-col gap-2.5">
@@ -85,38 +110,7 @@ export default async function AttemptResultPage({
           </div>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <p className="text-sm font-semibold text-text">Xato qilingan savollar</p>
-          {result.missedQuestions.length === 0 ? (
-            <p className="text-sm text-text-muted">
-              Barcha savollarga to&apos;g&apos;ri javob berdingiz!
-            </p>
-          ) : (
-            <div className="flex flex-col divide-y divide-border overflow-hidden rounded-md border border-border">
-              {result.missedQuestions.map((question, index) => (
-                <div key={question.questionId} className="flex flex-col gap-1.5 p-4">
-                  <p className="text-sm text-text">
-                    {index + 1}. {question.text}
-                  </p>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                    <span className="text-danger">
-                      Sizning javobingiz:{" "}
-                      {question.selectedOptionText ?? "Javob berilmagan"}
-                    </span>
-                    <span className="text-success">
-                      To&apos;g&apos;ri javob: {question.correctOptionText}
-                    </span>
-                  </div>
-                  {question.explanation && (
-                    <p className="text-xs leading-relaxed text-text-muted">
-                      {question.explanation}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <ResultReview questions={result.reviewQuestions} />
       </Card>
 
       <div className="flex flex-wrap gap-2">

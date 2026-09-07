@@ -19,6 +19,10 @@ export async function POST(request: Request) {
   const correctOptionIndex =
     typeof body?.correctOptionIndex === "number" ? body.correctOptionIndex : -1;
   const imageAlt = typeof body?.imageAlt === "string" ? body.imageAlt : null;
+  const explanation =
+    typeof body?.explanation === "string" ? body.explanation : null;
+  const legalReference =
+    typeof body?.legalReference === "string" ? body.legalReference : null;
 
   if (!topicId || !text || options.length === 0) {
     return NextResponse.json(
@@ -34,6 +38,8 @@ export async function POST(request: Request) {
       options,
       correctOptionIndex,
       imageAlt,
+      explanation,
+      legalReference,
     });
     return NextResponse.json(question, { status: 201 });
   } catch (error) {

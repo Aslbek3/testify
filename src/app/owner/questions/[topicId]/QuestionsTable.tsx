@@ -11,6 +11,8 @@ import {
   TableCell,
 } from "@/components/Table";
 import { Button } from "@/components/Button";
+import { Badge } from "@/components/Badge";
+import { optionLetter } from "@/lib/questionOptions";
 import type { QuestionListItem } from "@/services/questions";
 import { EditQuestionModal } from "./EditQuestionModal";
 
@@ -64,6 +66,7 @@ export function QuestionsTable({ questions }: { questions: QuestionListItem[] })
           <TableRow>
             <TableHeaderCell>Savol matni</TableHeaderCell>
             <TableHeaderCell>To&apos;g&apos;ri javob</TableHeaderCell>
+            <TableHeaderCell>YHQ havolasi</TableHeaderCell>
             <TableHeaderCell align="right">Amallar</TableHeaderCell>
           </TableRow>
         </TableHead>
@@ -72,7 +75,20 @@ export function QuestionsTable({ questions }: { questions: QuestionListItem[] })
             <TableRow key={question.id}>
               <TableCell className="max-w-xs">{truncate(question.text, 80)}</TableCell>
               <TableCell className="max-w-xs">
+                <span className="text-text-muted">
+                  {optionLetter(question.correctOptionIndex)}.
+                </span>{" "}
                 {truncate(question.options[question.correctOptionIndex] ?? "", 60)}
+              </TableCell>
+              {/* Kontent sifati ko'rsatkichi: qonun bandiga havolasiz savollar
+                  darhol ko'zga tashlansin — ustoz o'quvchiga asos ko'rsata
+                  olishi uchun havola bo'lgani ma'qul. */}
+              <TableCell className="max-w-xs">
+                {question.legalReference ? (
+                  truncate(question.legalReference, 40)
+                ) : (
+                  <Badge variant="warning">Havola yo&apos;q</Badge>
+                )}
               </TableCell>
               <TableCell align="right">
                 <div className="flex flex-col items-end gap-1">
