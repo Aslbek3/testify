@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { getVerifiedSessionUser } from "@/lib/auth";
 import { canManageQuestionBank } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
 import {
@@ -9,7 +9,7 @@ import {
 } from "@/services/questions";
 
 export async function GET() {
-  const user = await getSessionUser();
+  const user = await getVerifiedSessionUser();
   if (!user || !canManageQuestionBank(user)) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
@@ -19,7 +19,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const user = await getSessionUser();
+  const user = await getVerifiedSessionUser();
   if (!user || !canManageQuestionBank(user)) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }

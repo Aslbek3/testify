@@ -62,7 +62,11 @@ export function canViewStudent(
 ): boolean {
   if (isOwner(user)) return true;
   if (isStudent(user)) return user.id === student.userId;
-  if (isDirector(user)) return user.organizationId === student.organizationId;
+  // `organizationId !== null` sharti majburiy — aks holda tashkilotsiz
+  // direktor tashkilotsiz o'quvchini ko'ra olardi (null === null).
+  if (isDirector(user)) {
+    return user.organizationId !== null && user.organizationId === student.organizationId;
+  }
   if (isTutor(user) && group) return user.id === group.tutorId;
   return false;
 }
@@ -80,26 +84,29 @@ export function canManageStudent(user: SessionUser, group: GroupRef): boolean {
 }
 
 /**
- * O'quvchini bir guruhdan boshqasiga ko'chirish: Direktor o'z tashkiloti
- * ICHIDA istalgan guruhga (o'quvchi va maqsad guruh ikkalasi ham direktor
- * tashkilotiga tegishli bo'lishi kerak); Ustoz esa faqat o'ZINING
- * guruhiga (ya'ni ustoz uchun bu amaliyotda "guruh o'zgartirish" emas,
- * faqat o'z guruhiga qo'shish degani — RosterTable'da bu imkoniyat
- * ataylab ko'rsatilmaydi).
+ * O'quvchini bir guruhdan boshqasiga ko'chirish — FAQAT Direktor, o'z
+ * tashkiloti ichida (o'quvchi ham, maqsad guruh ham direktor tashkilotiga
+ * tegishli bo'lishi shart).
+ *
+ * Ustozga bu huquq ATAYLAB berilmagan. Ilgari bu yerda "ustoz o'z
+ * guruhiga qo'sha oladi" sharti bor edi, lekin u faqat MAQSAD guruhni
+ * tekshirar, o'quvchi ilgari kimga tegishli ekanini tekshirmas edi —
+ * natijada har qanday ustoz tashkilotdagi istalgan o'quvchini o'z
+ * guruhiga "tortib" olib, so'ng canManageStudent'dan o'tib, uning
+ * parolini tiklab, hisobiga to'liq kirib olishi mumkin edi. Guruh
+ * o'zgartirish mahsulot bo'yicha ham faqat direktor ishi.
  */
 export function canAssignStudentToGroup(
   user: SessionUser,
   student: StudentRef,
   targetGroup: GroupRef
 ): boolean {
-  if (isDirector(user)) {
-    return (
-      user.organizationId !== null &&
-      user.organizationId === student.organizationId &&
-      user.organizationId === targetGroup.organizationId
-    );
-  }
-  return isTutor(user) && user.id === targetGroup.tutorId;
+  return (
+    isDirector(user) &&
+    user.organizationId !== null &&
+    user.organizationId === student.organizationId &&
+    user.organizationId === targetGroup.organizationId
+  );
 }
 
 /**

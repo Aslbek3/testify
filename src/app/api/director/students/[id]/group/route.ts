@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
-import { canAssignStudentToGroup } from "@/lib/permissions";
+import { getVerifiedSessionUser } from "@/lib/auth";
+import { canAssignStudentToGroup, isDirector } from "@/lib/permissions";
 import { getStudentGroupContext } from "@/services/tutorDashboard";
 import {
   getGroupPermissionContext,
@@ -12,9 +12,13 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await getSessionUser();
-  if (!user) {
-    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
+  const user = await getVerifiedSessionUser();
+  // Rol darvozasi shu yerda ham bor (canAssignStudentToGroup allaqachon
+  // direktordan boshqasini rad etadi) — bu ataylab ikkinchi qatlam:
+  // ruxsat funksiyasi kelajakda yumshatilsa ham, bu route direktordan
+  // boshqasiga ochilib qolmaydi.
+  if (!user || !isDirector(user)) {
+    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
 
   const { id: studentId } = await params;
@@ -25,17 +29,17 @@ export async function PATCH(
   }
 
   const context = await getStudentGroupContext(studentId);
-  if (!context) {
-    return NextResponse.json({ error: "O'quvchi topilmadi" }, { status: 404 });
-  }
+  const targetGroup = context ? await getGroupPermissionContext(groupId) : null;
 
-  const targetGroup = await getGroupPermissionContext(groupId);
-  if (!targetGroup) {
-    return NextResponse.json({ error: "Maqsad guruh topilmadi" }, { status: 404 });
-  }
-
-  if (!canAssignStudentToGroup(user, context.student, targetGroup)) {
-    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+  // Ruxsati bo'lmagan chaqiruvchiga "bor/yo'q" farqi ko'rsatilmaydi —
+  // topilmadi ham, ruxsat yo'q ham bir xil 404 (resurs mavjudligini
+  // aniqlash uchun oracle bo'lib qolmasligi uchun).
+  if (
+    !context ||
+    !targetGroup ||
+    !canAssignStudentToGroup(user, context.student, targetGroup)
+  ) {
+    return NextResponse.json({ error: "O'quvchi yoki guruh topilmadi" }, { status: 404 });
   }
 
   try {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { getVerifiedSessionUser } from "@/lib/auth";
 import { isStudent } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
 import { startAttempt, AttemptError } from "@/services/attempts";
@@ -8,8 +8,13 @@ import type { AttemptMode } from "@prisma/client";
 
 const VALID_MODES: AttemptMode[] = ["PRACTICE", "EXAM"];
 
+// topicIds to'g'ridan-to'g'ri Prisma `{ topicId: { in: [...] } }` ichiga
+// tushadi — cheklovsiz massiv bazaga juda katta so'rov yasab yuborishi
+// mumkin. Haqiqiy mavzular soni bundan ancha kam.
+const MAX_TOPIC_IDS = 50;
+
 export async function POST(request: Request) {
-  const user = await getSessionUser();
+  const user = await getVerifiedSessionUser();
   if (!user || !isStudent(user)) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
@@ -22,6 +27,12 @@ export async function POST(request: Request) {
 
   if (!mode) {
     return NextResponse.json({ error: "Rejim (mode) noto'g'ri" }, { status: 400 });
+  }
+  if (topicIds && topicIds.length > MAX_TOPIC_IDS) {
+    return NextResponse.json(
+      { error: `Mavzular soni ${MAX_TOPIC_IDS} tadan oshmasligi kerak` },
+      { status: 400 }
+    );
   }
 
   // Guruh klientdan emas — o'quvchining haqiqiy guruhidan serverda olinadi.

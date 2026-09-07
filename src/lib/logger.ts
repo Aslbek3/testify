@@ -60,12 +60,22 @@ export function logError(error: unknown, context: LogContext = {}): void {
     return;
   }
 
+  // Serverdagi endpoint sessiya talab qiladi va rate limit'ga ega, shuning
+  // uchun u xatoni qabul qilmasligi ham mumkin (chiqib ketgan foydalanuvchi —
+  // 401, juda ko'p xato — 429). Bunday holatda hech narsa "portlamaydi":
+  // xato jimgina brauzer konsoliga yoziladi.
   fetch("/api/log/client", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(entry),
     keepalive: true,
-  }).catch(() => {
-    console.error(JSON.stringify(entry));
-  });
+  })
+    .then((response) => {
+      if (!response.ok) {
+        console.error(JSON.stringify(entry));
+      }
+    })
+    .catch(() => {
+      console.error(JSON.stringify(entry));
+    });
 }

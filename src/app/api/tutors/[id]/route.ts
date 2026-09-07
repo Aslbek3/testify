@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { getVerifiedSessionUser } from "@/lib/auth";
 import { canManageTutor } from "@/lib/permissions";
 import { getTutorOrgContext, setUserActive } from "@/services/users";
 
@@ -7,7 +7,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await getSessionUser();
+  const user = await getVerifiedSessionUser();
   if (!user) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
   }

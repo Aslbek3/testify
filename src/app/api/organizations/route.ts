@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { getVerifiedSessionUser } from "@/lib/auth";
 import { canManageOrganizations } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
 import { createOrganization } from "@/services/organizations";
@@ -9,7 +9,7 @@ const VALID_PLANS: Plan[] = ["START", "STANDARD", "PRO"];
 const VALID_STATUSES: OrganizationStatus[] = ["ACTIVE", "TRIAL", "EXPIRED"];
 
 export async function POST(request: Request) {
-  const user = await getSessionUser();
+  const user = await getVerifiedSessionUser();
   if (!user || !canManageOrganizations(user)) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }

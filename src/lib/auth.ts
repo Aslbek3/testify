@@ -63,19 +63,44 @@ export async function clearSessionCookie() {
 }
 
 /**
- * Dashboard sahifalarida takrorlanadigan tekshiruv: sessiyasiz /login ga,
- * boshqa rolda o'ziga tegishli sahifaga qaytaradi. proxy.ts allaqachon
- * himoya qiladi (Edge'da, faqat imzo/rol) — bu server komponent
- * darajasidagi CHUQUR tekshiruv: bazadagi haqiqiy holat bilan solishtiradi,
- * shunda o'chirilgan/bloklangan yoki paroli/roli o'zgargan foydalanuvchi
- * JWT muddati tugagunga (1 hafta) qadar kirib turishining oldi olinadi.
+ * CHUQUR sessiya tekshiruvi: JWT imzosidan tashqari bazadagi haqiqiy
+ * holatni ham tekshiradi — hisob bloklangan (`isActive: false`) yoki
+ * `sessionVersion` mos kelmasa (parol/rol o'zgargan, sessiya bekor
+ * qilingan) null qaytaradi, JWT muddati (1 hafta) tugamagan bo'lsa ham.
+ *
+ * MUHIM: rol va organizationId JWT'dan EMAS, bazadan olinadi — aks holda
+ * roli yoki tashkiloti o'zgargan foydalanuvchi eski token bilan eski
+ * huquqlarini saqlab qolar edi.
+ *
+ * Har bir API route shu orqali o'tishi shart (`getSessionUser` o'zi faqat
+ * imzoni tekshiradi va bloklangan hisobni to'xtata olmaydi).
  */
-export async function requireRole(role: Role): Promise<SessionUser> {
+export async function getVerifiedSessionUser(): Promise<SessionUser | null> {
   const user = await getSessionUser();
-  if (!user) redirect("/login");
+  if (!user) return null;
 
   const state = await getUserSessionState(user.id);
   if (!state || state.sessionVersion !== user.sessionVersion || !state.isActive) {
+    return null;
+  }
+
+  return {
+    id: user.id,
+    role: state.role,
+    organizationId: state.organizationId,
+    sessionVersion: state.sessionVersion,
+  };
+}
+
+/**
+ * Dashboard sahifalarida takrorlanadigan tekshiruv: sessiyasiz /login ga,
+ * boshqa rolda o'ziga tegishli sahifaga qaytaradi. proxy.ts allaqachon
+ * himoya qiladi (Edge'da, faqat imzo/rol) — bu esa server komponent
+ * darajasidagi chuqur tekshiruv (getVerifiedSessionUser orqali).
+ */
+export async function requireRole(role: Role): Promise<SessionUser> {
+  const user = await getVerifiedSessionUser();
+  if (!user) {
     // Eskirgan cookie'ni shu yerda o'chirib bo'lmaydi — cookies().delete()
     // faqat Server Action/Route Handler'da ishlaydi, Server komponent
     // render'ida emas. Shunga qaramay xavfsiz: bu cookie boshqa hech qanday
@@ -84,12 +109,7 @@ export async function requireRole(role: Role): Promise<SessionUser> {
     redirect("/login");
   }
 
-  if (state.role !== role) redirect(ROLE_HOME[state.role]);
+  if (user.role !== role) redirect(ROLE_HOME[user.role]);
 
-  return {
-    id: user.id,
-    role: state.role,
-    organizationId: state.organizationId,
-    sessionVersion: state.sessionVersion,
-  };
+  return user;
 }

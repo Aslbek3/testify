@@ -1,18 +1,20 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { getVerifiedSessionUser } from "@/lib/auth";
 import { isDirector } from "@/lib/permissions";
+import { INVALID_EMAIL_MESSAGE, isValidEmail, normalizeEmail } from "@/lib/email";
+import { validatePassword } from "@/lib/password";
 import { registerStudent, RegistrationError } from "@/services/auth";
 import { listGroupsForOrganization } from "@/services/directorDashboard";
 
 export async function POST(request: Request) {
-  const user = await getSessionUser();
+  const user = await getVerifiedSessionUser();
   if (!user || !isDirector(user) || !user.organizationId) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
 
   const body = await request.json().catch(() => null);
   const name = typeof body?.name === "string" ? body.name.trim() : "";
-  const email = typeof body?.email === "string" ? body.email.trim() : "";
+  const email = typeof body?.email === "string" ? normalizeEmail(body.email) : "";
   const password = typeof body?.password === "string" ? body.password : "";
   const groupId = typeof body?.groupId === "string" ? body.groupId : "";
 
@@ -22,11 +24,12 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-  if (password.length < 8) {
-    return NextResponse.json(
-      { error: "Parol kamida 8 belgidan iborat bo'lishi kerak" },
-      { status: 400 }
-    );
+  if (!isValidEmail(email)) {
+    return NextResponse.json({ error: INVALID_EMAIL_MESSAGE }, { status: 400 });
+  }
+  const passwordError = validatePassword(password);
+  if (passwordError) {
+    return NextResponse.json({ error: passwordError }, { status: 400 });
   }
 
   // Direktor faqat O'Z tashkilotidagi guruhga o'quvchi qo'sha oladi —

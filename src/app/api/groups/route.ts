@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { getVerifiedSessionUser } from "@/lib/auth";
 import { isDirector } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
 import { createGroup, DirectorActionError } from "@/services/directorDashboard";
 
 export async function POST(request: Request) {
-  const user = await getSessionUser();
+  const user = await getVerifiedSessionUser();
   if (!user || !isDirector(user) || !user.organizationId) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
