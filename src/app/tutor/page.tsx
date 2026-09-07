@@ -4,8 +4,7 @@ import { StatTile } from "@/components/StatTile";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
 import {
   getGroupsForTutor,
-  getTopicErrorRates,
-  getMostMissedQuestions,
+  getGroupAnalytics,
   getRosterForGroup,
   getRecentExamAttemptCount,
 } from "@/services/tutorDashboard";
@@ -59,12 +58,15 @@ export default async function TutorPage({
 
   const selectedGroup = groups.find((g) => g.id === groupParam) ?? groups[0];
 
-  const [topicErrorRates, missedQuestions, roster, recentExamCount] = await Promise.all([
-    getTopicErrorRates(selectedGroup.id),
-    getMostMissedQuestions(selectedGroup.id),
+  // Mavzu bo'yicha xato foizi va eng ko'p xato qilingan savollar bitta
+  // so'rovdan chiqadi — ilgari ikkalasi alohida chaqirilib, guruhning
+  // butun javoblar jadvali har yuklanishda ikki marta tortilardi.
+  const [analytics, roster, recentExamCount] = await Promise.all([
+    getGroupAnalytics(selectedGroup.id),
     getRosterForGroup(selectedGroup.id),
     getRecentExamAttemptCount(selectedGroup.id),
   ]);
+  const { topicErrorRates, mostMissedQuestions: missedQuestions } = analytics;
 
   const studentsWithScore = roster.filter((r) => r.averageScore !== null);
   const averageScore =

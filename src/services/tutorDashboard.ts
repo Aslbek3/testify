@@ -56,32 +56,51 @@ async function getGroupStudentIds(groupId: string): Promise<string[]> {
   return profiles.map((p) => p.userId);
 }
 
-/** So'nggi `days` kun ichida guruhda boshlangan EXAM urinishlari soni. */
+/**
+ * So'nggi `days` kun ichida SHU GURUHDA boshlangan EXAM urinishlari soni.
+ *
+ * Filtr `Attempt.groupId` bo'yicha — o'quvchining hozirgi guruhi bo'yicha
+ * emas. Farqi: o'quvchi boshqa guruhga ko'chirilsa, uning eski urinishlari
+ * eski guruhda qoladi va yangi ustozning ko'rsatkichiga qo'shilib ketmaydi.
+ */
 export async function getRecentExamAttemptCount(
   groupId: string,
   days = 7
 ): Promise<number> {
-  const studentIds = await getGroupStudentIds(groupId);
-  if (studentIds.length === 0) return 0;
-
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   return prisma.attempt.count({
-    where: { studentId: { in: studentIds }, mode: "EXAM", startedAt: { gte: since } },
+    where: { groupId, mode: "EXAM", startedAt: { gte: since } },
   });
 }
 
-type GroupAnswer = {
-  isCorrect: boolean;
-  questionId: string;
-  question: { text: string; topicId: string; topic: { name: string } };
+/**
+ * Kamida shuncha javob bo'lgan savol/mavzugina reytingga kiradi.
+ *
+ * Savollar butun bazadan tasodifiy tanlangani uchun ba'zi savollarga
+ * atigi bir marta javob berilgan bo'ladi. Bitta o'quvchi bitta marta
+ * xato qilgan savol 100% ko'rsatib, haqiqatan ham muammoli (masalan 30
+ * javobdan 24 tasi xato = 80%) savollarni ro'yxatdan siqib chiqarardi.
+ */
+const MIN_ANSWERS_FOR_RANKING = 5;
+
+export type GroupAnalytics = {
+  topicErrorRates: TopicErrorRate[];
+  mostMissedQuestions: MissedQuestion[];
 };
 
-/** Guruh o'quvchilarining barcha javoblari — xato foizi va ko'p xato qilingan savollar shu asosda hisoblanadi. */
-async function getGroupAnswers(groupId: string): Promise<GroupAnswer[]> {
-  const studentIds = await getGroupStudentIds(groupId);
-  if (studentIds.length === 0) return [];
-  return prisma.attemptAnswer.findMany({
-    where: { attempt: { studentId: { in: studentIds } } },
+/**
+ * Guruhning mavzu bo'yicha xato foizi va eng ko'p xato qilingan savollari.
+ *
+ * Ikkalasi bitta funksiyada, chunki ikkalasi ham AYNI javoblar to'plamidan
+ * hisoblanadi — ilgari ular alohida eksport qilinib, ustoz paneli har
+ * yuklanganda o'sha og'ir so'rovni ikki marta bajarardi.
+ */
+export async function getGroupAnalytics(
+  groupId: string,
+  missedLimit = 5
+): Promise<GroupAnalytics> {
+  const answers = await prisma.attemptAnswer.findMany({
+    where: { attempt: { groupId } },
     select: {
       isCorrect: true,
       questionId: true,
@@ -94,68 +113,56 @@ async function getGroupAnswers(groupId: string): Promise<GroupAnswer[]> {
       },
     },
   });
-}
-
-/** Mavzu bo'yicha xato foizi — javob berilmagan mavzular ro'yxatga kiritilmaydi. */
-export async function getTopicErrorRates(groupId: string): Promise<TopicErrorRate[]> {
-  const answers = await getGroupAnswers(groupId);
 
   const byTopic = new Map<string, { topicName: string; total: number; wrong: number }>();
-  for (const a of answers) {
-    const entry = byTopic.get(a.question.topicId) ?? {
-      topicName: a.question.topic.name,
-      total: 0,
-      wrong: 0,
-    };
-    entry.total += 1;
-    if (!a.isCorrect) entry.wrong += 1;
-    byTopic.set(a.question.topicId, entry);
-  }
-
-  const rates: TopicErrorRate[] = Array.from(byTopic.entries()).map(([topicId, v]) => ({
-    topicId,
-    topicName: v.topicName,
-    errorRatePercent: Math.round((v.wrong / v.total) * 100),
-  }));
-
-  rates.sort((a, b) => b.errorRatePercent - a.errorRatePercent);
-  return rates;
-}
-
-/** Guruh bo'yicha eng ko'p xato qilingan savollar (kamida bitta javob bo'lgan savollar orasidan). */
-export async function getMostMissedQuestions(
-  groupId: string,
-  limit = 5
-): Promise<MissedQuestion[]> {
-  const answers = await getGroupAnswers(groupId);
-
   const byQuestion = new Map<
     string,
     { questionText: string; topicName: string; total: number; wrong: number }
   >();
+
   for (const a of answers) {
-    const entry = byQuestion.get(a.questionId) ?? {
+    const topic = byTopic.get(a.question.topicId) ?? {
+      topicName: a.question.topic.name,
+      total: 0,
+      wrong: 0,
+    };
+    topic.total += 1;
+    if (!a.isCorrect) topic.wrong += 1;
+    byTopic.set(a.question.topicId, topic);
+
+    const question = byQuestion.get(a.questionId) ?? {
       questionText: a.question.text,
       topicName: a.question.topic.name,
       total: 0,
       wrong: 0,
     };
-    entry.total += 1;
-    if (!a.isCorrect) entry.wrong += 1;
-    byQuestion.set(a.questionId, entry);
+    question.total += 1;
+    if (!a.isCorrect) question.wrong += 1;
+    byQuestion.set(a.questionId, question);
   }
 
-  const questions: MissedQuestion[] = Array.from(byQuestion.entries()).map(
-    ([questionId, v]) => ({
+  const topicErrorRates: TopicErrorRate[] = Array.from(byTopic.entries())
+    .filter(([, v]) => v.total >= MIN_ANSWERS_FOR_RANKING)
+    .map(([topicId, v]) => ({
+      topicId,
+      topicName: v.topicName,
+      errorRatePercent: Math.round((v.wrong / v.total) * 100),
+    }))
+    .sort((a, b) => b.errorRatePercent - a.errorRatePercent);
+
+  const mostMissedQuestions: MissedQuestion[] = Array.from(byQuestion.entries())
+    .filter(([, v]) => v.total >= MIN_ANSWERS_FOR_RANKING)
+    .map(([questionId, v]) => ({
       questionId,
       questionText: v.questionText,
       topicName: v.topicName,
       missPercent: Math.round((v.wrong / v.total) * 100),
-    })
-  );
+    }))
+    // Foiz teng bo'lsa ko'proq javob bo'lgani ustun — ishonchliroq ma'lumot.
+    .sort((a, b) => b.missPercent - a.missPercent)
+    .slice(0, missedLimit);
 
-  questions.sort((a, b) => b.missPercent - a.missPercent);
-  return questions.slice(0, limit);
+  return { topicErrorRates, mostMissedQuestions };
 }
 
 /**

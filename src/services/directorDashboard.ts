@@ -80,20 +80,17 @@ export async function getTutorRanking(
       tutorOfGroups: {
         where: { organizationId },
         select: {
+          id: true,
           name: true,
-          students: {
-            select: {
-              user: {
-                select: {
-                  // FAQAT imtihon — tutorDashboard'dagi getRosterForGroup
-                  // bilan bir xil qoida (mashq ballari sun'iy yuqori).
-                  attempts: {
-                    where: { mode: "EXAM", score: { not: null } },
-                    select: { score: true },
-                  },
-                },
-              },
-            },
+          students: { select: { userId: true } },
+          // FAQAT imtihon, FAQAT yakunlangani va FAQAT shu guruhda
+          // topshirilgani (`Attempt.groupId` bo'yicha bog'lanish — o'quvchi
+          // bo'yicha emas). O'quvchi boshqa guruhga ko'chirilsa, eski
+          // urinishlari eski ustozda qoladi: aks holda ustozlar o'zlari
+          // qilmagan ish uchun baholanardi.
+          attempts: {
+            where: { mode: "EXAM", finishedAt: { not: null }, score: { not: null } },
+            select: { studentId: true, score: true },
           },
         },
       },
@@ -109,14 +106,18 @@ export async function getTutorRanking(
     // o'rtachalash) noto'g'ri edi: ko'p imtihon topshirgan bitta o'quvchi
     // butun guruh ko'rsatkichini o'ziga tortib ketardi. Ustoz jadvalidagi
     // hisob ham aynan shu — o'quvchi bo'yicha — usulda ishlaydi.
-    const studentAverages = students
-      .map((s) =>
-        average(
-          s.user.attempts
-            .map((a) => a.score)
-            .filter((sc): sc is number => sc !== null)
-        )
-      )
+    const scoresByStudent = new Map<string, number[]>();
+    for (const group of tutor.tutorOfGroups) {
+      for (const attempt of group.attempts) {
+        if (attempt.score === null) continue;
+        const list = scoresByStudent.get(attempt.studentId) ?? [];
+        list.push(attempt.score);
+        scoresByStudent.set(attempt.studentId, list);
+      }
+    }
+
+    const studentAverages = Array.from(scoresByStudent.values())
+      .map((scores) => average(scores))
       .filter((avg): avg is number => avg !== null);
 
     return {
