@@ -57,7 +57,7 @@ export default async function StudentPage() {
             darajasi va urinishlar tarixi shu yerda.
           </p>
         </div>
-        <Link href="/student/boshlash">
+        <Link href="/student/mashq">
           <Button type="button">Test boshlash</Button>
         </Link>
       </div>

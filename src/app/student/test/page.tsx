@@ -15,10 +15,10 @@ const VALID_MODES: AttemptMode[] = ["PRACTICE", "EXAM"];
 export default async function TestPage({
   searchParams,
 }: {
-  searchParams: Promise<{ attemptId?: string; mode?: string }>;
+  searchParams: Promise<{ attemptId?: string; mode?: string; savollar?: string }>;
 }) {
   const user = await requireRole("STUDENT");
-  const { attemptId, mode } = await searchParams;
+  const { attemptId, mode, savollar } = await searchParams;
 
   // Urinish allaqachon boshlangan — davom ettiramiz (sahifa yangilansa ham
   // progress yo'qolmasligi shu orqali ta'minlanadi).
@@ -44,11 +44,39 @@ export default async function TestPage({
   // shunda keyingi refresh yangi urinish YARATMAYDI, davom ettiradi.
   if (mode && VALID_MODES.includes(mode as AttemptMode)) {
     const groupId = await getStudentGroupId(user.id);
-    const started = await startAttempt({
-      user,
-      mode: mode as AttemptMode,
-      groupId,
-    });
+
+    // "Maraton" — savollar sonini o'quvchi tanlaydi. Qiymat baribir
+    // `startAttempt` ichida tekshiriladi; bu yerda faqat songa aylantiriladi
+    // (noto'g'ri matn kelsa `undefined` bo'lib, standart son ishlatiladi).
+    const requested = savollar ? Number(savollar) : undefined;
+    const questionCount =
+      requested !== undefined && Number.isFinite(requested) ? requested : undefined;
+
+    let started;
+    try {
+      started = await startAttempt({
+        user,
+        mode: mode as AttemptMode,
+        groupId,
+        questionCount,
+      });
+    } catch (error) {
+      // Masalan "Imtihon uchun savollar yetarli emas" yoki noto'g'ri
+      // savollar soni — bu yerda oq ekran o'rniga tushunarli sahifaga
+      // qaytariladi. `redirect()` o'zi ham istisno tashlaydi, shuning
+      // uchun uni catch ichida ushlab qolmaymiz.
+      if (error instanceof AttemptError) {
+        const backTo =
+          mode === "EXAM"
+            ? "/student/imtihon"
+            : questionCount !== undefined
+              ? "/student/maraton"
+              : "/student/mashq";
+        redirect(`${backTo}?xato=${encodeURIComponent(error.message)}`);
+      }
+      throw error;
+    }
+
     redirect(`/student/test?attemptId=${started.attemptId}`);
   }
 

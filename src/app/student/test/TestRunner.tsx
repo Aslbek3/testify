@@ -12,6 +12,13 @@ import type { ResumableAttempt } from "@/services/attempts";
 
 const DANGER_THRESHOLD_SECONDS = 2 * 60;
 
+/**
+ * Shundan ko'p savolda yuqoridagi chiziqchalar o'rniga oddiy progress
+ * ko'rsatiladi. Maratonda 200 tagacha savol bo'lishi mumkin — o'shanda har
+ * bir chiziqcha 2 pikseldan kam bo'lib, na ko'rinadi, na bosiladi.
+ */
+const MAX_PROGRESS_DOTS = 30;
+
 type LocalAnswer = {
   selectedOptionIndex: number;
   isCorrect?: boolean;
@@ -96,6 +103,7 @@ export function TestRunner({
   );
 
   const total = questions.length;
+  const answeredCount = questions.filter((q) => answers[q.id]).length;
   const currentQuestion = questions[currentIndex];
   const currentAnswer = answers[currentQuestion.id];
   const isLast = currentIndex === total - 1;
@@ -337,6 +345,23 @@ export function TestRunner({
           )}
         </div>
 
+        {/* Maratonda savollar soni 200 tagacha bo'lishi mumkin — o'shanda
+            har bir chiziqcha 2 pikseldan kam bo'lib, na ko'rinadi, na
+            bosiladi. Ko'p savolda chiziqchalar o'rniga oddiy progress
+            ko'rsatiladi. */}
+        {total > MAX_PROGRESS_DOTS ? (
+          <div className="border-b border-border px-5 py-3.5 sm:px-6">
+            <div className="h-1.5 rounded-full bg-bg-subtle">
+              <div
+                className="h-1.5 rounded-full bg-brand transition-all"
+                style={{ width: `${Math.round((answeredCount / total) * 100)}%` }}
+              />
+            </div>
+            <p className="mt-2 text-xs text-text-muted">
+              {total} tadan {answeredCount} tasiga javob berildi
+            </p>
+          </div>
+        ) : (
         <nav
           className="flex gap-1 border-b border-border px-5 py-3.5 sm:px-6"
           aria-label="Savollar holati"
@@ -405,6 +430,7 @@ export function TestRunner({
             );
           })}
         </nav>
+        )}
 
         <div
           className={cn(

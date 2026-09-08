@@ -22,7 +22,13 @@ const NAV_ITEMS: Record<Role, NavItem[]> = {
   TUTOR: [{ label: "Umumiy", href: "/tutor" }],
   STUDENT: [
     { label: "Umumiy", href: "/student" },
-    { label: "Test yechish", href: "/student/boshlash" },
+    // Test rejimlari alohida bo'lim sifatida — ilgari hammasi bitta
+    // "Test yechish" sahifasi ichida edi va o'quvchi qaysi rejimlar borligini
+    // bosmaguncha bilmasdi.
+    { label: "Mashq", href: "/student/mashq" },
+    { label: "Maraton", href: "/student/maraton" },
+    { label: "Imtihon", href: "/student/imtihon" },
+    { label: "Xatolarim", href: "/student/xatolarim" },
   ],
 };
 

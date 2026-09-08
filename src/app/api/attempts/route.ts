@@ -28,6 +28,11 @@ export async function POST(request: Request) {
   if (!mode) {
     return NextResponse.json({ error: "Rejim (mode) noto'g'ri" }, { status: 400 });
   }
+  // Maraton uchun — savollar soni. Chegaralar `startAttempt` ichida
+  // tekshiriladi (u yagona manba), bu yerda faqat turi tekshiriladi.
+  const questionCount =
+    typeof body?.questionCount === "number" ? body.questionCount : undefined;
+
   if (topicIds && topicIds.length > MAX_TOPIC_IDS) {
     return NextResponse.json(
       { error: `Mavzular soni ${MAX_TOPIC_IDS} tadan oshmasligi kerak` },
@@ -39,7 +44,7 @@ export async function POST(request: Request) {
   const groupId = await getStudentGroupId(user.id);
 
   try {
-    const result = await startAttempt({ user, mode, topicIds, groupId });
+    const result = await startAttempt({ user, mode, topicIds, groupId, questionCount });
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
     if (error instanceof AttemptError) {

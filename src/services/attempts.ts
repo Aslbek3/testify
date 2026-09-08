@@ -40,6 +40,42 @@ export type AttemptQuestionForClient = {
   topicName: string;
 };
 
+/**
+ * Maratonda tanlash mumkin bo'lgan eng kam va eng ko'p savol soni.
+ *
+ * Yuqori chegara nima uchun kerak: son klientdan keladi va u to'g'ridan-to'g'ri
+ * `questionIds` massivining hajmini belgilaydi. Cheklovsiz qoldirilsa, bitta
+ * so'rov bilan o'n minglab savol so'rab, bazaga ham, xotiraga ham keraksiz
+ * yuk tashlash mumkin edi. Amaldagi chegara baribir bazadagi savollar soni.
+ */
+export const MARATHON_MIN_QUESTIONS = 5;
+export const MARATHON_MAX_QUESTIONS = 200;
+
+/**
+ * Bazadagi savollar soni — maraton sahifasi tanlov variantlarini shunga
+ * qarab tuzadi. Bazada 60 ta savol bo'lsa "100 ta savol" tugmasini
+ * ko'rsatish yolg'on va'da bo'lardi.
+ */
+export async function countAvailableQuestions(): Promise<number> {
+  return prisma.question.count();
+}
+
+/** Urinishda nechta savol bo'lishini aniqlaydi. */
+function resolveQuestionCount(mode: AttemptMode, requested?: number): number {
+  // Imtihon soni muzokara qilinmaydi — u qoida.
+  if (mode === "EXAM" || requested === undefined) return QUESTION_COUNT[mode];
+
+  if (!Number.isInteger(requested)) {
+    throw new AttemptError("Savollar soni butun son bo'lishi kerak");
+  }
+  if (requested < MARATHON_MIN_QUESTIONS || requested > MARATHON_MAX_QUESTIONS) {
+    throw new AttemptError(
+      `Savollar soni ${MARATHON_MIN_QUESTIONS} tadan ${MARATHON_MAX_QUESTIONS} tagacha bo'lishi kerak`
+    );
+  }
+  return requested;
+}
+
 /** Fisher-Yates — tasodifiy savol tanlash uchun. */
 function shuffle<T>(items: T[]): T[] {
   const arr = [...items];
@@ -55,6 +91,21 @@ export async function startAttempt(input: {
   mode: AttemptMode;
   topicIds?: string[];
   groupId?: string | null;
+  /**
+   * "Maraton" uchun — savollar sonini o'quvchi o'zi tanlaydi.
+   *
+   * Maraton ATAYLAB yangi `AttemptMode` emas: u mashqning varianti
+   * (taymer yo'q, javob darhol ko'rsatiladi), farqi faqat savollar sonida.
+   * Enum'ga yangi qiymat qo'shilsa, `QUESTION_COUNT`, barcha panel
+   * filtrlari (`mode: "EXAM"`) va tayyorgarlik hisobi qayta ko'rilishi
+   * kerak bo'lardi — bittasi unutilsa statistika jimgina noto'g'ri
+   * bo'lib qolardi.
+   *
+   * Faqat PRACTICE uchun ishlaydi: imtihon savollari soni qat'iy
+   * (`QUESTION_COUNT.EXAM`), aks holda o'quvchi 1 savollik "imtihon"
+   * topshirib 100% olishi mumkin edi.
+   */
+  questionCount?: number;
 }): Promise<{
   attemptId: string;
   mode: AttemptMode;
@@ -74,7 +125,7 @@ export async function startAttempt(input: {
     throw new AttemptError("Tanlangan mavzularda savollar topilmadi");
   }
 
-  const targetCount = QUESTION_COUNT[input.mode];
+  const targetCount = resolveQuestionCount(input.mode, input.questionCount);
   if (input.mode === "EXAM" && candidates.length < targetCount) {
     throw new AttemptError("Imtihon uchun savollar yetarli emas", 400);
   }
