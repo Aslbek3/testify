@@ -64,9 +64,10 @@ export async function clearSessionCookie() {
 
 /**
  * CHUQUR sessiya tekshiruvi: JWT imzosidan tashqari bazadagi haqiqiy
- * holatni ham tekshiradi — hisob bloklangan (`isActive: false`) yoki
+ * holatni ham tekshiradi — hisob bloklangan (`isActive: false`),
  * `sessionVersion` mos kelmasa (parol/rol o'zgargan, sessiya bekor
- * qilingan) null qaytaradi, JWT muddati (1 hafta) tugamagan bo'lsa ham.
+ * qilingan) yoki tashkilotning tarif muddati tugagan bo'lsa null
+ * qaytaradi, JWT muddati (1 hafta) tugamagan bo'lsa ham.
  *
  * MUHIM: rol va organizationId JWT'dan EMAS, bazadan olinadi — aks holda
  * roli yoki tashkiloti o'zgargan foydalanuvchi eski token bilan eski
@@ -81,6 +82,18 @@ export async function getVerifiedSessionUser(): Promise<SessionUser | null> {
 
   const state = await getUserSessionState(user.id);
   if (!state || state.sessionVersion !== user.sessionVersion || !state.isActive) {
+    return null;
+  }
+
+  // Tarif tugagan tashkilot — sessiya darhol bekor bo'ladi, aks holda
+  // to'lovni to'xtatgan avtomaktabning allaqachon kirgan foydalanuvchilari
+  // token muddati (1 hafta) tugaguncha bemalol ishlab turardi (tekshiruv
+  // faqat login'da bor edi).
+  //
+  // OWNER'ning tashkiloti yo'q (`organizationId: null`) — `organization` ham
+  // null bo'lgani uchun bu shart unga hech qachon tegmaydi. Aynan
+  // `verifyCredentials`dagi kabi.
+  if (state.organization?.status === "EXPIRED") {
     return null;
   }
 
