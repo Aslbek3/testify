@@ -149,8 +149,16 @@ production'ga hech qachon shu holicha ko'chirilmaydi.
   10/15 daqiqa, IP almashtirish bilan aylanib o'tilmaydi); fail2ban shunchaki
   ikkinchi, hajmli-hujumga qarshi qatlam.
 - **Production test hisoblari (2026-09-06)**: tezkor test uchun 4 rolli
-  hisob production DB'da (`testify_prod`) yaratildi/tiklandi — parol
-  hammasida bir xil: **test1234**
+  hisob production DB'da (`testify_prod`) yaratildi/tiklandi.
+
+  ⚠️ **Parol bu yerga YOZILMAYDI.** Bu repo ochiq (public) — 2026-09-08
+  da shu bo'limda parol turgani va u internetga ochiq serverdagi
+  **App Owner** hisobiga kiritishi aniqlangan edi. Ya'ni repo'ni topgan
+  har kim platformadagi barcha tashkilotlarni boshqara olardi, va hech
+  qanday rate-limit yordam bermasdi — parol to'g'ri edi.
+
+  Parol faqat serverdagi `.env` da yoki parol menejerida saqlanadi.
+  Kerak bo'lsa `RESET_TEST_PASSWORD` bilan qayta o'rnatiladi (pastga qara).
 
   | Rol | Email |
   |---|---|
@@ -161,9 +169,11 @@ production'ga hech qachon shu holicha ko'chirilmaydi.
 
   Tashkilot: "Test Avtomaktab" (id `test-org-1`), Guruh: "Test Guruh"
   (id `test-group-1`) — direktor/ustoz/o'quvchi shularga bog'langan.
-  Qayta ishlatish/tiklash uchun: `npx tsx scripts/reset-test-accounts.ts`
-  (idempotent — mavjud bo'lsa parolni test1234'ga qaytaradi va
-  sessionVersion'ni oshiradi). Bu hisoblarni yaratgan
+  Qayta ishlatish/tiklash uchun:
+  `RESET_TEST_PASSWORD="<kuchli-parol>" npx tsx scripts/reset-test-accounts.ts`
+  (idempotent — mavjud bo'lsa parolni shu qiymatga qaytaradi va
+  sessionVersion'ni oshiradi, ya'ni eski sessiyalar darhol tugaydi).
+  Tanlangan parolni bu faylga YOZMANG. Bu hisoblarni yaratgan
   `owner@testif.gt.tc` eski owner hisobiga tegilmagan, u ham hali bor.
 - **Production'dagi test savollari (2026-09-06)**: dastlab 0 ta savol
   bor edi (`prisma/seed.ts` faqat lokal dev bazaga ishlaydi, production
