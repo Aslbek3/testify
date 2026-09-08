@@ -128,6 +128,26 @@ production'ga hech qachon shu holicha ko'chirilmaydi.
   chetlab o'tar edi. Bu fix ⚠️ bilan Nginx konfiguratsiyasiga bog'liq:
   proxy yo'lida bittadan ortiq bo'lmasa ishlaydi (`docs/deploy.md`
   3-bo'limiga qara).
+- ⚠️ **fail2ban `corepanel-login` jail — ilovaning rate-limit'iga bog'liq
+  (2026-09-08)**: server darajasida `/etc/fail2ban/jail.local`da
+  `corepanel-login` jail'i `POST /api/auth/login` 401'larini kuzatib
+  turadi (endi testify'ning o'z `access_log`idan —
+  `/var/log/nginx/testify_access.log`, avval umumiy `access.log`dan
+  edi). Qiymatlari (`maxretry=50`, `findtime=5m`, `bantime=15m`) ataylab
+  `src/lib/rateLimit.ts`dagi `LOGIN_IP_RATE_LIMIT` (40 urinish/15 daqiqa)
+  dan YUQORI turadi: normal foydalanuvchi (masalan bitta NAT ortidagi
+  30 o'quvchilik sinf) ilovaning o'z 429 javobiga uriladi (bu fail2ban
+  regex'iga tushmaydi, faqat 401 sanaladi) va butun sayt bloklanmaydi;
+  fail2ban faqat ilovani chetlab o'tgan/haddan tashqari hajmli trafikni
+  tutadi. **MUHIM: bu ikkisi bir-biriga bog'liq — `rateLimit.ts`dagi
+  `LOGIN_IP_RATE_LIMIT.maxAttempts` yoki `windowMs` o'zgarsa,
+  `jail.local`dagi `corepanel-login`ning `maxretry`/`findtime`/`bantime`
+  ham shunga qarab qayta ko'rilishi shart** (fail2ban chegarasi doim
+  ilova chegarasidan yuqori qolishi kerak), aks holda butun sayt yana
+  oddiy foydalanuvchilarni bloklay boshlaydi. Asosiy brute-force himoyasi
+  bu emas — u hisob (email) bo'yicha cheklov (`LOGIN_ACCOUNT_RATE_LIMIT`,
+  10/15 daqiqa, IP almashtirish bilan aylanib o'tilmaydi); fail2ban shunchaki
+  ikkinchi, hajmli-hujumga qarshi qatlam.
 - **Production test hisoblari (2026-09-06)**: tezkor test uchun 4 rolli
   hisob production DB'da (`testify_prod`) yaratildi/tiklandi — parol
   hammasida bir xil: **test1234**
