@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import { readinessFromScore, type ReadinessStatus } from "@/lib/readiness";
 
 export class DirectorActionError extends Error {}
@@ -7,6 +8,8 @@ export type OrganizationOverview = {
   groupCount: number;
   tutorCount: number;
   studentCount: number;
+  /** Shundan nechtasining hisobi bloklangan — plitka ostidagi izoh uchun. */
+  blockedStudentCount: number;
   averageScore: number | null;
 };
 
@@ -15,7 +18,17 @@ export type TutorRankingRow = {
   tutorName: string;
   isActive: boolean;
   groupName: string;
+  /** Guruhning HOZIRGI a'zolari. */
   studentCount: number;
+  /**
+   * `averageScore` nechta o'quvchining imtihon natijasidan chiqqani. Bu
+   * `studentCount` bilan teng bo'lishi SHART EMAS: ball urinish topshirilgan
+   * paytdagi guruh (`Attempt.groupId`) bo'yicha hisoblanadi, ya'ni boshqa
+   * guruhga ko'chirilgan o'quvchining eski natijasi eski ustozda qoladi.
+   * Ikkala son yonma-yon ko'rsatiladi, aks holda "O'quvchilar: 0, O'rtacha
+   * ball: 72%" qatori tushunarsiz bo'lib qoladi.
+   */
+  scoredStudentCount: number;
   averageScore: number | null;
 };
 
@@ -27,114 +40,174 @@ export type GroupOverviewRow = {
   lastActivityAt: Date | null;
 };
 
-function average(scores: number[]): number | null {
-  if (scores.length === 0) return null;
-  const sum = scores.reduce((a, b) => a + b, 0);
-  return Math.round(sum / scores.length);
+/**
+ * O'quvchini sanashning YAGONA ta'rifi — direktor panelidagi barcha joyda
+ * shu ishlatiladi (plitka, bo'sh holat tekshiruvi, ro'yxat). Guruh profili
+ * yo'q STUDENT qatori hech qaysi guruhga tegishli emas va jadvalda
+ * ko'rsatib ham bo'lmaydi, shuning uchun sanoqqa ham kirmaydi: aks holda
+ * plitka "50", ro'yxat esa "48" ko'rsatardi.
+ */
+function studentScope(organizationId: string): Prisma.UserWhereInput {
+  return { organizationId, role: "STUDENT", studentProfile: { isNot: null } };
+}
+
+/**
+ * Tashkilotning o'rtacha bali.
+ *
+ * Uch narsa ataylab shunday:
+ * 1. FAQAT `mode = 'EXAM'` va `finishedAt IS NOT NULL` — mashqda javob darhol
+ *    ko'rsatiladi (ball sun'iy yuqori), tashlab ketilgan urinishning javobsiz
+ *    savollari esa hali "xato" emas. `score IS NOT NULL` yolg'iz o'zi yetarli
+ *    emas edi: u ikki maydon doim birga yozilishiga tayanadigan mo'rt shart.
+ * 2. Avval HAR BIR O'QUVCHINING o'rtachasi, keyin o'quvchilar o'rtachasi
+ *    (`GROUP BY a."studentId"` + tashqi `AVG`). Barcha urinishlarni bitta
+ *    ro'yxatga qo'shib o'rtachalash noto'g'ri: 10 ta imtihonni 50% ga
+ *    topshirgan o'quvchi va 1 ta imtihonni 100% ga topshirgan o'quvchida
+ *    urinish bo'yicha 55%, o'quvchi bo'yicha esa 75% chiqadi. Pastdagi
+ *    ustozlar reytingi aynan shu — o'quvchi bo'yicha — usulda hisoblaydi,
+ *    ya'ni endi bitta sahifada bir-biriga zid ikkita raqam chiqmaydi.
+ * 3. Bog'lanish `Attempt.groupId → Group.organizationId` orqali, o'quvchining
+ *    HOZIRGI guruhi orqali emas — `getTutorRanking` bilan bir xil qoida.
+ *
+ * Agregatsiya bazada bajariladi: aks holda 500 o'quvchi × 50 imtihon = 25 000
+ * qator faqat bitta o'rtacha uchun Node'ga tortilardi.
+ */
+async function getOrganizationAverageScore(
+  organizationId: string
+): Promise<number | null> {
+  const rows = await prisma.$queryRaw<{ averageScore: number | null }[]>`
+    SELECT ROUND(AVG(s."studentAvg"))::int AS "averageScore"
+    FROM (
+      SELECT ROUND(AVG(a."score")) AS "studentAvg"
+      FROM "Attempt" a
+      JOIN "Group" g ON g."id" = a."groupId"
+      WHERE a."mode" = 'EXAM'
+        AND a."finishedAt" IS NOT NULL
+        AND a."score" IS NOT NULL
+        AND g."organizationId" = ${organizationId}
+      GROUP BY a."studentId"
+    ) s
+  `;
+
+  return rows[0]?.averageScore ?? null;
 }
 
 export async function getOrganizationOverview(
   organizationId: string
 ): Promise<OrganizationOverview> {
-  const [groupCount, tutorCount, studentCount, finishedAttempts] = await Promise.all([
-    prisma.group.count({ where: { organizationId } }),
-    prisma.user.count({ where: { organizationId, role: "TUTOR" } }),
-    prisma.user.count({ where: { organizationId, role: "STUDENT" } }),
-    // FAQAT imtihon (EXAM) — mashqda javob darhol ko'rsatilgani uchun
-    // mashq ballari sun'iy yuqori bo'ladi. Bu plitka pastdagi o'quvchilar
-    // jadvali bilan bir xil qoidada hisoblanishi shart, aks holda bitta
-    // sahifada bir-biriga zid ikkita raqam chiqadi.
-    prisma.attempt.findMany({
-      where: {
-        mode: "EXAM",
-        score: { not: null },
-        student: {
-          studentProfile: { group: { organizationId } },
-        },
-      },
-      select: { score: true },
-    }),
-  ]);
-
-  const scores = finishedAttempts
-    .map((a) => a.score)
-    .filter((s): s is number => s !== null);
+  const [groupCount, tutorCount, studentCount, blockedStudentCount, averageScore] =
+    await Promise.all([
+      prisma.group.count({ where: { organizationId } }),
+      prisma.user.count({ where: { organizationId, role: "TUTOR" } }),
+      prisma.user.count({ where: studentScope(organizationId) }),
+      prisma.user.count({
+        where: { ...studentScope(organizationId), isActive: false },
+      }),
+      getOrganizationAverageScore(organizationId),
+    ]);
 
   return {
     groupCount,
     tutorCount,
     studentCount,
-    averageScore: average(scores),
+    blockedStudentCount,
+    averageScore,
   };
+}
+
+/**
+ * Ustoz kesimidagi o'rtacha ball — `getOrganizationAverageScore` bilan
+ * AYNI qoida (EXAM + yakunlangan + `Attempt.groupId` orqali bog'lanish +
+ * avval o'quvchi o'rtachasi), faqat ustoz bo'yicha guruhlangan holda.
+ *
+ * `GROUP BY g."tutorId", a."studentId"` — bir o'quvchi shu ustozning ikki
+ * guruhida bo'lgan bo'lsa ham u bitta o'quvchi sifatida sanaladi.
+ * `scoredStudentCount` — ball nechta o'quvchining natijasidan chiqqani.
+ */
+async function getTutorScoreRows(organizationId: string) {
+  return prisma.$queryRaw<
+    { tutorId: string; averageScore: number; scoredStudentCount: number }[]
+  >`
+    SELECT
+      sa."tutorId",
+      ROUND(AVG(sa."studentAvg"))::int AS "averageScore",
+      COUNT(*)::int                    AS "scoredStudentCount"
+    FROM (
+      SELECT g."tutorId"   AS "tutorId",
+             a."studentId" AS "studentId",
+             ROUND(AVG(a."score")) AS "studentAvg"
+      FROM "Attempt" a
+      JOIN "Group" g ON g."id" = a."groupId"
+      WHERE a."mode" = 'EXAM'
+        AND a."finishedAt" IS NOT NULL
+        AND a."score" IS NOT NULL
+        AND g."organizationId" = ${organizationId}
+      GROUP BY g."tutorId", a."studentId"
+    ) sa
+    GROUP BY sa."tutorId"
+  `;
 }
 
 export async function getTutorRanking(
   organizationId: string
 ): Promise<TutorRankingRow[]> {
-  const tutors = await prisma.user.findMany({
-    where: { organizationId, role: "TUTOR" },
-    select: {
-      id: true,
-      name: true,
-      isActive: true,
-      tutorOfGroups: {
-        where: { organizationId },
-        select: {
-          id: true,
-          name: true,
-          students: { select: { userId: true } },
-          // FAQAT imtihon, FAQAT yakunlangani va FAQAT shu guruhda
-          // topshirilgani (`Attempt.groupId` bo'yicha bog'lanish — o'quvchi
-          // bo'yicha emas). O'quvchi boshqa guruhga ko'chirilsa, eski
-          // urinishlari eski ustozda qoladi: aks holda ustozlar o'zlari
-          // qilmagan ish uchun baholanardi.
-          attempts: {
-            where: { mode: "EXAM", finishedAt: { not: null }, score: { not: null } },
-            select: { studentId: true, score: true },
+  const [tutors, scoreRows] = await Promise.all([
+    prisma.user.findMany({
+      where: { organizationId, role: "TUTOR" },
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+        tutorOfGroups: {
+          where: { organizationId },
+          select: {
+            name: true,
+            // A'zolar soni bazada sanaladi — bu yerda faqat son kerak,
+            // o'quvchilar ro'yxati emas.
+            _count: { select: { students: true } },
           },
         },
       },
-    },
-  });
+    }),
+    getTutorScoreRows(organizationId),
+  ]);
+
+  const scoreByTutor = new Map(scoreRows.map((row) => [row.tutorId, row]));
 
   const rows: TutorRankingRow[] = tutors.map((tutor) => {
-    const groupName = tutor.tutorOfGroups.map((g) => g.name).join(", ") || "—";
-    const students = tutor.tutorOfGroups.flatMap((g) => g.students);
-
-    // Avval HAR BIR O'QUVCHINING o'rtachasi, keyin o'quvchilar o'rtachasi.
-    // Barcha urinishlarni bitta ro'yxatga qo'shib yuborish (urinish bo'yicha
-    // o'rtachalash) noto'g'ri edi: ko'p imtihon topshirgan bitta o'quvchi
-    // butun guruh ko'rsatkichini o'ziga tortib ketardi. Ustoz jadvalidagi
-    // hisob ham aynan shu — o'quvchi bo'yicha — usulda ishlaydi.
-    const scoresByStudent = new Map<string, number[]>();
-    for (const group of tutor.tutorOfGroups) {
-      for (const attempt of group.attempts) {
-        if (attempt.score === null) continue;
-        const list = scoresByStudent.get(attempt.studentId) ?? [];
-        list.push(attempt.score);
-        scoresByStudent.set(attempt.studentId, list);
-      }
-    }
-
-    const studentAverages = Array.from(scoresByStudent.values())
-      .map((scores) => average(scores))
-      .filter((avg): avg is number => avg !== null);
+    const score = scoreByTutor.get(tutor.id);
 
     return {
       tutorId: tutor.id,
       tutorName: tutor.name,
       isActive: tutor.isActive,
-      groupName,
-      studentCount: students.length,
-      averageScore: average(studentAverages),
+      groupName: tutor.tutorOfGroups.map((g) => g.name).join(", ") || "—",
+      studentCount: tutor.tutorOfGroups.reduce(
+        (sum, g) => sum + g._count.students,
+        0
+      ),
+      scoredStudentCount: score?.scoredStudentCount ?? 0,
+      averageScore: score?.averageScore ?? null,
     };
   });
 
   rows.sort((a, b) => {
-    if (a.averageScore === null && b.averageScore === null) return 0;
+    // Hozirgi o'quvchisi qolmagan ustoz reyting BOSHIDA turmaydi: uning bali
+    // boshqa guruhga ko'chirilgan eski o'quvchilardan qolgan va bugungi ishni
+    // ko'rsatmaydi. Uni ro'yxatdan olib tashlash ham to'g'ri emas (natijasi
+    // haqiqiy), shuning uchun alohida — pastki qismda — turadi.
+    const aEmpty = a.studentCount === 0;
+    const bEmpty = b.studentCount === 0;
+    if (aEmpty !== bEmpty) return aEmpty ? 1 : -1;
+
+    // Ball yo'q ustozlar ham pastda; teng bo'lsa tartib ism bo'yicha barqaror.
+    if (a.averageScore === null && b.averageScore === null) {
+      return a.tutorName.localeCompare(b.tutorName);
+    }
     if (a.averageScore === null) return 1;
     if (b.averageScore === null) return -1;
-    return b.averageScore - a.averageScore;
+    if (b.averageScore !== a.averageScore) return b.averageScore - a.averageScore;
+    return a.tutorName.localeCompare(b.tutorName);
   });
 
   return rows;
@@ -261,8 +334,7 @@ export async function listStudentsForOrganization(
 
   const students = await prisma.user.findMany({
     where: {
-      organizationId,
-      role: "STUDENT",
+      ...studentScope(organizationId),
       ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
       ...(groupId ? { studentProfile: { groupId } } : {}),
     },
@@ -275,28 +347,40 @@ export async function listStudentsForOrganization(
           group: { select: { id: true, name: true, tutor: { select: { name: true } } } },
         },
       },
-      // Faqat yakunlangan imtihonlar — tutorDashboard'dagi getRosterForGroup
-      // bilan bir xil qoida (tashlab ketilgan urinish na ballga, na "imtihonlar"
-      // ustuniga kirmaydi).
-      attempts: {
-        where: { mode: "EXAM", finishedAt: { not: null } },
-        select: { score: true },
-      },
     },
     orderBy: { name: "asc" },
   });
 
+  // Ball va imtihonlar soni bazada agregatsiya qilinadi: ilgari har bir
+  // o'quvchining BARCHA urinish qatorlari Node'ga tortilardi (500 o'quvchi ×
+  // 50 imtihon = 25 000 qator), endi o'quvchi boshiga bittadan qator qaytadi.
+  // Filtr avvalgidek: faqat yakunlangan imtihonlar — tutorDashboard'dagi
+  // getRosterForGroup bilan bir xil qoida (tashlab ketilgan urinish na ballga,
+  // na "imtihonlar" ustuniga kirmaydi).
+  const stats =
+    students.length === 0
+      ? []
+      : await prisma.attempt.groupBy({
+          by: ["studentId"],
+          where: {
+            studentId: { in: students.map((s) => s.id) },
+            mode: "EXAM",
+            finishedAt: { not: null },
+          },
+          _avg: { score: true },
+          _count: { _all: true },
+        });
+
+  const statByStudent = new Map(stats.map((row) => [row.studentId, row]));
+
   return students
+    // `studentScope` allaqachon profilsizlarni chiqarib tashlagan — bu satr
+    // faqat TypeScript uchun (profil tipida hamon `null` bo'lishi mumkin).
     .filter((s) => s.studentProfile !== null)
     .map((s) => {
-      const examAttempts = s.attempts;
-      const scores = examAttempts
-        .map((a) => a.score)
-        .filter((score): score is number => score !== null);
-      const averageScore =
-        scores.length > 0
-          ? Math.round(scores.reduce((sum, sc) => sum + sc, 0) / scores.length)
-          : null;
+      const stat = statByStudent.get(s.id);
+      const rawAverage = stat?._avg.score ?? null;
+      const averageScore = rawAverage === null ? null : Math.round(rawAverage);
 
       return {
         studentId: s.id,
@@ -305,9 +389,23 @@ export async function listStudentsForOrganization(
         groupId: s.studentProfile!.group.id,
         groupName: s.studentProfile!.group.name,
         tutorName: s.studentProfile!.group.tutor.name,
-        examAttemptCount: examAttempts.length,
+        examAttemptCount: stat?._count._all ?? 0,
         averageScore,
         status: readinessFromScore(averageScore),
       };
     });
+}
+
+/**
+ * Faqat "tashkilotda umuman o'quvchi bormi?" tekshiruvi uchun. Ilgari buning
+ * uchun `listStudentsForOrganization` ikkinchi marta (filtrsiz) chaqirilardi
+ * va natijadan faqat `.length` ishlatilardi — har sahifa yuklanishida ikkita
+ * bir xil og'ir so'rov. Sanoq sharti ro'yxatnikiga aynan mos
+ * (`studentScope`), aks holda "0 ta o'quvchi" bo'sh holati ro'yxat bilan zid
+ * chiqishi mumkin edi.
+ */
+export async function countStudentsForOrganization(
+  organizationId: string
+): Promise<number> {
+  return prisma.user.count({ where: studentScope(organizationId) });
 }

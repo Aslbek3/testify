@@ -10,6 +10,23 @@ const VARIANT_STYLES: Record<BadgeVariant, string> = {
   brand: "bg-brand-soft text-brand",
 };
 
+/**
+ * Ayni variantning TO'LDIRILGAN (to'q) rangi — shkala (progress bar) uchun.
+ *
+ * Badge bilan bitta joyda turadi, chunki ular doim yonma-yon ishlatiladi:
+ * o'quvchi va ustoz panellarida har bir mavzu qatorida shkala va uning
+ * yonida shu rangdagi Badge bo'ladi. Ikki nusxada saqlansa, biri
+ * o'zgartirilib ikkinchisi unutilganda shkala bilan yorliq turli rangda
+ * qolib ketardi.
+ */
+export const BADGE_SOLID_CLASS: Record<BadgeVariant, string> = {
+  success: "bg-success",
+  warning: "bg-warning",
+  danger: "bg-danger",
+  neutral: "bg-text-muted",
+  brand: "bg-brand",
+};
+
 export function Badge({
   variant = "neutral",
   children,

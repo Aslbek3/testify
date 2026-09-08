@@ -27,13 +27,16 @@ export function QuestionImage({
   useEffect(() => {
     if (!zoomed) return;
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        // Test ekranida klaviatura 1–5 bilan javob tanlanadi va Enter
-        // keyingi savolga o'tadi. Overlay ochiq turganda o'sha tinglovchi
-        // ham ishlab ketmasligi uchun hodisa shu yerda to'xtatiladi.
-        event.stopPropagation();
-        setZoomed(false);
-      }
+      // Rasm kattalashtirilgan holatda hech qanday klavish test ekraniga
+      // yetib bormasin. Test ekranida 1–5 javob tanlaydi, ←/→ savol
+      // almashtiradi, Enter keyingisiga o'tadi — rasmga tikilib turgan
+      // o'quvchi tasodifan raqam bossa, mashqda javob berilgan hisoblanardi
+      // va uni qaytarib bo'lmasdi.
+      //
+      // `document` da tinglaymiz, test ekrani esa `window` da — ko'pikchada
+      // (bubble) `document` oldin keladi, shuning uchun bu to'xtatish ishlaydi.
+      event.stopPropagation();
+      if (event.key === "Escape") setZoomed(false);
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);

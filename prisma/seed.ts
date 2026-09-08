@@ -932,6 +932,16 @@ async function main() {
   }
 
   // ---- Urinishlar (Attempt + AttemptAnswer) ----
+  // Urinishlar `upsert` qilinmaydi (ularning tabiiy kaliti yo'q), shuning
+  // uchun seed qayta ishga tushirilganda avvalgilari o'chiriladi — aks holda
+  // har safar yangi to'plam qo'shilib, demo o'quvchida o'nlab urinish
+  // to'planib qolardi va statistikani tekshirib bo'lmasdi.
+  const seedStudentIds = students.map((s) => s.id);
+  await prisma.attemptAnswer.deleteMany({
+    where: { attempt: { studentId: { in: seedStudentIds } } },
+  });
+  await prisma.attempt.deleteMany({ where: { studentId: { in: seedStudentIds } } });
+
   // Har bir o'quvchining har mavzudagi "ko'nikma darajasi" (0..1) seed'dan
   // hosil qilinadi, shu asosda javoblar to'g'ri/xato bo'ladi — natijada
   // real ma'lumotga o'xshash, lekin har doim bir xil chiqadigan taqsimot olinadi.
@@ -942,48 +952,85 @@ async function main() {
       topicSkill.set(topic.id, 0.4 + skillRand() * 0.55);
     }
 
-    const attemptCount = 2;
-    for (let a = 0; a < attemptCount; a++) {
-      const daysAgo = a === 0 ? 10 : 2;
-      const startedAt = new Date(Date.now() - daysAgo * 86400000);
+    // Uchta urinish: ikkita imtihon va bitta mashq. Imtihon ko'proq, chunki
+    // barcha o'rtacha/tayyorgarlik ko'rsatkichlari FAQAT imtihondan
+    // hisoblanadi — bitta imtihon bilan panellarda ko'rsatadigan narsa
+    // qolmaydi.
+    const ATTEMPT_PLAN = [
+      { mode: "EXAM" as const, questionCount: 20, daysAgo: 12, unanswered: 0 },
+      // Ikkinchi imtihonda oxirgi 3 savol ATAYLAB javobsiz qoldiriladi —
+      // "javobsiz" holati (ball xato deb sanaydi, mavzu statistikasi ham
+      // shunday) demo bazada ko'rinib tursin.
+      { mode: "EXAM" as const, questionCount: 20, daysAgo: 3, unanswered: 3 },
+      { mode: "PRACTICE" as const, questionCount: 10, daysAgo: 1, unanswered: 0 },
+    ];
+
+    for (let a = 0; a < ATTEMPT_PLAN.length; a++) {
+      const plan = ATTEMPT_PLAN[a];
+      const startedAt = new Date(Date.now() - plan.daysAgo * 86400000);
       const finishedAt = new Date(startedAt.getTime() + 12 * 60000);
 
-      // Har bir o'quvchiga bittadan EXAM va bittadan PRACTICE urinish —
-      // aks holda (mode ko'rsatilmasa, standart PRACTICE bo'lgani uchun)
-      // demo bazada birorta ham EXAM urinish bo'lmay qolar edi, bu esa
-      // "faqat EXAM'dan hisoblash" mantig'ini ko'rsatib bo'lmas edi.
+      // Savollar urinish uchun ALOHIDA tanlanadi va `questionIds` ga
+      // yoziladi. Ilgari seed butun savollar bazasiga javob berib chiqar va
+      // `questionIds` ni umuman to'ldirmas edi — bu ikki jihatdan noto'g'ri:
+      //  - haqiqiy urinishda 10/20 savol bo'ladi, 66 ta emas;
+      //  - `questionIds` bo'sh bo'lsa mavzu statistikasi (u aynan shu
+      //    ro'yxatdan boshlanadi, javobsizni ham sanash uchun) urinishni
+      //    umuman ko'rmaydi va panellar bo'sh chiqadi.
+      const pickRand = seedRandom(`pick-${student.email}-${a}`);
+      const pool = [...allQuestions];
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(pickRand() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      const picked = pool.slice(0, Math.min(plan.questionCount, pool.length));
+
       const attempt = await prisma.attempt.create({
         data: {
           studentId: student.id,
           startedAt,
           finishedAt,
           score: 0,
-          mode: a === 0 ? "EXAM" : "PRACTICE",
+          mode: plan.mode,
+          // Guruh urinish topshirilgan paytdagi guruh bo'yicha yoziladi —
+          // ustoz/direktor statistikasi aynan shu maydon orqali bog'lanadi.
+          groupId: group.id,
+          questionIds: picked.map((q) => q.id),
         },
       });
 
       const answerRand = seedRandom(`answers-${student.email}-${a}`);
+      const answeredCount = Math.max(0, picked.length - plan.unanswered);
       let correctCount = 0;
-      for (const { topic, questions } of topics) {
-        const skill = topicSkill.get(topic.id)!;
-        for (const question of questions) {
-          const isCorrect = answerRand() < skill;
-          if (isCorrect) correctCount++;
-          const wrongIndex = (question.correctOptionIndex + 1) % 4;
-          await prisma.attemptAnswer.create({
-            data: {
-              attemptId: attempt.id,
-              questionId: question.id,
-              selectedOptionIndex: isCorrect
-                ? question.correctOptionIndex
-                : wrongIndex,
-              isCorrect,
-            },
-          });
-        }
+
+      for (let qi = 0; qi < answeredCount; qi++) {
+        const question = picked[qi];
+        const skill = topicSkill.get(question.topicId) ?? 0.5;
+        const isCorrect = answerRand() < skill;
+        if (isCorrect) correctCount++;
+
+        // Xato variant savolning O'Z variantlar soniga qarab tanlanadi.
+        // Ilgari bu `% 4` edi — 2 variantli savolga mavjud bo'lmagan
+        // 2-indeksni yozib qo'yardi (savollarda endi 2 tadan 5 tagacha
+        // variant bo'lishi mumkin).
+        const optionCount = Array.isArray(question.options)
+          ? question.options.length
+          : 4;
+        const wrongIndex = (question.correctOptionIndex + 1) % optionCount;
+
+        await prisma.attemptAnswer.create({
+          data: {
+            attemptId: attempt.id,
+            questionId: question.id,
+            selectedOptionIndex: isCorrect ? question.correctOptionIndex : wrongIndex,
+            isCorrect,
+          },
+        });
       }
 
-      const score = Math.round((correctCount / allQuestions.length) * 100);
+      // Ball ilovadagi formulaning AYNI o'zi: javobsiz qolgan savol xato
+      // deb sanaladi (`correct / questionIds.length`).
+      const score = Math.round((correctCount / picked.length) * 100);
       await prisma.attempt.update({ where: { id: attempt.id }, data: { score } });
     }
   }

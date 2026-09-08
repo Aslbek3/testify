@@ -163,10 +163,23 @@ export function TestRunner({
       });
 
       if (res.status === 409) {
-        // Server tomonda vaqt tugagan deb topildi (soat sinxronsizligi
-        // kabi chekka holat) — mijoz taymeri buni allaqachon sezishi kerak
-        // edi, shu bois to'g'ridan-to'g'ri yakunlashga o'tkazamiz.
-        handleFinish();
+        if (mode === "EXAM") {
+          // Server tomonda vaqt tugagan deb topildi (soat sinxronsizligi
+          // kabi chekka holat) — mijoz taymeri buni allaqachon sezishi kerak
+          // edi, shu bois to'g'ridan-to'g'ri yakunlashga o'tkazamiz.
+          handleFinish();
+          return;
+        }
+        // MASHQDA 409 boshqa narsani bildiradi: "javob allaqachon berilgan".
+        // Bu yerda testni yakunlash mumkin emas edi — server javobni qayta
+        // yozishdan himoyalangani uchun bu holat endi normal javob, xato
+        // emas. Amalda bunga yetib kelinmaydi (variantlar javobdan keyin
+        // bloklanadi), lekin yetib kelinsa test tugab qolmasligi shart.
+        setSaveStatus((prev) => {
+          const next = { ...prev };
+          delete next[questionId];
+          return next;
+        });
         return;
       }
       if (!res.ok) throw new Error(`saqlash muvaffaqiyatsiz: ${res.status}`);
@@ -263,6 +276,13 @@ export function TestRunner({
       const target = event.target as HTMLElement | null;
       if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
 
+      // Modifikator bilan bosilgan klavish — bu brauzer yorlig'i, javob emas.
+      // Ilgari Ctrl+1 (yorliqlar orasida o'tish) A variantini tanlab qo'yardi,
+      // Alt+→ (brauzerda "oldinga") esa keyingi savolga o'tkazardi. Mashqda
+      // javob berilgandan keyin uni o'zgartirib bo'lmaydi — ya'ni tasodifan
+      // bosilgan Ctrl+1 savolni butunlay kuydirib yuborardi.
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+
       const digit = Number(event.key);
       if (Number.isInteger(digit) && digit >= 1 && digit <= currentQuestion.options.length) {
         event.preventDefault();
@@ -323,22 +343,52 @@ export function TestRunner({
         >
           {questions.map((q, i) => {
             const isCurrent = i === currentIndex;
-            const isAnswered = Boolean(answers[q.id]);
+            const answer = answers[q.id];
+            const isAnswered = Boolean(answer);
             const status = saveStatus[q.id];
+
+            // MASHQDA chiziqcha javob to'g'ri-noto'g'riligini ko'rsatadi:
+            // yashil/qizil. Mashqda to'g'ri javob allaqachon ekranda ochilgan,
+            // shuning uchun yashirishning ma'nosi yo'q — aksincha, o'quvchi
+            // butun test bo'ylab qayerda qoqilganini bir qarashda ko'radi.
+            //
+            // IMTIHONDA esa faqat "javob berilgan/berilmagan" ko'rinadi (ko'k):
+            // u yerda to'g'ri javob yakunlanmaguncha hech qanday yo'l bilan
+            // oshkor qilinmasligi kerak, chiziqcha rangi ham shunga kiradi.
+            // `correctOptionIndex` faqat mashqda serverdan keladi, ya'ni bu
+            // shart imtihonda hech qachon bajarilmaydi.
+            const knowsCorrectness =
+              mode === "PRACTICE" && answer?.correctOptionIndex !== undefined;
+
             const fillColor =
+              // Saqlanmagan javob birinchi o'rinda — u boshqa hamma narsadan
+              // muhimroq signal (javob yo'qolgan bo'lishi mumkin).
               status === "failed"
                 ? "bg-danger"
                 : status === "retrying" || status === "saving"
                   ? "bg-warning"
-                  : isAnswered
-                    ? "bg-brand"
-                    : "bg-border";
+                  : knowsCorrectness
+                    ? answer?.isCorrect
+                      ? "bg-success"
+                      : "bg-danger"
+                    : isAnswered
+                      ? "bg-brand"
+                      : "bg-border";
+
+            const answerLabel = knowsCorrectness
+              ? answer?.isCorrect
+                ? ", to'g'ri"
+                : ", xato"
+              : isAnswered
+                ? ", javob berilgan"
+                : "";
+
             return (
               <button
                 key={q.id}
                 type="button"
                 onClick={() => setCurrentIndex(i)}
-                aria-label={`${i + 1}-savol${isAnswered ? ", javob berilgan" : ""}${
+                aria-label={`${i + 1}-savol${answerLabel}${
                   status === "failed" ? ", saqlanmadi" : ""
                 }`}
                 aria-current={isCurrent ? "step" : undefined}

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import {
   listOrganizations,
+  listOrganizationOptions,
+  getPlatformOverview,
   type OrganizationSortDirection,
   type OrganizationSortField,
 } from "@/services/organizations";
@@ -74,20 +76,15 @@ export default async function OwnerPage({
       : undefined;
 
   // Statistik plitkalar butun platforma bo'yicha bo'lishi kerak (filtrlarga
-  // bog'liq bo'lmasin), shuning uchun ular uchun filtrlanmagan ro'yxat
-  // alohida olinadi. Jadval esa filtrlangan/saralangan ro'yxatni ko'rsatadi.
-  const allOrganizations = await listOrganizations();
-  const organizations = await listOrganizations({
-    q,
-    status: statusFilter,
-    sortField,
-    sortDirection,
-  });
-
-  const activeCount = allOrganizations.filter((o) => o.status === "ACTIVE").length;
-  const activeStudents = allOrganizations
-    .filter((o) => o.status === "ACTIVE")
-    .reduce((sum, o) => sum + o.studentCount, 0);
+  // bog'liq bo'lmasin). Ilgari buning uchun `listOrganizations()` ikkinchi
+  // marta — filtrsiz — chaqirilar va natijasidan faqat uchta yig'indi
+  // olinardi; endi shu yig'indilar bazada sanaladi. Jadval esa
+  // filtrlangan/saralangan ro'yxatni ko'rsatadi.
+  const [overview, organizationOptions, organizations] = await Promise.all([
+    getPlatformOverview(),
+    listOrganizationOptions(),
+    listOrganizations({ q, status: statusFilter, sortField, sortDirection }),
+  ]);
 
   function sortHref(field: OrganizationSortField) {
     const nextDirection: OrganizationSortDirection =
@@ -116,22 +113,33 @@ export default async function OwnerPage({
               Savollar bazasi
             </Button>
           </Link>
-          <NewDirectorModal
-            organizations={allOrganizations.map((o) => ({ id: o.id, name: o.name }))}
-          />
+          <NewDirectorModal organizations={organizationOptions} />
           <NewOrganizationModal />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {/* Yorliqlarda "faol" so'zi ikki xil narsani anglatardi: hisob
+          bloklanmaganini va tashkilot holati ACTIVE ekanini. Endi har bir
+          plitka nimani sanashini aniq yozadi. "primary" plitka ikki ustunni
+          egallagani uchun to'rtta plitka jami beshta katak. */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
         <StatTile
           emphasis="primary"
-          label="Jami faol o'quvchilar"
-          value={activeStudents}
-          sub="Faol tashkilotlardagi o'quvchilar"
+          label="Faol tashkilotlardagi o'quvchilar"
+          value={overview.activeOrganizationStudentCount}
+          sub="Bloklanmagan hisoblar"
         />
-        <StatTile label="Jami tashkilotlar" value={allOrganizations.length} />
-        <StatTile label="Faol tashkilotlar" value={activeCount} />
+        <StatTile
+          label="Jami o'quvchilar"
+          value={overview.studentCount}
+          sub="Barcha tashkilotlar"
+        />
+        <StatTile label="Jami tashkilotlar" value={overview.organizationCount} />
+        <StatTile
+          label="Faol tashkilotlar"
+          value={overview.activeOrganizationCount}
+          sub="Holati: Faol"
+        />
       </div>
 
       <Card>
@@ -144,7 +152,12 @@ export default async function OwnerPage({
 
         <OrganizationFilters />
 
-        {allOrganizations.length === 0 ? (
+        <p className="mb-3 text-sm text-text-muted">
+          Ustozlar va o&apos;quvchilar ustunlari faqat bloklanmagan hisoblarni
+          sanaydi.
+        </p>
+
+        {overview.organizationCount === 0 ? (
           <p className="text-sm text-text-muted">
             Hozircha birorta tashkilot qo&apos;shilmagan.
           </p>
