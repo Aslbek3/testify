@@ -80,15 +80,20 @@ production'ga hech qachon shu holicha ko'chirilmaydi.
   --interpreter $(which node)`, nvm v22.23.1 muhitida). Agar `pm2
   resurrect`/reboot'dan keyin `testify` crash-loop qilsa — birinchi
   sabab shu (interpreter yo'li noto'g'ri bo'lib qolishi).
-- **Domen**: `testif.gt.tc`, Nginx site: `/etc/nginx/sites-available/testify`
-  (2026-09-06 da yoqilgan, faqat HTTP/80 — HTTPS/certbot hali yo'q).
+- **Domen**: `testif.duckdns.org` (2026-09-06 da `testif.gt.tc`dan
+  o'tkazildi — gt.tc DNS bu VPS'ga hech qachon ko'rsatilmagan edi,
+  `185.27.134.212`ga ko'rsatib turardi; duckdns.org boshqa loyihalar
+  kabi to'g'ridan-to'g'ri shu VPS'ga ishlaydi). Nginx site:
+  `/etc/nginx/sites-available/testify` (`server_name
+  testif.duckdns.org`, `sites-enabled`ga symlink qilingan), SSL
+  certbot orqali o'rnatilgan (`/etc/letsencrypt/live/testif.duckdns.org/`).
   Namuna: `docs/nginx.conf.example` (izohlar bilan — nima uchun
-  `X-Real-IP`ni Nginx qayta yozishi shart, `client_max_body_size`,
-  certbot).
-  ⚠️ **DNS mos emas**: `testif.gt.tc` hozircha `185.27.134.212` ga
-  ko'rsatadi, bu VPS esa `161.97.105.98` — domen A-yozuvi shu VPS'ga
-  ko'rsatilmaguncha tashqaridan ochilmaydi. Tuzatilgach: `certbot
-  --nginx -d testif.gt.tc` bilan HTTPS qo'shiladi.
+  `X-Real-IP`ni Nginx qayta yozishi shart, `client_max_body_size`).
+  **2026-09-08 da qayta tekshirildi**: `testif.duckdns.org` DNS A-yozuvi
+  shu VPS'ning IPv4'iga (`161.97.105.98`) to'g'ri ko'rsatadi; port 80
+  so'rovi Certbot boshqaruvidagi qoida bilan `301`ga HTTPS'ga
+  yo'naltiradi; sertifikat amal qiladi (muddati 2026-12-05); **https://testif.duckdns.org**
+  `200 OK` bilan ochiladi.
 - **Baza**: mahalliy PostgreSQL, DB `testify_prod`, user `testify_prod`
   (parol faqat serverdagi `.env` da, git'ga tushmaydi).
 - **App Owner hisobi**: `owner@testif.gt.tc` (2026-09-06 da yaratilgan —
@@ -123,6 +128,34 @@ production'ga hech qachon shu holicha ko'chirilmaydi.
   chetlab o'tar edi. Bu fix ⚠️ bilan Nginx konfiguratsiyasiga bog'liq:
   proxy yo'lida bittadan ortiq bo'lmasa ishlaydi (`docs/deploy.md`
   3-bo'limiga qara).
+- **Production test hisoblari (2026-09-06)**: tezkor test uchun 4 rolli
+  hisob production DB'da (`testify_prod`) yaratildi/tiklandi — parol
+  hammasida bir xil: **test1234**
+
+  | Rol | Email |
+  |---|---|
+  | App Owner | owner@testify.dev |
+  | Direktor | director@testify.dev |
+  | Ustoz | tutor@testify.dev |
+  | O'quvchi | student1@testify.dev |
+
+  Tashkilot: "Test Avtomaktab" (id `test-org-1`), Guruh: "Test Guruh"
+  (id `test-group-1`) — direktor/ustoz/o'quvchi shularga bog'langan.
+  Qayta ishlatish/tiklash uchun: `npx tsx scripts/reset-test-accounts.ts`
+  (idempotent — mavjud bo'lsa parolni test1234'ga qaytaradi va
+  sessionVersion'ni oshiradi). Bu hisoblarni yaratgan
+  `owner@testif.gt.tc` eski owner hisobiga tegilmagan, u ham hali bor.
+- **Production'dagi test savollari (2026-09-06)**: dastlab 0 ta savol
+  bor edi (`prisma/seed.ts` faqat lokal dev bazaga ishlaydi, production
+  hech qachon to'liq seed qilinmagan). Tezkor test uchun 64 tadan
+  **20 tasi** qo'lda ko'chirilgan (3 mavzu: "Yo'l belgilari" — 8 ta,
+  "Svetofor va nazoratchi ishoralari" — 7 ta, "Ustunlik huquqi" — 4 ta),
+  xuddi seed.ts dagi bilan bir xil deterministik ID sxemasi bilan
+  (`seed-topic-<slug>`, `<topicId>-q<i>`) — shu sabab kelajakda to'liq
+  `prisma/seed.ts` production'da ishga tushirilsa, bu 20 tasi
+  qayta yozib almashtiriladi (upsert), dublikat bo'lmaydi. Qolgan
+  44 tasini qo'shish uchun xuddi shu usulni takrorlash kifoya (vaqtinchalik
+  skript ishlatilib, keyin o'chirilgan — saqlanmagan).
 - ⚠️ **2026-09-06 kechqurun git divergensiya voqeasi**: production
   papkasi (shu joy) va boshqa bir sessiya/nusxa parallel ravishda bir
   xil narsa (isActive/sessionVersion/blocking) ustida ishlagan — boshqa
