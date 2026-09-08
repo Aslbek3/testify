@@ -14,10 +14,11 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 const SALT_ROUNDS = 10;
-const PASSWORD = process.env.RESET_TEST_PASSWORD;
-if (!PASSWORD) {
+const envPassword = process.env.RESET_TEST_PASSWORD;
+if (!envPassword) {
   throw new Error("RESET_TEST_PASSWORD environment variable is required");
 }
+const PASSWORD: string = envPassword;
 
 async function upsertUser(input: {
   name: string;
