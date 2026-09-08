@@ -1,4 +1,4 @@
-import type { AttemptMode } from "@prisma/client";
+import { Prisma, type AttemptMode } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { canTakeAttempt } from "@/lib/permissions";
 import { toStringArray } from "@/lib/json";
@@ -140,6 +140,64 @@ export type SaveAnswerResult =
       legalReference: string | null;
     };
 
+/**
+ * Mashq rejimida javobni saqlaydi — va uni QAYTA YOZISHNI taqiqlaydi.
+ *
+ * Nega kerak: mashqda server javobdan keyin `correctOptionIndex` ni qaytaradi.
+ * Klient tomonda variantlar shundan keyin bloklanadi (`practiceLocked`), lekin
+ * server buni takrorlamas edi — API'ga to'g'ridan-to'g'ri ikkinchi so'rov
+ * yuborish yetardi. Tekshirib ko'rilgan: xato javob → server to'g'risini
+ * aytadi → o'shani qayta yuborish → ball 100%. Bu ballning o'zidan ko'ra
+ * mavzu tahlilini buzardi (ustozning "zaif mavzular" ro'yxati).
+ *
+ * AYNI o'sha variant qayta kelsa xato qaytarilmaydi: `TestRunner` tarmoq
+ * uzilganda javobni avtomatik qayta yuboradi, va birinchi so'rov aslida
+ * yetib borgan bo'lsa (javob esa yo'qolgan bo'lsa) takroriy urinish
+ * muvaffaqiyatsiz bo'lmasligi kerak.
+ *
+ * `create` + P2002 — poyga holatiga chidamli: bir vaqtda kelgan ikki so'rovdan
+ * faqat bittasi yozadi, ikkinchisi shu yerda tekshiruvdan o'tadi.
+ */
+async function savePracticeAnswer(input: {
+  attemptId: string;
+  questionId: string;
+  selectedOptionIndex: number;
+  isCorrect: boolean;
+}): Promise<void> {
+  try {
+    await prisma.attemptAnswer.create({
+      data: {
+        attemptId: input.attemptId,
+        questionId: input.questionId,
+        selectedOptionIndex: input.selectedOptionIndex,
+        isCorrect: input.isCorrect,
+      },
+    });
+  } catch (error) {
+    const isDuplicate =
+      error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
+    if (!isDuplicate) throw error;
+
+    const existing = await prisma.attemptAnswer.findUnique({
+      where: {
+        attemptId_questionId: {
+          attemptId: input.attemptId,
+          questionId: input.questionId,
+        },
+      },
+      select: { selectedOptionIndex: true },
+    });
+
+    if (existing?.selectedOptionIndex !== input.selectedOptionIndex) {
+      throw new AttemptError(
+        "Mashq rejimida javob berilgandan keyin uni o'zgartirib bo'lmaydi",
+        409
+      );
+    }
+    // Aynan o'sha variant — bu takroriy so'rov, hech narsa o'zgartirilmaydi.
+  }
+}
+
 export async function saveAnswer(input: {
   user: SessionUser;
   attemptId: string;
@@ -195,25 +253,36 @@ export async function saveAnswer(input: {
 
   const isCorrect = input.selectedOptionIndex === question.correctOptionIndex;
 
-  await prisma.attemptAnswer.upsert({
-    where: {
-      attemptId_questionId: {
-        attemptId: input.attemptId,
-        questionId: input.questionId,
-      },
-    },
-    update: {
-      selectedOptionIndex: input.selectedOptionIndex,
-      isCorrect,
-      answeredAt: new Date(),
-    },
-    create: {
+  if (attempt.mode === "PRACTICE") {
+    await savePracticeAnswer({
       attemptId: input.attemptId,
       questionId: input.questionId,
       selectedOptionIndex: input.selectedOptionIndex,
       isCorrect,
-    },
-  });
+    });
+  } else {
+    // IMTIHONDA javobni o'zgartirish QONUNIY: to'g'ri javob ko'rsatilmaydi,
+    // o'quvchi esa yakunlashdan oldin fikrini o'zgartirishi tabiiy.
+    await prisma.attemptAnswer.upsert({
+      where: {
+        attemptId_questionId: {
+          attemptId: input.attemptId,
+          questionId: input.questionId,
+        },
+      },
+      update: {
+        selectedOptionIndex: input.selectedOptionIndex,
+        isCorrect,
+        answeredAt: new Date(),
+      },
+      create: {
+        attemptId: input.attemptId,
+        questionId: input.questionId,
+        selectedOptionIndex: input.selectedOptionIndex,
+        isCorrect,
+      },
+    });
+  }
 
   if (attempt.mode === "EXAM") {
     // Imtihon rejimida hech qanday feedback qaytarilmaydi.
@@ -368,6 +437,21 @@ async function scoreAttempt(attempt: {
     select: { isCorrect: true, answeredAt: true },
   });
 
+  return computeScore(attempt, answers);
+}
+
+/**
+ * Ball formulasining o'zi — bazaga murojaat qilmaydi.
+ *
+ * `scoreAttempt` dan alohida turadi, chunki `finalizeExpiredAttempts` bir
+ * nechta urinishni birdan yopadi va ularning javoblarini BITTA so'rov bilan
+ * oladi. Formula esa baribir yagona joyda qolishi shart — aks holda ikki yo'l
+ * bir xil urinishga boshqa-boshqa ball berib qo'yishi mumkin.
+ */
+function computeScore(
+  attempt: { mode: AttemptMode; startedAt: Date; questionIds: string[] },
+  answers: { isCorrect: boolean; answeredAt: Date }[]
+): { score: number; correctCount: number; totalCount: number } {
   // Vaqt tugagach ham urinish normal yakunlanadi, lekin EXAM rejimida
   // limitdan keyin kelgan javoblar (soatlar sinxron emasligi yoki
   // saveAnswer'ning 409'dan oldin qabul qilib ulgurgan chekka holat uchun)
@@ -417,29 +501,55 @@ export async function finalizeExpiredAttempts(studentId: string): Promise<number
     select: { id: true, mode: true, startedAt: true, questionIds: true },
   });
 
-  let closedCount = 0;
-  for (const attempt of expired) {
-    const { score } = await scoreAttempt(attempt);
+  if (expired.length === 0) return 0;
+
+  // Barcha tashlab ketilgan urinishlarning javoblari BITTA so'rovda olinadi.
+  // Ilgari sikl ichida urinish boshiga ikkita so'rov ketardi: 2 oy ilovaga
+  // kirmagan o'quvchida 25 ta ochiq imtihon to'planib qolsa, panel
+  // ochilishidan oldin 50 ta ketma-ket so'rov bajarilardi.
+  const allAnswers = await prisma.attemptAnswer.findMany({
+    where: { attemptId: { in: expired.map((a) => a.id) } },
+    select: { attemptId: true, questionId: true, isCorrect: true, answeredAt: true },
+  });
+
+  const answersByAttempt = new Map<string, typeof allAnswers>();
+  for (const answer of allAnswers) {
+    const list = answersByAttempt.get(answer.attemptId) ?? [];
+    list.push(answer);
+    answersByAttempt.set(answer.attemptId, list);
+  }
+
+  const updates = expired.map((attempt) => {
+    // questionId filtri `scoreAttempt` dagidek — urinishga tegishli
+    // bo'lmagan javob ballga qo'shilmasin.
+    const answers = (answersByAttempt.get(attempt.id) ?? []).filter((a) =>
+      attempt.questionIds.includes(a.questionId)
+    );
+    const { score } = computeScore(attempt, answers);
 
     // Shartli (atomik) yangilanish — shu payt o'quvchi boshqa yorliqda
     // urinishni haqiqiy "Yakunlash" tugmasi bilan yopayotgan bo'lishi
     // mumkin; `finishedAt: null` sharti tufayli faqat bittasi yozadi.
-    const updated = await prisma.attempt.updateMany({
+    return prisma.attempt.updateMany({
       where: { id: attempt.id, finishedAt: null },
       // Yakunlanish vaqti — imtihon muddati tugagan lahza, hozirgi vaqt
       // emas: urinish aslida o'shanda tugagan, o'quvchi ilovani bir oydan
-      // keyin ochgani tarixni siljitmasligi kerak.
+      // keyin ochgani tarixni siljitmasligi kerak. `finishAttempt` ham
+      // vaqti tugagan imtihonga AYNI shu vaqtni yozadi.
       data: {
-        finishedAt: new Date(
-          attempt.startedAt.getTime() + EXAM_DURATION_SECONDS * 1000
-        ),
+        finishedAt: expiredFinishedAt(attempt.startedAt),
         score,
       },
     });
-    closedCount += updated.count;
-  }
+  });
 
-  return closedCount;
+  const results = await prisma.$transaction(updates);
+  return results.reduce((sum, result) => sum + result.count, 0);
+}
+
+/** Vaqti tugagan imtihon qachon yakunlangan hisoblanadi. */
+function expiredFinishedAt(startedAt: Date): Date {
+  return new Date(startedAt.getTime() + EXAM_DURATION_SECONDS * 1000);
 }
 
 export async function finishAttempt(input: {
@@ -470,9 +580,20 @@ export async function finishAttempt(input: {
   // (masalan taymer avtomatik yakunlashi va foydalanuvchining "Yakunlash"
   // tugmasi deyarli bir vaqtda ishlaganda). `finishedAt: null` shartini
   // WHERE'ga qo'shsak, faqat birinchi so'rov yozadi.
+  // Vaqti allaqachon tugagan imtihon "hozir" emas, muddat tugagan lahzada
+  // yakunlangan deb yoziladi — `finalizeExpiredAttempts` bilan bir xil.
+  // Ilgari ikki yo'l bir xil urinishga turli `finishedAt` yozardi: brauzer
+  // yorlig'i uch soat ochiq qolib, keyin "Yakunlash" bosilsa, 25 daqiqalik
+  // imtihon uch soat davom etgandek ko'rinardi va ustozning "oxirgi faollik"
+  // ustunini siljitardi.
+  const expiryAt = expiredFinishedAt(attempt.startedAt);
+  const now = new Date();
+  const finishedAt =
+    attempt.mode === "EXAM" && now > expiryAt ? expiryAt : now;
+
   const updated = await prisma.attempt.updateMany({
     where: { id: input.attemptId, finishedAt: null },
-    data: { finishedAt: new Date(), score },
+    data: { finishedAt, score },
   });
   if (updated.count === 0) {
     throw new AttemptError("Bu urinish allaqachon yakunlangan", 409);
