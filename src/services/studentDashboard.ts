@@ -3,7 +3,8 @@ import type { AttemptMode } from "@prisma/client";
 
 export type StudentOverview = {
   overallScore: number | null;
-  attemptCount: number;
+  /** YAKUNLANGAN urinishlar soni (imtihon + mashq). */
+  finishedAttemptCount: number;
   groupName: string | null;
 };
 
@@ -45,18 +46,33 @@ export async function getStudentGroupId(studentId: string): Promise<string | nul
  * O'quvchining umumiy ko'rsatkichlari: tayyorgarlik foizi FAQAT imtihon
  * (EXAM) urinishlari bo'yicha hisoblanadi — mashqda javob darhol
  * ko'rsatilgani uchun mashq ballari sun'iy yuqori bo'ladi va aralashtirilsa
- * haqiqiy tayyorgarlikni noto'g'ri ko'rsatadi. Jami urinishlar soni esa
- * umumiy faollik ko'rsatkichi sifatida ikkala rejimni ham o'z ichiga oladi.
+ * haqiqiy tayyorgarlikni noto'g'ri ko'rsatadi. Urinishlar soni esa faollik
+ * ko'rsatkichi sifatida ikkala rejimni ham o'z ichiga oladi, lekin faqat
+ * YAKUNLANGANLARINI sanaydi.
  */
 export async function getStudentOverview(studentId: string): Promise<StudentOverview> {
-  const [attemptCount, examAttempts, profile] = await Promise.all([
+  const [finishedAttemptCount, examAttempts, profile] = await Promise.all([
     // Faqat son kerak — qatorlarni yuklamasdan bazaning o'zi sanaydi.
+    //
+    // `finishedAt: { not: null }`: ilgari filtr yo'q edi va ochib tashlab
+    // ketilgan urinishlar ham sanalardi. Mashqda taymer yo'q, shuning uchun
+    // tashlab ketilgan mashq abadiy `finishedAt: null` bo'lib qoladi
+    // (`finalizeExpiredAttempts` faqat imtihonni yopadi) — 20 marta mashq
+    // boshlab 3 tasini yechgan o'quvchi o'z panelida "20", ustoz jadvalida
+    // esa "3" ko'rardi. Ustoz roster'i allaqachon yakunlanganlarni sanaydi,
+    // shu qoida bu yerga ham keltirildi: yakunlanmagan urinish o'quvchiga
+    // ham natija bermaydi, uni "urinish" deb sanashning ma'nosi yo'q.
     prisma.attempt.count({
-      where: { studentId },
+      where: { studentId, finishedAt: { not: null } },
     }),
     // Bu yerda esa ballarning o'zi kerak (o'rtachani hisoblash uchun).
+    // `finishedAt: { not: null }` ataylab yozilgan: yakunlanmagan urinishda
+    // score allaqachon null bo'lgani uchun natija o'zgarmaydi, lekin shart
+    // ko'rinib turgani muhim — "ball/o'rtacha/tayyorgarlik" ko'rsatkichlari
+    // hamma joyda AYNI qoidada (EXAM + yakunlangan) hisoblanadi va bu qoida
+    // score'ning null bo'lishiga tasodifan bog'lanib qolmasligi kerak.
     prisma.attempt.findMany({
-      where: { studentId, mode: "EXAM" },
+      where: { studentId, mode: "EXAM", finishedAt: { not: null } },
       select: { score: true },
     }),
     prisma.studentProfile.findUnique({
@@ -78,14 +94,33 @@ export async function getStudentOverview(studentId: string): Promise<StudentOver
 
   return {
     overallScore,
-    attemptCount,
+    finishedAttemptCount,
     groupName: profile?.group.name ?? null,
   };
 }
 
 /**
- * Har bir mavzu bo'yicha o'quvchining o'zi javob bergan savollar orasidagi
- * to'g'ri javob foizi. O'quvchi umuman tegmagan mavzular chiqarib tashlanadi.
+ * Har bir mavzu bo'yicha o'quvchining o'zlashtirish foizi.
+ *
+ * Faqat YAKUNLANGAN IMTIHON (`mode = 'EXAM'`, `finishedAt IS NOT NULL`)
+ * urinishlari hisobga olinadi:
+ * - mashqda javob darhol ko'rsatiladi va bir xil savol qayta chiqqanda
+ *   o'quvchi uni eslab qoladi, shuning uchun mashq foizi vaqt o'tgani sayin
+ *   sun'iy o'sadi. Ball halqasi (`ProgressRing`) allaqachon EXAM-only edi —
+ *   mavzu satrlari mashqni ham qo'shgani uchun bitta ekranda 55% va 94%
+ *   yonma-yon turardi;
+ * - yakunlanmagan urinishning javobsiz savollari hali "xato" emas —
+ *   o'quvchi ularga yetib bormagan. Uni qo'shsak, endigina boshlangan
+ *   imtihon butun statistikani yerga urardi.
+ *
+ * Hisob `AttemptAnswer` dan emas, `Attempt.questionIds` dan boshlanadi:
+ * javobsiz qolgan savol uchun `AttemptAnswer` qatori umuman yaratilmaydi,
+ * shuning uchun eski hisob uni ko'rmasdi va 20 tadan 12 tasiga javob bergan
+ * o'quvchi 60% ball ustida barcha mavzuda 100% ko'rsatardi. `LEFT JOIN` +
+ * `FILTER (WHERE aa."isCorrect")` javobsizni "to'g'ri emas" deb sanaydi —
+ * ball formulasi (`correct / questionIds.length`) bilan aynan bir xil.
+ *
+ * O'quvchi imtihonda umuman uchratmagan mavzular ro'yxatga tushmaydi.
  */
 export async function getMasteryByTopic(studentId: string): Promise<TopicMastery[]> {
   // Agregatsiya bazada bajariladi — o'quvchining har bir javob qatorini
@@ -101,11 +136,16 @@ export async function getMasteryByTopic(studentId: string): Promise<TopicMastery
       t."name" AS "topicName",
       COUNT(*) FILTER (WHERE aa."isCorrect")::int AS "correct",
       COUNT(*)::int                               AS "total"
-    FROM "AttemptAnswer" aa
-    JOIN "Attempt"  a ON a."id" = aa."attemptId"
-    JOIN "Question" q ON q."id" = aa."questionId"
+    FROM "Attempt" a
+    CROSS JOIN LATERAL unnest(a."questionIds") AS qid
+    JOIN "Question" q ON q."id" = qid
     JOIN "Topic"    t ON t."id" = q."topicId"
+    LEFT JOIN "AttemptAnswer" aa
+           ON aa."attemptId"  = a."id"
+          AND aa."questionId" = qid
     WHERE a."studentId" = ${studentId}
+      AND a."mode" = 'EXAM'
+      AND a."finishedAt" IS NOT NULL
     GROUP BY t."id", t."name"
   `;
 

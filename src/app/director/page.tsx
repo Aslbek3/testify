@@ -58,12 +58,28 @@ export default async function DirectorPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {/* "primary" plitka ikki ustunni egallaydi (StatTile), shuning uchun
+          to'rtta plitka jami beshta katak — setka ham shunga moslangan. */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
         <StatTile
           emphasis="primary"
           label="O'rtacha ball"
           value={overview.averageScore === null ? "—" : `${overview.averageScore}%`}
-          sub={overview.averageScore === null ? "Ma'lumot yo'q" : undefined}
+          sub={
+            overview.averageScore === null
+              ? "Imtihon topshirilmagan"
+              : "Imtihonlar bo'yicha, o'quvchi kesimida"
+          }
+        />
+        {/* Bu son ilgari hisoblanardi-yu, hech qayerda ko'rsatilmasdi. */}
+        <StatTile
+          label="Jami o'quvchilar"
+          value={overview.studentCount}
+          sub={
+            overview.blockedStudentCount > 0
+              ? `${overview.blockedStudentCount} tasi bloklangan`
+              : undefined
+          }
         />
         <StatTile label="Jami guruhlar" value={overview.groupCount} />
         <StatTile label="Jami ustozlar" value={overview.tutorCount} />

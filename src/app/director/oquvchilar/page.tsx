@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { canViewOrganization } from "@/lib/permissions";
 import {
   listStudentsForOrganization,
+  countStudentsForOrganization,
   listGroupsForOrganization,
 } from "@/services/directorDashboard";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
@@ -30,8 +31,11 @@ export default async function DirectorStudentsPage({
 
   const organizationId = user.organizationId;
 
-  const [allStudents, students, groups] = await Promise.all([
-    listStudentsForOrganization(organizationId),
+  // "Umuman o'quvchi bormi?" (bo'sh holat) va "filtrga hech narsa tushmadi"
+  // ikki xil holat. Birinchisi uchun ilgari butun ro'yxat ikkinchi marta
+  // yuklanardi va undan faqat `.length` olinardi — endi oddiy `count`.
+  const [totalStudentCount, students, groups] = await Promise.all([
+    countStudentsForOrganization(organizationId),
     listStudentsForOrganization(organizationId, { q, groupId: group }),
     listGroupsForOrganization(organizationId),
   ]);
@@ -60,7 +64,7 @@ export default async function DirectorStudentsPage({
 
         <StudentFilters groups={groups} />
 
-        {allStudents.length === 0 ? (
+        {totalStudentCount === 0 ? (
           <p className="mt-4 text-sm text-text-muted">
             Hozircha tashkilotingizda o&apos;quvchilar yo&apos;q.
           </p>

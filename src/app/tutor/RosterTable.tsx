@@ -153,34 +153,59 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
                     {!isLoading && !hasError && detail && (
                       <div className="grid gap-6 sm:grid-cols-2">
                         <div>
-                          <p className="mb-2 text-sm font-medium text-text">
+                          <p className="text-sm font-medium text-text">
                             Mavzular bo&apos;yicha o&apos;zlashtirish
                           </p>
-                          <div className="space-y-2">
-                            {detail.masteryByTopic.map((m) => (
-                              <div
-                                key={m.topicName}
-                                className="grid grid-cols-[140px_1fr_40px] items-center gap-2"
-                              >
-                                <span className="truncate text-sm text-text-muted">
-                                  {m.topicName}
-                                </span>
-                                <div className="h-2 rounded bg-bg-subtle">
-                                  <div
-                                    className="h-2 rounded bg-brand"
-                                    style={{ width: `${m.masteryPercent}%` }}
-                                  />
+                          {/* Doira ataylab boshqacha: jadvaldagi ustunlar
+                              FAQAT shu guruhda topshirilgan imtihonlarni
+                              sanaydi (ustoz o'zi qilmagan ish uchun
+                              baholanmasin), bu yerda esa o'quvchining BARCHA
+                              imtihonlari ko'rsatiladi — boshqa guruhdan
+                              ko'chib kelgan o'quvchining zaif mavzusini yangi
+                              ustoz ham bilishi kerak. Ikkalasi bir xil emas,
+                              shuning uchun manba ochiq yozilgan. */}
+                          <p className="mb-2 text-xs text-text-muted">
+                            Barcha imtihonlar bo&apos;yicha (boshqa guruhdagilari ham)
+                          </p>
+                          {detail.masteryByTopic.length === 0 ? (
+                            // Bo'sh holat matni majburiy: mavzu tahlili faqat
+                            // yakunlangan imtihonlardan hisoblanadi, shuning
+                            // uchun faqat mashq qilgan o'quvchida ro'yxat
+                            // bo'sh qoladi — bu "0%" degani emas.
+                            <p className="text-sm text-text-muted">
+                              Imtihon topshirilmagan — mavzu tahlili imtihon
+                              natijalari asosida hisoblanadi.
+                            </p>
+                          ) : (
+                            <div className="space-y-2">
+                              {detail.masteryByTopic.map((m) => (
+                                <div
+                                  key={m.topicId}
+                                  className="grid grid-cols-[140px_1fr_40px] items-center gap-2"
+                                >
+                                  <span className="truncate text-sm text-text-muted">
+                                    {m.topicName}
+                                  </span>
+                                  <div className="h-2 rounded bg-bg-subtle">
+                                    <div
+                                      className="h-2 rounded bg-brand"
+                                      style={{ width: `${m.masteryPercent}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-right font-mono text-sm tabular-nums text-text-muted">
+                                    {m.masteryPercent}%
+                                  </span>
                                 </div>
-                                <span className="text-right font-mono text-sm tabular-nums text-text-muted">
-                                  {m.masteryPercent}%
-                                </span>
-                              </div>
-                            ))}
-                          </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         <div>
-                          <p className="mb-2 text-sm font-medium text-text">
+                          <p className="text-sm font-medium text-text">
                             Urinishlar tarixi
+                          </p>
+                          <p className="mb-2 text-xs text-text-muted">
+                            Barcha guruhlardagi yakunlangan urinishlar
                           </p>
                           {detail.attempts.length === 0 ? (
                             <p className="text-sm text-text-muted">

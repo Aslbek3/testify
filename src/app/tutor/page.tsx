@@ -1,5 +1,7 @@
 import { requireRole } from "@/lib/auth";
 import { cn } from "@/lib/cn";
+import { readinessFromScore } from "@/lib/readiness";
+import { BADGE_SOLID_CLASS } from "@/components/Badge";
 import { StatTile } from "@/components/StatTile";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
 import {
@@ -12,10 +14,17 @@ import { GroupSelect } from "./GroupSelect";
 import { RosterTable } from "./RosterTable";
 import { NewStudentModal } from "./NewStudentModal";
 
+/**
+ * Mavzu xato foizining rangi tayyorgarlik chegaralaridan kelib chiqadi:
+ * xato foizi = 100 - o'zlashtirish foizi, shuning uchun rang
+ * `readinessFromScore` orqali olinadi.
+ *
+ * Ilgari bu yerda 15/30, o'quvchi panelida 85/65, `readiness.ts` da esa
+ * 90/75 turardi — bitta mavzu uch joyda uch xil rangda chiqishi mumkin edi.
+ * Endi chegara faqat `EXAM_PASS_PERCENT` dan kelib chiqadi.
+ */
 function severityClass(errorRatePercent: number): string {
-  if (errorRatePercent < 15) return "bg-success";
-  if (errorRatePercent <= 30) return "bg-warning";
-  return "bg-danger";
+  return BADGE_SOLID_CLASS[readinessFromScore(100 - errorRatePercent).variant];
 }
 
 export default async function TutorPage({
@@ -106,19 +115,34 @@ export default async function TutorPage({
           <p className="mt-1.5 font-mono text-[52px] font-semibold leading-none text-brand">
             {averageScore !== null ? `${averageScore}%` : "—"}
           </p>
+          <p className="mt-2 text-sm text-text-muted">
+            Yakunlangan imtihonlar bo&apos;yicha
+          </p>
         </div>
-        <StatTile label="Faol o'quvchilar" value={activeStudentCount} />
-        <StatTile label="So'nggi hafta imtihonlar" value={recentExamCount} />
+        {/* "Faol" so'zi ataylab ishlatilmadi: bu yerdagi son hisob
+            bloklanmaganini bildiradi, o'quvchi faol o'qiyotganini emas. */}
+        <StatTile label="Bloklanmagan hisoblar" value={activeStudentCount} />
+        <StatTile
+          label="So'nggi hafta imtihonlar"
+          value={recentExamCount}
+          sub="Yakunlanganlari"
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Mavzu bo&apos;yicha xato foizi</CardTitle>
+            {/* Ikkala kartochka bitta ekranda turgani va HAR XIL qoidada
+                hisoblangani uchun manba ochiq yozilgan. */}
+            <span className="shrink-0 text-sm text-text-muted">
+              Javobsizlar ham xato
+            </span>
           </CardHeader>
           {topicErrorRates.length === 0 ? (
             <p className="text-sm text-text-muted">
-              Hali bu guruh bo&apos;yicha javob berilgan savollar yo&apos;q.
+              Imtihon topshirilmagan — mavzu tahlili shu guruhda yakunlangan
+              imtihon natijalari asosida hisoblanadi.
             </p>
           ) : (
             <div className="space-y-3">
@@ -146,10 +170,18 @@ export default async function TutorPage({
         <Card>
           <CardHeader>
             <CardTitle>Eng ko&apos;p xato qilingan savollar</CardTitle>
+            {/* Bu ro'yxatda javobsizlar ataylab sanalmaydi: ular qo'shilsa
+                ro'yxat savol qiyinligini emas, savolning imtihondagi
+                o'rnini ko'rsatadi (vaqt tugaganda oxirgi savollar har doim
+                javobsiz qoladi). Batafsil izoh getGroupAnalytics'da. */}
+            <span className="shrink-0 text-sm text-text-muted">
+              Javob berilganlar orasida
+            </span>
           </CardHeader>
           {missedQuestions.length === 0 ? (
             <p className="text-sm text-text-muted">
-              Hali xato qilingan savollar yo&apos;q.
+              Imtihon topshirilmagan — ro&apos;yxat shu guruhda yakunlangan
+              imtihonlardagi javoblar asosida tuziladi.
             </p>
           ) : (
             <ul className="space-y-3">
@@ -172,13 +204,16 @@ export default async function TutorPage({
       <Card>
         <CardHeader>
           <CardTitle>O&apos;quvchilar</CardTitle>
-          <span className="text-sm text-text-muted">
-            {totalAttempts} ta urinish · Qatorni bosing — to&apos;liq progress ochiladi
+          <span className="shrink-0 text-sm text-text-muted">
+            {totalAttempts} ta yakunlangan urinish · Qatorni bosing — to&apos;liq
+            progress ochiladi
           </span>
         </CardHeader>
         <p className="mb-3 text-sm text-text-muted">
-          O&apos;quvchining guruhini o&apos;zgartirish kerak bo&apos;lsa, direktorga
-          murojaat qiling.
+          Jadvaldagi sonlar faqat SHU guruhdagi urinishlarni ko&apos;rsatadi:
+          o&apos;quvchi boshqa guruhdan ko&apos;chirilgan bo&apos;lsa, uning eski
+          natijalari eski ustozida qoladi. O&apos;quvchining guruhini
+          o&apos;zgartirish kerak bo&apos;lsa, direktorga murojaat qiling.
         </p>
         <RosterTable roster={roster} />
       </Card>

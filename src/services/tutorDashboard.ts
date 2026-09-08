@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { AttemptMode } from "@prisma/client";
 import { readinessFromScore, type ReadinessStatus } from "@/lib/readiness";
+import { getMasteryByTopic, type TopicMastery } from "@/services/studentDashboard";
 
 export type TutorGroup = { id: string; name: string };
 
@@ -35,7 +36,10 @@ export type StudentGroupContext = {
 
 export type StudentDetail = {
   name: string;
-  masteryByTopic: { topicName: string; masteryPercent: number }[];
+  // O'quvchining o'z panelidagi bilan AYNI tip — ataylab: ikkala ekran bir
+  // xil funksiyadan (studentDashboard'dagi getMasteryByTopic) oziqlanadi,
+  // shuning uchun ustoz va o'quvchi hech qachon boshqa-boshqa foiz ko'rmaydi.
+  masteryByTopic: TopicMastery[];
   attempts: { id: string; date: string; score: number | null; mode: AttemptMode }[];
 };
 
@@ -48,20 +52,19 @@ export async function getGroupsForTutor(tutorId: string): Promise<TutorGroup[]> 
   });
 }
 
-async function getGroupStudentIds(groupId: string): Promise<string[]> {
-  const profiles = await prisma.studentProfile.findMany({
-    where: { groupId },
-    select: { userId: true },
-  });
-  return profiles.map((p) => p.userId);
-}
-
 /**
- * So'nggi `days` kun ichida SHU GURUHDA boshlangan EXAM urinishlari soni.
+ * So'nggi `days` kun ichida SHU GURUHDA boshlangan va YAKUNLANGAN
+ * imtihonlar soni.
  *
  * Filtr `Attempt.groupId` bo'yicha — o'quvchining hozirgi guruhi bo'yicha
  * emas. Farqi: o'quvchi boshqa guruhga ko'chirilsa, uning eski urinishlari
  * eski guruhda qoladi va yangi ustozning ko'rsatkichiga qo'shilib ketmaydi.
+ *
+ * `finishedAt: { not: null }` shart: ilgari tashlab ketilgan (ochib qo'yib
+ * chiqib ketilgan) imtihonlar ham sanalardi va ekranda o'zaro zid raqamlar
+ * chiqardi — plitkada "5 imtihon", jadvalda esa o'sha o'quvchilarda
+ * "0 imtihon" va "Imtihon topshirilmagan". Jadval va mavzu diagrammasi
+ * allaqachon yakunlanganlarni sanaydi, plitka ham shu qoidaga keltirildi.
  */
 export async function getRecentExamAttemptCount(
   groupId: string,
@@ -69,17 +72,26 @@ export async function getRecentExamAttemptCount(
 ): Promise<number> {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   return prisma.attempt.count({
-    where: { groupId, mode: "EXAM", startedAt: { gte: since } },
+    where: {
+      groupId,
+      mode: "EXAM",
+      finishedAt: { not: null },
+      startedAt: { gte: since },
+    },
   });
 }
 
 /**
- * Kamida shuncha javob bo'lgan savol/mavzugina reytingga kiradi.
+ * Kamida shuncha marta uchragan savol/mavzugina reytingga kiradi.
  *
  * Savollar butun bazadan tasodifiy tanlangani uchun ba'zi savollarga
  * atigi bir marta javob berilgan bo'ladi. Bitta o'quvchi bitta marta
  * xato qilgan savol 100% ko'rsatib, haqiqatan ham muammoli (masalan 30
  * javobdan 24 tasi xato = 80%) savollarni ro'yxatdan siqib chiqarardi.
+ *
+ * "Uchragan" ikki ro'yxatda ikki xil o'lchanadi va bu ataylab:
+ * mavzu bo'yicha — imtihonda BERILGAN savollar soni (javobsizlar ham),
+ * savollar reytingida — BERILGAN JAVOBLAR soni (pastdagi izohga qara).
  */
 const MIN_ANSWERS_FOR_RANKING = 5;
 
@@ -91,76 +103,117 @@ export type GroupAnalytics = {
 /**
  * Guruhning mavzu bo'yicha xato foizi va eng ko'p xato qilingan savollari.
  *
- * Ikkalasi bitta funksiyada, chunki ikkalasi ham AYNI javoblar to'plamidan
- * hisoblanadi — ilgari ular alohida eksport qilinib, ustoz paneli har
- * yuklanganda o'sha og'ir so'rovni ikki marta bajarardi.
+ * Ikkalasi bitta funksiyada, chunki ikkalasi ham AYNI urinishlar to'plamidan
+ * (shu guruhdagi yakunlangan imtihonlar) hisoblanadi — ilgari ular alohida
+ * eksport qilinib, ustoz paneli har yuklanganda o'sha og'ir so'rovni ikki
+ * marta bajarardi.
+ *
+ * Ikkala agregatsiya ham BAZADA bajariladi. Ilgari guruhning butun
+ * `AttemptAnswer` jadvali savol matni bilan birga Node'ga tortilar edi:
+ * 200 o'quvchi x 100 urinish x ~15 javob = 300 000 qator (~60 MB), va
+ * PM2 FORK rejimida (bitta jarayon) bu faqat shu sahifani emas, butun
+ * ilovani o'ldirardi. Endi mavzu boshiga / savol boshiga bitta qator
+ * qaytadi, savollar reytingida esa LIMIT ham bor.
+ *
+ * Prisma'ning `groupBy`i bog'langan jadval ustuni (question.topicId) bo'yicha
+ * guruhlay olmagani va `unnest`/`FILTER` ni umuman bilmagani uchun $queryRaw.
  */
 export async function getGroupAnalytics(
   groupId: string,
   missedLimit = 5
 ): Promise<GroupAnalytics> {
-  const answers = await prisma.attemptAnswer.findMany({
-    where: { attempt: { groupId } },
-    select: {
-      isCorrect: true,
-      questionId: true,
-      question: {
-        select: {
-          text: true,
-          topicId: true,
-          topic: { select: { name: true } },
-        },
-      },
-    },
-  });
+  const [topicRows, questionRows] = await Promise.all([
+    // MAVZU BO'YICHA XATO FOIZI — javobsiz qolgan savol XATO deb sanaladi.
+    //
+    // Shuning uchun hisob `AttemptAnswer` dan emas, `Attempt.questionIds`
+    // dan boshlanadi: javobsiz savol uchun `AttemptAnswer` qatori umuman
+    // yaratilmaydi. `LEFT JOIN` + `FILTER (WHERE aa."isCorrect")` javobsizni
+    // "to'g'ri emas" tomonga qo'shadi. Aynan shu narsa ball formulasida ham
+    // bor (`correct / questionIds.length`), shuning uchun endi ustoz
+    // ko'rgan mavzu foizi o'quvchining balli bilan mos keladi — ilgari 20
+    // tadan 12 tasiga javob bergan o'quvchi 60% ball ustida barcha mavzuda
+    // 100% ko'rsatardi.
+    prisma.$queryRaw<
+      { topicId: string; topicName: string; correct: number; total: number }[]
+    >`
+      SELECT
+        t."id"   AS "topicId",
+        t."name" AS "topicName",
+        COUNT(*) FILTER (WHERE aa."isCorrect")::int AS "correct",
+        COUNT(*)::int                               AS "total"
+      FROM "Attempt" a
+      CROSS JOIN LATERAL unnest(a."questionIds") AS qid
+      JOIN "Question" q ON q."id" = qid
+      JOIN "Topic"    t ON t."id" = q."topicId"
+      LEFT JOIN "AttemptAnswer" aa
+             ON aa."attemptId"  = a."id"
+            AND aa."questionId" = qid
+      WHERE a."groupId" = ${groupId}
+        AND a."mode" = 'EXAM'
+        AND a."finishedAt" IS NOT NULL
+      GROUP BY t."id", t."name"
+      HAVING COUNT(*) >= ${MIN_ANSWERS_FOR_RANKING}::int
+    `,
 
-  const byTopic = new Map<string, { topicName: string; total: number; wrong: number }>();
-  const byQuestion = new Map<
-    string,
-    { questionText: string; topicName: string; total: number; wrong: number }
-  >();
+    // ENG KO'P XATO QILINGAN SAVOLLAR — bu yerda qoida TESKARI: javobsiz
+    // qolgan savol umuman sanalmaydi (`AttemptAnswer` dan boshlanadi).
+    //
+    // Sabab: bu ro'yxatning maqsadi "qaysi savol qiyin yoki noto'g'ri
+    // yozilgan"ni topish. Javobsizlarni qo'shsak, ro'yxat savol qiyinligini
+    // emas, savolning urinishdagi O'RNINI ko'rsatadi — vaqt tugaganda har
+    // doim oxirgi savollar javobsiz qoladi, ya'ni 18-20-savollar avtomatik
+    // "eng qiyin" bo'lib chiqadi va ustozni butunlay noto'g'ri yo'naltiradi.
+    prisma.$queryRaw<
+      {
+        questionId: string;
+        questionText: string;
+        topicName: string;
+        wrong: number;
+        total: number;
+      }[]
+    >`
+      SELECT
+        q."id"   AS "questionId",
+        q."text" AS "questionText",
+        t."name" AS "topicName",
+        COUNT(*) FILTER (WHERE NOT aa."isCorrect")::int AS "wrong",
+        COUNT(*)::int                                   AS "total"
+      FROM "AttemptAnswer" aa
+      JOIN "Attempt"  a ON a."id" = aa."attemptId"
+      JOIN "Question" q ON q."id" = aa."questionId"
+      JOIN "Topic"    t ON t."id" = q."topicId"
+      WHERE a."groupId" = ${groupId}
+        AND a."mode" = 'EXAM'
+        AND a."finishedAt" IS NOT NULL
+      GROUP BY q."id", q."text", t."name"
+      HAVING COUNT(*) >= ${MIN_ANSWERS_FOR_RANKING}::int
+      -- Foiz teng bo'lsa ko'proq javob bo'lgani ustun — ishonchliroq
+      -- ma'lumot. Ilgari bu izoh bor edi, lekin saralashda amalga
+      -- oshirilmagan edi.
+      ORDER BY
+        (COUNT(*) FILTER (WHERE NOT aa."isCorrect"))::numeric / COUNT(*) DESC,
+        COUNT(*) DESC
+      LIMIT ${missedLimit}
+    `,
+  ]);
 
-  for (const a of answers) {
-    const topic = byTopic.get(a.question.topicId) ?? {
-      topicName: a.question.topic.name,
-      total: 0,
-      wrong: 0,
-    };
-    topic.total += 1;
-    if (!a.isCorrect) topic.wrong += 1;
-    byTopic.set(a.question.topicId, topic);
-
-    const question = byQuestion.get(a.questionId) ?? {
-      questionText: a.question.text,
-      topicName: a.question.topic.name,
-      total: 0,
-      wrong: 0,
-    };
-    question.total += 1;
-    if (!a.isCorrect) question.wrong += 1;
-    byQuestion.set(a.questionId, question);
-  }
-
-  const topicErrorRates: TopicErrorRate[] = Array.from(byTopic.entries())
-    .filter(([, v]) => v.total >= MIN_ANSWERS_FOR_RANKING)
-    .map(([topicId, v]) => ({
-      topicId,
-      topicName: v.topicName,
-      errorRatePercent: Math.round((v.wrong / v.total) * 100),
+  // Mavzular soni o'nlab, shuning uchun saralash Node'da — ko'rsatiladigan
+  // (yaxlitlangan) foiz bo'yicha saralanadi, ya'ni jadval tartibi ekrandagi
+  // raqamlarga aynan mos keladi.
+  const topicErrorRates: TopicErrorRate[] = topicRows
+    .map((row) => ({
+      topicId: row.topicId,
+      topicName: row.topicName,
+      errorRatePercent: Math.round(((row.total - row.correct) / row.total) * 100),
     }))
     .sort((a, b) => b.errorRatePercent - a.errorRatePercent);
 
-  const mostMissedQuestions: MissedQuestion[] = Array.from(byQuestion.entries())
-    .filter(([, v]) => v.total >= MIN_ANSWERS_FOR_RANKING)
-    .map(([questionId, v]) => ({
-      questionId,
-      questionText: v.questionText,
-      topicName: v.topicName,
-      missPercent: Math.round((v.wrong / v.total) * 100),
-    }))
-    // Foiz teng bo'lsa ko'proq javob bo'lgani ustun — ishonchliroq ma'lumot.
-    .sort((a, b) => b.missPercent - a.missPercent)
-    .slice(0, missedLimit);
+  const mostMissedQuestions: MissedQuestion[] = questionRows.map((row) => ({
+    questionId: row.questionId,
+    questionText: row.questionText,
+    topicName: row.topicName,
+    missPercent: Math.round((row.wrong / row.total) * 100),
+  }));
 
   return { topicErrorRates, mostMissedQuestions };
 }
@@ -171,6 +224,15 @@ export async function getGroupAnalytics(
  * mashqda javob darhol ko'rsatilgani uchun mashq ballari sun'iy yuqori
  * bo'ladi va aralashtirilsa ustozga noto'g'ri manzara beradi. Oxirgi
  * faollik esa ikkala rejimni ham hisobga oladi (haqiqiy faollik ko'rsatkichi).
+ *
+ * Urinishlar `Attempt.groupId` bo'yicha filtrlanadi — o'quvchining hozirgi
+ * guruhi bo'yicha emas. Ilgari bu filtr yo'q edi va boshqa guruhdan
+ * ko'chirilgan o'quvchining eski imtihonlari yangi ustozning JADVALIDA
+ * ko'rinardi, lekin o'sha ustozning "so'nggi hafta" plitkasiga ham, mavzu
+ * diagrammasiga ham kirmasdi (ular allaqachon groupId bo'yicha ishlardi) —
+ * bitta ekranda to'rt raqamdan ikkitasi bir qoidada, ikkitasi boshqasida
+ * edi. Ko'chirilgan o'quvchining eski natijalari eski ustozda qolishi
+ * kerak, aks holda yangi ustoz o'zi qilmagan ish uchun baholanadi.
  */
 export async function getRosterForGroup(groupId: string): Promise<RosterEntry[]> {
   const profiles = await prisma.studentProfile.findMany({
@@ -181,7 +243,10 @@ export async function getRosterForGroup(groupId: string): Promise<RosterEntry[]>
 
   const studentIds = profiles.map((p) => p.userId);
   const attempts = await prisma.attempt.findMany({
-    where: { studentId: { in: studentIds } },
+    // `groupId` — asosiy filtr; `studentId in` esa guruhni tark etgan
+    // (boshqa guruhga ko'chirilgan) o'quvchining shu guruhda qoldirgan
+    // urinishlarini keraksiz tortmaslik uchun.
+    where: { groupId, studentId: { in: studentIds } },
     orderBy: { startedAt: "desc" },
     select: { studentId: true, startedAt: true, finishedAt: true, score: true, mode: true },
   });
@@ -213,8 +278,17 @@ export async function getRosterForGroup(groupId: string): Promise<RosterEntry[]>
             finishedExamScores.reduce((sum, s) => sum + s, 0) / finishedExamScores.length
           )
         : null;
-    // Eng so'nggi faollik — barcha urinishlarning ham boshlanish, ham
-    // yakunlanish vaqtlari ichidan eng kattasi. Faqat `[0]` ni olish
+    // Eng so'nggi faollik — SHU GURUHDAGI barcha urinishlarning ham
+    // boshlanish, ham yakunlanish vaqtlari ichidan eng kattasi.
+    //
+    // Guruh filtri bu ustunga ham qo'llanadi (yuqoridagi so'rov orqali):
+    // ustun jadvalning qolgan uchta ustuni bilan bitta qatorda turadi va
+    // ular endi "shu guruhdagi faollik"ni ko'rsatadi. Aks holda "0 imtihon,
+    // 0 mashq, lekin kecha faol" degan tushunarsiz qator chiqardi. Boshqa
+    // guruhga ko'chirilgan o'quvchining faolligini yangi ustozi ko'radi,
+    // eskisi emas.
+    //
+    // Faqat `[0]` ni olish
     // noto'g'ri edi: ro'yxat startedAt bo'yicha saralangani uchun keyinroq
     // yakunlangan eski urinish e'tibordan chetda qolib, ko'rsatilgan vaqt
     // orqaga siljib ketishi mumkin edi.
@@ -263,6 +337,13 @@ export async function getStudentGroupContext(
 /**
  * O'quvchining mavzular bo'yicha o'zlashtirishi (eng zaif mavzu birinchi)
  * va yakunlangan urinishlar tarixi.
+ *
+ * Mavzu foizi o'quvchining O'Z panelidagi bilan bitta funksiyadan
+ * (`getMasteryByTopic`) olinadi. Ilgari bu yerda alohida, Node'da
+ * hisoblanadigan nusxa turardi va u boshqa qoidada ishlardi (mashqlarni ham
+ * qo'shardi, javobsizni ko'rmasdi) — natijada ustoz bilan o'quvchi bir xil
+ * mavzu uchun boshqa-boshqa foiz ko'rardi. Endi manba bitta: yakunlangan
+ * imtihonlar, javobsiz savol xato deb sanaladi.
  */
 export async function getStudentDetailForTutor(
   studentId: string
@@ -273,46 +354,21 @@ export async function getStudentDetailForTutor(
   });
   if (!user) return null;
 
-  const topics = await prisma.topic.findMany({
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
-  });
-
-  const answers = await prisma.attemptAnswer.findMany({
-    where: { attempt: { studentId } },
-    select: { isCorrect: true, question: { select: { topicId: true } } },
-  });
-
-  const statsByTopic = new Map<string, { correct: number; total: number }>();
-  for (const a of answers) {
-    const entry = statsByTopic.get(a.question.topicId) ?? { correct: 0, total: 0 };
-    entry.total += 1;
-    if (a.isCorrect) entry.correct += 1;
-    statsByTopic.set(a.question.topicId, entry);
-  }
-
-  // FAQAT o'quvchi tegib ko'rgan mavzular. Ilgari barcha mavzular olinib,
-  // ma'lumot yo'qlari 0% deb belgilanardi va ro'yxat o'sish bo'yicha
-  // saralangani uchun "hech urinilmagan" mavzular "eng zaif" bo'lib
-  // ro'yxat boshini to'ldirib tashlardi — ustoz haqiqiy zaif mavzuni
-  // ko'rmay qolardi. studentDashboard'dagi getMasteryByTopic ham aynan
-  // shu qoidada ishlaydi.
-  const masteryByTopic = topics
-    .filter((t) => (statsByTopic.get(t.id)?.total ?? 0) > 0)
-    .map((t) => {
-      const stats = statsByTopic.get(t.id)!;
-      return {
-        topicName: t.name,
-        masteryPercent: Math.round((stats.correct / stats.total) * 100),
-      };
-    })
-    .sort((a, b) => a.masteryPercent - b.masteryPercent);
-
-  const attemptRows = await prisma.attempt.findMany({
-    where: { studentId, finishedAt: { not: null } },
-    orderBy: { finishedAt: "desc" },
-    select: { id: true, finishedAt: true, score: true, mode: true },
-  });
+  const [masteryByTopic, attemptRows] = await Promise.all([
+    // FAQAT o'quvchi imtihonda uchratgan mavzular chiqadi (getMasteryByTopic
+    // shunday ishlaydi). Ilgari barcha mavzular olinib, ma'lumot yo'qlari 0%
+    // deb belgilanardi va ro'yxat o'sish bo'yicha saralangani uchun "hech
+    // urinilmagan" mavzular "eng zaif" bo'lib ro'yxat boshini to'ldirib
+    // tashlardi — ustoz haqiqiy zaif mavzuni ko'rmay qolardi.
+    getMasteryByTopic(studentId),
+    // Tarix esa ataylab IKKALA rejimni ham ko'rsatadi (har qatorda "Imtihon"
+    // yoki "Mashq" belgisi bor) — bu statistika emas, faollik jurnali.
+    prisma.attempt.findMany({
+      where: { studentId, finishedAt: { not: null } },
+      orderBy: { finishedAt: "desc" },
+      select: { id: true, finishedAt: true, score: true, mode: true },
+    }),
+  ]);
 
   const attempts = attemptRows.map((a) => ({
     id: a.id,

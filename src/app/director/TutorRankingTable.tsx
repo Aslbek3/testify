@@ -42,8 +42,17 @@ export function TutorRankingTable({ rows }: { rows: TutorRankingRow[] }) {
           <TableHeaderCell>#</TableHeaderCell>
           <TableHeaderCell>Ustoz</TableHeaderCell>
           <TableHeaderCell>Guruh</TableHeaderCell>
-          <TableHeaderCell align="right">O&apos;quvchilar</TableHeaderCell>
-          <TableHeaderCell align="right">O&apos;rtacha ball</TableHeaderCell>
+          {/* Ikki ustun ataylab boshqacha nomlangan: birinchisi guruhning
+              HOZIRGI a'zolari, ikkinchisi esa shu guruhda topshirilgan
+              imtihonlardan chiqqan ball — boshqa guruhga ko'chib ketgan
+              o'quvchining natijasi ham shu yerda qoladi. Ball qatorining
+              ostida u nechta o'quvchi natijasidan chiqqani yoziladi. */}
+          <TableHeaderCell align="right">
+            Hozirgi o&apos;quvchilar
+          </TableHeaderCell>
+          <TableHeaderCell align="right">
+            O&apos;rtacha ball (imtihon)
+          </TableHeaderCell>
           <TableHeaderCell>Hisob</TableHeaderCell>
           <TableHeaderCell>Amallar</TableHeaderCell>
         </TableRow>
@@ -58,7 +67,16 @@ export function TutorRankingTable({ rows }: { rows: TutorRankingRow[] }) {
               <TableCell>{row.groupName}</TableCell>
               <TableCell align="right">{row.studentCount}</TableCell>
               <TableCell align="right">
-                {row.averageScore === null ? "—" : `${row.averageScore}%`}
+                {row.averageScore === null ? (
+                  "—"
+                ) : (
+                  <>
+                    {row.averageScore}%
+                    <span className="block text-xs text-text-muted">
+                      {row.scoredStudentCount} o&apos;quvchi natijasi
+                    </span>
+                  </>
+                )}
               </TableCell>
               <TableCell>
                 <Badge variant={row.isActive ? "success" : "danger"}>

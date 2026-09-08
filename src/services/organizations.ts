@@ -8,7 +8,9 @@ export type OrganizationWithCounts = {
   plan: Plan;
   status: OrganizationStatus;
   createdAt: Date;
+  /** Bloklanmagan (`isActive`) hisoblar soni — Qoida 5 ga qara. */
   tutorCount: number;
+  /** Bloklanmagan va guruhga biriktirilgan o'quvchilar soni. */
   studentCount: number;
 };
 
@@ -55,6 +57,15 @@ export async function listOrganizations(
   // Ustoz/o'quvchi sonlari bazaning o'zida sanaladi: har bir tashkilotning
   // barcha user qatorlarini yuklab, JS'da filter qilish o'rniga bitta
   // groupBy — natijada tashkilot boshiga ko'pi bilan ikkita qator qaytadi.
+  //
+  // `isActive: true` — bloklangan hisob endi sanoqqa kirmaydi. Ilgari 100
+  // o'quvchidan 30 tasi bloklangan tashkilot ham "100" ko'rsatardi, ya'ni
+  // tarif/hisob-kitob qarori uchun ishlatilsa 30% xato raqam edi.
+  //
+  // O'quvchi uchun qo'shimcha `studentProfile: { isNot: null }` sharti —
+  // direktorning o'z ro'yxati (`listStudentsForOrganization`) guruh profili
+  // yo'q o'quvchini ko'rsatmaydi; shart bo'lmasa owner "50", direktor esa
+  // "48" ko'rardi. Shart faqat STUDENT shoxida: ustozda profil bo'lmaydi.
   const counts =
     organizations.length === 0
       ? []
@@ -62,7 +73,11 @@ export async function listOrganizations(
           by: ["organizationId", "role"],
           where: {
             organizationId: { in: organizations.map((org) => org.id) },
-            role: { in: ["TUTOR", "STUDENT"] },
+            isActive: true,
+            OR: [
+              { role: "TUTOR" },
+              { role: "STUDENT", studentProfile: { isNot: null } },
+            ],
           },
           _count: { _all: true },
         });
@@ -96,6 +111,64 @@ export async function listOrganizations(
   }
 
   return mapped;
+}
+
+export type PlatformOverview = {
+  organizationCount: number;
+  activeOrganizationCount: number;
+  /** Butun platforma bo'yicha bloklanmagan o'quvchi hisoblari. */
+  studentCount: number;
+  /** Shundan holati "Faol" bo'lgan tashkilotlardagilari. */
+  activeOrganizationStudentCount: number;
+};
+
+/**
+ * Owner panelidagi plitkalar uchun. Plitkalar filtrga bog'liq bo'lmasligi
+ * kerak, lekin buning uchun ilgari `listOrganizations()` ikkinchi marta —
+ * filtrsiz — chaqirilardi va natijadan faqat uchta yig'indi olinardi. Endi
+ * uchta `count` so'rovi ketadi, tashkilot qatorlari umuman yuklanmaydi.
+ *
+ * Sonlar `isActive: true` bo'yicha — "faol" bu yerda "hisobi bloklanmagan"
+ * degani; tashkilot holati (ACTIVE/TRIAL/EXPIRED) esa butunlay boshqa narsa
+ * va u alohida ko'rsatiladi.
+ */
+export async function getPlatformOverview(): Promise<PlatformOverview> {
+  const activeStudentWhere: Prisma.UserWhereInput = {
+    role: "STUDENT",
+    isActive: true,
+    studentProfile: { isNot: null },
+  };
+
+  const [
+    organizationCount,
+    activeOrganizationCount,
+    studentCount,
+    activeOrganizationStudentCount,
+  ] = await Promise.all([
+    prisma.organization.count(),
+    prisma.organization.count({ where: { status: "ACTIVE" } }),
+    prisma.user.count({ where: activeStudentWhere }),
+    prisma.user.count({
+      where: { ...activeStudentWhere, organization: { status: "ACTIVE" } },
+    }),
+  ]);
+
+  return {
+    organizationCount,
+    activeOrganizationCount,
+    studentCount,
+    activeOrganizationStudentCount,
+  };
+}
+
+/** "Yangi direktor" modalidagi tashkilot tanlash ro'yxati uchun. */
+export async function listOrganizationOptions(): Promise<
+  { id: string; name: string }[]
+> {
+  return prisma.organization.findMany({
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
 }
 
 export async function createOrganization(input: {
