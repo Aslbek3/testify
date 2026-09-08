@@ -1024,6 +1024,15 @@ async function main() {
             questionId: question.id,
             selectedOptionIndex: isCorrect ? question.correctOptionIndex : wrongIndex,
             isCorrect,
+            // Javob vaqti urinish OYNASI ichida bo'lishi shart. Ko'rsatilmasa
+            // `now()` yoziladi, `startedAt` esa kunlar oldingi bo'ladi — va
+            // imtihon ballini hisoblashda "muddatdan keyin kelgan javob"
+            // filtri (`scoreAttempt`) ularning HAMMASINI chiqarib tashlardi.
+            // Natijada natija sahifasi saqlangan ball (masalan 60%) ustida
+            // "0 ta to'g'ri" ko'rsatardi — aynan o'sha filtr oldini olishi
+            // kerak bo'lgan zidlik. Har savolga 30 soniya: 20 savol = 10
+            // daqiqa, imtihonning 25 daqiqalik oynasiga bemalol sig'adi.
+            answeredAt: new Date(startedAt.getTime() + (qi + 1) * 30_000),
           },
         });
       }
