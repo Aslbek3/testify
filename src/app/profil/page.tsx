@@ -1,10 +1,14 @@
 import { notFound } from "next/navigation";
 import type { Role } from "@prisma/client";
 import { requireAnySession } from "@/lib/auth";
-import { getProfile } from "@/services/profile";
+import { getProfile, getStudentProfileStats } from "@/services/profile";
+import { readinessFromScore } from "@/lib/readiness";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
+import { StatTile } from "@/components/StatTile";
+import { Badge } from "@/components/Badge";
 import { formatDate } from "@/lib/format";
 import { ChangePasswordForm } from "./ChangePasswordForm";
+import { ProfileNameForm } from "./ProfileNameForm";
 
 const ROLE_LABEL: Record<Role, string> = {
   OWNER: "App Owner",
@@ -22,10 +26,21 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** "3 kun" / "1 kun" — streak uchun qisqa matn. */
+function streakLabel(days: number): string {
+  return days === 0 ? "—" : `${days} kun`;
+}
+
 export default async function ProfilPage() {
   const user = await requireAnySession();
   const profile = await getProfile(user.id);
   if (!profile) notFound();
+
+  // Ko'rsatkichlar FAQAT o'quvchida: ustoz yoki direktor profilida
+  // "o'rtacha ball" va "kun ketma-ket" ma'nosiz bo'lardi.
+  const stats =
+    profile.role === "STUDENT" ? await getStudentProfileStats(user.id) : null;
+  const readiness = stats ? readinessFromScore(stats.averageScore) : null;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -36,13 +51,46 @@ export default async function ProfilPage() {
         </p>
       </div>
 
+      {stats && (
+        <>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <StatTile
+              label="O'rtacha ball"
+              value={stats.averageScore !== null ? `${stats.averageScore}%` : "—"}
+              sub="Imtihonlar bo'yicha"
+            />
+            <StatTile label="Imtihonlar" value={stats.examCount} sub="Yakunlangan" />
+            <StatTile label="Mashqlar" value={stats.practiceCount} sub="Yakunlangan" />
+            {/* Ketma-ket kunlar — bu ball emas, ODAT ko'rsatkichi, shuning
+                uchun mashq ham, imtihon ham hisobga olinadi. */}
+            <StatTile
+              label="Kun ketma-ket"
+              value={streakLabel(stats.streakDays)}
+              sub={stats.streakDays > 0 ? "Davom eting" : "Bugun boshlang"}
+            />
+          </div>
+
+          {readiness && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Tayyorgarlik holati</CardTitle>
+                <span className="text-sm text-text-muted">
+                  Yakunlangan imtihonlar bo&apos;yicha
+                </span>
+              </CardHeader>
+              <Badge variant={readiness.variant}>{readiness.label}</Badge>
+            </Card>
+          )}
+        </>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Hisob ma&apos;lumotlari</CardTitle>
         </CardHeader>
 
         <div>
-          <Row label="Ism" value={profile.name} />
+          <ProfileNameForm currentName={profile.name} />
           <Row label="Email" value={profile.email} />
           <Row label="Rol" value={ROLE_LABEL[profile.role]} />
           {profile.organizationName && (
@@ -53,13 +101,13 @@ export default async function ProfilPage() {
           <Row label="Ro'yxatdan o'tgan" value={formatDate(profile.createdAt)} />
         </div>
 
-        {/* Ism va email o'zgartirilmaydi — buni ochiq aytish kerak, aks
-            holda foydalanuvchi tahrirlash tugmasini qidirib yuradi.
-            Email — kirish identifikatori va ustoz o'quvchini aynan shu
-            orqali topadi; uni o'quvchining o'zi almashtirsa, ustoz
-            hisobni yo'qotib qo'yishi mumkin. */}
+        {/* Email o'zgartirilmaydi va buni ochiq aytish kerak, aks holda
+            foydalanuvchi tahrirlash tugmasini qidirib yuradi. Email —
+            kirish identifikatori va ustoz o'quvchini aynan shu orqali
+            topadi; uni o'quvchining o'zi almashtirsa, ustoz hisobni
+            yo'qotib qo'yishi mumkin. */}
         <p className="mt-4 text-xs leading-relaxed text-text-muted">
-          Ism yoki emailni o&apos;zgartirish kerak bo&apos;lsa,{" "}
+          Emailni o&apos;zgartirish kerak bo&apos;lsa,{" "}
           {profile.role === "STUDENT"
             ? "ustozingizga"
             : profile.role === "TUTOR"

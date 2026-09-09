@@ -3,7 +3,8 @@
  * beri bekor qilingan). Shu sababli oddiy qat'iy siljish yetarli va
  * `Intl`/ICU ma'lumotlariga bog'liqlik kerak emas.
  */
-const UZBEKISTAN_UTC_OFFSET_MINUTES = 5 * 60;
+export const UZBEKISTAN_UTC_OFFSET_HOURS = 5;
+const UZBEKISTAN_UTC_OFFSET_MINUTES = UZBEKISTAN_UTC_OFFSET_HOURS * 60;
 
 /**
  * Sanani `kk/oo/yyyy` ko'rinishida, HAR DOIM O'zbekiston vaqti bo'yicha

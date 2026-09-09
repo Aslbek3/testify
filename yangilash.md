@@ -277,6 +277,66 @@ Avval mijozdan so'rash kerak — taxmin qilib qurmaslik.
 
 ---
 
+## 5.1 Keyingi bosqichga qo'yilgan g'oyalar (2026-09-09)
+
+Bular muhokama qilingan va kelishilgan, lekin hozir bajarilmagan — sabab
+har birida yozilgan.
+
+### Avatar: rasm yuklash emas, tayyor ikonkalardan tanlash
+
+Raqobatchi profilida foydalanuvchi rasmi bor. Bizda rasm yuklash
+infratuzilmasi umuman yo'q (owner hatto savolga rasm yuklay olmaydi), va
+uni faqat avatar uchun qurish nomutanosib.
+
+**Yechim:** tizimda **4–5 ta tayyor ikonka** bo'lsin, foydalanuvchi
+shulardan birini tanlaydi. Fayl yuklash, saqlash joyi, hajm cheklovi,
+moderatsiya — hech biri kerak emas; `User` modelida bitta kichik maydon
+(`avatarKey`) yetadi.
+
+Amaliy sabab: **qiz va o'g'il bolalarni ajratib turish.** Ustoz guruh
+ro'yxatiga qaraganda kimning kimligini tezroq topadi. Ismdan har doim ham
+aniq bo'lavermaydi.
+
+Eslatma: ikonkalar neytral va hurmatli bo'lishi kerak; "qiz/o'g'il" degan
+yorliq qo'yilmaydi — foydalanuvchi shunchaki o'ziga yoqqanini tanlaydi.
+
+### To'lov: onlayn, admin tasdig'i bilan
+
+To'lov tizimi hozir umuman yo'q — `Organization.plan` va `status` bor,
+lekin ular shunchaki yorliq.
+
+**Kelishilgan model:** to'lov onlayn amalga oshiriladi, lekin obuna
+**admin tasdig'idan keyin** faollashadi. Ya'ni avtomatik emas —
+to'lovni owner ko'rib chiqib tasdiqlaydi.
+
+Bu bizda allaqachon borlarga yaxshi tushadi: owner tashkilotning `plan`
+va `status` ini o'zgartira oladi (2026-09-09 da qo'shildi), `EXPIRED`
+esa sessiyani darhol bekor qiladi. Ya'ni tasdiqlash mexanizmining
+"qo'lda" qismi tayyor — qolgani to'lov qabul qilish va uni owner ko'radigan
+ro'yxatga ulash.
+
+Hal qilinishi kerak: qaysi to'lov tizimi (Payme/Click/UZUM), to'lov
+yozuvlari uchun model, va owner uchun "tasdiqlash kutayotgan to'lovlar"
+ro'yxati.
+
+### Yutuqlar (achievements)
+
+Raqobatchida 6 ta nishon bor. Bizda hozir yutuq qo'yadigan mazmun yo'q:
+"100 test yechdingiz" degan nishon bazada 66 ta savol borligida ma'nosiz.
+Savollar bazasi to'lgandan keyin qaytiladi.
+
+Istisno — **"kun ketma-ket" (streak)**: u mavjud ma'lumotdan hisoblanadi,
+sxema o'zgarmaydi va savollar sonidan mustaqil. Shuning uchun u
+2026-09-09 da profilga qo'shildi.
+
+### Guruh ichidagi reyting
+
+Raqobatchida "Top 97%" bor — butun platforma bo'yicha. Bizda bu g'alati:
+boshqa avtomaktabning o'quvchisi bilan solishtirishning ma'nosi yo'q.
+O'z guruhi ichidagi o'rin mantiqiyroq, lekin nozik: sinfdoshlar oldida
+oxirgi o'rinda ekanini ko'rish motivatsiyani o'ldirishi ham mumkin.
+Mijozni bilgan holda hal qilinadi.
+
 ## 6. Ochiq savollar (mahsulot qarori kerak)
 
 1. **Savollar bazasi qayerdan keladi?** O'zimiz yozamizmi, sotib olamizmi,
