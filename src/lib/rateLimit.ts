@@ -108,6 +108,28 @@ export function loginAccountRateLimitKey(normalizedEmail: string): string {
 }
 
 /** Parol tiklash — tiklayotgan xodim (ustoz/direktor) bo'yicha hisoblagich. */
+/**
+ * O'z parolini o'zgartirish uchun cheklov — kalit foydalanuvchining o'zi.
+ *
+ * Nega kerak: bu endpoint joriy parolni tekshiradi, ya'ni u orqali parolni
+ * taxmin qilish mumkin. O'g'irlangan sessiya cookie'siga ega hujumchi shu
+ * yo'l bilan haqiqiy parolni topib olishga urinishi mumkin edi (parolni
+ * bilish unga boshqa qurilmada ham kirish imkonini beradi).
+ *
+ * Nima uchun soatiga 10: haqiqiy odam parolini kuniga bir marta, ko'pi
+ * bilan bir necha marta o'zgartiradi. Joriy parolni bir-ikki marta xato
+ * yozish ham normal — 10 ta shunga ham yetadi.
+ */
+export const PASSWORD_CHANGE_RATE_LIMIT: Required<RateLimitOptions> = {
+  windowMs: 60 * 60 * 1000, // 1 soat
+  maxAttempts: 10,
+};
+
+/** O'z parolini o'zgartirish — foydalanuvchining o'zi bo'yicha hisoblagich. */
+export function passwordChangeRateLimitKey(userId: string): string {
+  return `password-change:${userId}`;
+}
+
 export function passwordResetRateLimitKey(actorUserId: string): string {
   return `password-reset:${actorUserId}`;
 }

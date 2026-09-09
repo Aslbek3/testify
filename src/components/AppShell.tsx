@@ -162,15 +162,28 @@ export function AppShell({
           })}
         </nav>
 
-        <div className="space-y-3 border-t border-white/10 px-5 py-4">
+        <div className="space-y-3 border-t border-white/10 px-3 py-4">
           <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0">
+            {/* Foydalanuvchi bloki — profilga kirish yo'li. Alohida menyu
+                bandi qilinmadi: hisob sozlamalarini odam aynan shu yerdan,
+                o'z ismi ustidan qidiradi. */}
+            <Link
+              href="/profil"
+              onClick={() => setMobileOpen(false)}
+              aria-current={pathname === "/profil" ? "page" : undefined}
+              className={cn(
+                "min-w-0 flex-1 rounded-md px-2 py-2 transition-colors",
+                pathname === "/profil" ? "bg-white/10" : "hover:bg-white/5"
+              )}
+            >
               <p className="truncate text-sm font-medium text-white">{userName}</p>
-              <p className="text-xs text-white/50">{ROLE_LABEL[role]}</p>
-            </div>
+              <p className="text-xs text-white/50">{ROLE_LABEL[role]} · Profil</p>
+            </Link>
             <ThemeToggle />
           </div>
-          <LogoutButton variant="ghost-dark" />
+          <div className="px-2">
+            <LogoutButton variant="ghost-dark" />
+          </div>
         </div>
       </aside>
 

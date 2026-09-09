@@ -111,6 +111,19 @@ export async function getVerifiedSessionUser(): Promise<SessionUser | null> {
  * himoya qiladi (Edge'da, faqat imzo/rol) — bu esa server komponent
  * darajasidagi chuqur tekshiruv (getVerifiedSessionUser orqali).
  */
+/**
+ * Rolidan qat'i nazar, kirgan foydalanuvchini qaytaradi.
+ *
+ * Profil kabi HAMMA uchun umumiy sahifalar uchun — u yerda "qaysi rol"
+ * emas, "umuman kirganmi" muhim. `requireRole` bunga yaramaydi: u aniq
+ * bitta rolni talab qiladi va boshqasini o'z sahifasiga qaytarib yuboradi.
+ */
+export async function requireAnySession(): Promise<SessionUser> {
+  const user = await getVerifiedSessionUser();
+  if (!user) redirect("/login");
+  return user;
+}
+
 export async function requireRole(role: Role): Promise<SessionUser> {
   const user = await getVerifiedSessionUser();
   if (!user) {

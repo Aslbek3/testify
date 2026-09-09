@@ -15,7 +15,12 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const segment = pathname.split("/")[1];
   const requiredRole = ROLE_PREFIX[segment];
-  if (!requiredRole) return NextResponse.next();
+
+  // Profil — barcha rollar uchun umumiy sahifa: rol tekshirilmaydi, faqat
+  // sessiya bor-yo'qligi. Shuning uchun u ROLE_PREFIX'ga kirmaydi, lekin
+  // himoyasiz ham qolmasligi kerak.
+  const isSharedPage = segment === "profil";
+  if (!requiredRole && !isSharedPage) return NextResponse.next();
 
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   const user = token ? verifySessionToken(token) : null;
@@ -26,7 +31,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (user.role !== requiredRole) {
+  if (requiredRole && user.role !== requiredRole) {
     return NextResponse.redirect(new URL(ROLE_HOME[user.role], request.url));
   }
 
@@ -34,5 +39,11 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/owner/:path*", "/director/:path*", "/tutor/:path*", "/student/:path*"],
+  matcher: [
+    "/owner/:path*",
+    "/director/:path*",
+    "/tutor/:path*",
+    "/student/:path*",
+    "/profil/:path*",
+  ],
 };
