@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/components/Badge";
 import { PLAN_LABEL, ORG_STATUS_LABEL, ORG_STATUS_VARIANT } from "@/lib/labels";
 import { formatDate } from "@/lib/format";
-import { listPendingPayments } from "@/services/payments";
+import { listPendingPayments, listRecentPayments } from "@/services/payments";
 import { extendSubscription, getSubscriptionState } from "@/lib/subscription";
 import { NewOrganizationModal } from "./NewOrganizationModal";
 import { EditOrganizationModal } from "./EditOrganizationModal";
@@ -31,6 +31,7 @@ import {
   PendingPaymentsCard,
   type PendingPaymentReview,
 } from "./PendingPaymentsCard";
+import { PaymentHistoryCard } from "./PaymentHistoryCard";
 import type { OrganizationStatus } from "@prisma/client";
 import type { OrganizationWithCounts } from "@/services/organizations";
 
@@ -127,12 +128,18 @@ export default async function OwnerPage({
   // marta — filtrsiz — chaqirilar va natijasidan faqat uchta yig'indi
   // olinardi; endi shu yig'indilar bazada sanaladi. Jadval esa
   // filtrlangan/saralangan ro'yxatni ko'rsatadi.
-  const [overview, organizationOptions, organizations, pendingPayments] =
-    await Promise.all([
+  const [
+    overview,
+    organizationOptions,
+    organizations,
+    pendingPayments,
+    recentPayments,
+  ] = await Promise.all([
       getPlatformOverview(),
       listOrganizationOptions(),
       listOrganizations({ q, status: statusFilter, sortField, sortDirection }),
       listPendingPayments(),
+      listRecentPayments(),
     ]);
 
   // Tasdiqlansa obuna qaysi sanagacha uzayishini ko'rsatish uchun
@@ -305,6 +312,12 @@ export default async function OwnerPage({
           </Table>
         )}
       </Card>
+
+      {/* To'lov tarixi eng pastda: kundalik ish emas, lekin DOIM shu
+          yerda turadi. Tepadagi "tasdiq kutayotgan" kartochkasi ish
+          bo'lmasa yo'qoladi — agar tarix ham yo'qolsa, owner uchun
+          to'lov degan bo'lim umuman yo'qdek ko'rinardi. */}
+      <PaymentHistoryCard payments={recentPayments} />
     </div>
   );
 }

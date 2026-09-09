@@ -178,6 +178,22 @@ export async function listPendingPayments(): Promise<PaymentRow[]> {
   return rows.map(toRow);
 }
 
+/**
+ * Butun platforma bo'yicha to'lov tarixi — owner o'z panelida ko'radi.
+ *
+ * Nega kerak: tasdiqlangan yoki rad etilgan to'lov `listPendingPayments()`
+ * dan chiqib ketadi va owner uchun izsiz yo'qolardi. Ya'ni "kim to'lagan,
+ * men nimani tasdiqlaganman" degan savolga javob beradigan joy yo'q edi.
+ */
+export async function listRecentPayments(limit = 20): Promise<PaymentRow[]> {
+  const rows = await prisma.payment.findMany({
+    select: paymentSelect,
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+  return rows.map(toRow);
+}
+
 /** Bitta tashkilotning to'lov tarixi — direktor o'z panelida ko'radi. */
 export async function listPaymentsForOrganization(
   organizationId: string,
