@@ -135,7 +135,7 @@ export default async function TutorPage({
             <CardTitle>Mavzu bo&apos;yicha xato foizi</CardTitle>
             {/* Ikkala kartochka bitta ekranda turgani va HAR XIL qoidada
                 hisoblangani uchun manba ochiq yozilgan. */}
-            <span className="shrink-0 text-sm text-text-muted">
+            <span className="text-sm text-text-muted">
               Javobsizlar ham xato
             </span>
           </CardHeader>
@@ -174,7 +174,7 @@ export default async function TutorPage({
                 ro'yxat savol qiyinligini emas, savolning imtihondagi
                 o'rnini ko'rsatadi (vaqt tugaganda oxirgi savollar har doim
                 javobsiz qoladi). Batafsil izoh getGroupAnalytics'da. */}
-            <span className="shrink-0 text-sm text-text-muted">
+            <span className="text-sm text-text-muted">
               Javob berilganlar orasida
             </span>
           </CardHeader>
@@ -204,7 +204,7 @@ export default async function TutorPage({
       <Card>
         <CardHeader>
           <CardTitle>O&apos;quvchilar</CardTitle>
-          <span className="shrink-0 text-sm text-text-muted">
+          <span className="text-sm text-text-muted">
             {totalAttempts} ta yakunlangan urinish · Qatorni bosing — to&apos;liq
             progress ochiladi
           </span>

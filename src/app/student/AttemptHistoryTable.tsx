@@ -70,7 +70,12 @@ export function AttemptHistoryTable({ history }: { history: AttemptHistoryItem[]
                     // Qator ham bosiladi — havola bosilganda ikkalasi
                     // birdan ishlab, ikki marta navigatsiya bo'lmasligi uchun.
                     onClick={(event) => event.stopPropagation()}
-                    className="font-medium text-brand underline"
+                    // `py-3 -my-3` — bosish maydonini 18px dan ~42px ga oshiradi,
+                    // lekin manfiy margin tufayli qator balandligi
+                    // o'zgarmaydi. "Davom ettirish" uchun bu ayniqsa muhim:
+                    // tugallanmagan urinish qatori bosilmaydi, ya'ni bu
+                    // yagona yo'l.
+                    className="inline-flex min-h-[42px] items-center py-3 -my-3 font-medium text-brand underline"
                   >
                     Ko&apos;rish
                   </Link>
@@ -78,7 +83,12 @@ export function AttemptHistoryTable({ history }: { history: AttemptHistoryItem[]
                   <Link
                     href={`/student/test?attemptId=${attempt.id}`}
                     onClick={(event) => event.stopPropagation()}
-                    className="font-medium text-brand underline"
+                    // `py-3 -my-3` — bosish maydonini 18px dan ~42px ga oshiradi,
+                    // lekin manfiy margin tufayli qator balandligi
+                    // o'zgarmaydi. "Davom ettirish" uchun bu ayniqsa muhim:
+                    // tugallanmagan urinish qatori bosilmaydi, ya'ni bu
+                    // yagona yo'l.
+                    className="inline-flex min-h-[42px] items-center py-3 -my-3 font-medium text-brand underline"
                   >
                     Davom ettirish
                   </Link>

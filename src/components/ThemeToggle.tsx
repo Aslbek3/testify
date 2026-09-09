@@ -60,7 +60,10 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={theme === "dark" ? "Yorug' rejimga o'tish" : "Qorong'i rejimga o'tish"}
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white/70 hover:bg-white/10 hover:text-white"
+      // Mobilda 44x44 — barmoq uchun eng kam tavsiya etiladigan o'lcham.
+      // Desktopda sichqoncha aniqroq, shuning uchun 32x32 da qoladi va
+      // sidebar pastidagi qator siqilib ketmaydi.
+      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-white/70 hover:bg-white/10 hover:text-white pointer-fine:h-8 pointer-fine:w-8"
     >
       {theme === "dark" ? <SunIcon /> : <MoonIcon />}
     </button>

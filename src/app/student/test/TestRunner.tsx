@@ -417,7 +417,11 @@ export function TestRunner({
                   status === "failed" ? ", saqlanmadi" : ""
                 }`}
                 aria-current={isCurrent ? "step" : undefined}
-                className="flex min-h-[24px] min-w-[10px] flex-1 items-center rounded-full"
+                // Mobilda bosish maydoni balandroq: 390px ekranda 20 ta chiziqcha
+                // ~13px kenglikda qoladi va 24px balandlikdagi nishonga barmoq
+                // bilan tegish qiyin. Ko'rinadigan chiziqcha o'zgarmaydi —
+                // faqat uni o'rab turgan tugma balandlashadi.
+                className="flex min-h-[44px] min-w-[10px] flex-1 items-center rounded-full pointer-fine:min-h-[24px]"
               >
                 <span
                   className={cn(

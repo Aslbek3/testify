@@ -148,7 +148,9 @@ export function AppShell({
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "block rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  // Mobilda 44px balandlik (py-3) — telefonda bu asosiy navigatsiya
+                  // va 36px nishonga barmoq bilan tegish noqulay edi.
+                  "block rounded-md px-3 py-3 text-sm font-medium transition-colors pointer-fine:py-2",
                   isActive
                     ? "bg-white/10 text-white"
                     : "text-white/60 hover:bg-white/5 hover:text-white"
@@ -172,7 +174,14 @@ export function AppShell({
         </div>
       </aside>
 
-      <div className="flex min-h-screen flex-1 flex-col md:min-w-0">
+      {/* `min-w-0` MOBILDA HAM shart. Flex elementining standart
+          `min-width: auto` qiymati uni ichidagi eng keng elementdan
+          (masalan 640px lik jadval) kichrayishga qo'ymaydi — natijada
+          `overflow-x-auto` o'rami ham kengayib ketadi va jadval o'z
+          konteyneri ichida emas, BUTUN SAHIFA bo'ylab gorizontal scroll
+          hosil qiladi. Ilgari bu sinf `md:` bilan chegaralangan edi va
+          390px ekranda /tutor sahifasi 1001px kenglikda ochilardi. */}
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-3 border-b border-border bg-bg px-4 py-3 md:hidden">
           <button
             ref={hamburgerRef}
@@ -181,7 +190,9 @@ export function AppShell({
             aria-label="Menyuni ochish"
             aria-expanded={mobileOpen}
             aria-controls={SIDEBAR_ID}
-            className="rounded-md p-1.5 text-text hover:bg-bg-subtle"
+            // 44x44 — barmoq uchun eng kam tavsiya etiladigan o'lcham.
+              // Ilgari 32x32 edi.
+              className="flex h-11 w-11 items-center justify-center rounded-md text-text hover:bg-bg-subtle"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <path

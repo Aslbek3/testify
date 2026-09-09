@@ -62,7 +62,7 @@ export default async function MaratonPage({
                 <Link
                   key={size}
                   href={`/student/test?mode=PRACTICE&savollar=${size}`}
-                  className="rounded-md border border-border px-4 py-2 text-sm font-medium text-text hover:bg-bg-subtle"
+                  className="rounded-md border border-border px-4 py-3 text-sm font-medium pointer-fine:py-2 text-text hover:bg-bg-subtle"
                 >
                   {size} ta
                 </Link>
@@ -70,7 +70,7 @@ export default async function MaratonPage({
               {showAll && (
                 <Link
                   href={`/student/test?mode=PRACTICE&savollar=${available}`}
-                  className="rounded-md border border-brand bg-brand-soft px-4 py-2 text-sm font-medium text-brand hover:bg-brand-soft/70"
+                  className="rounded-md border border-brand bg-brand-soft px-4 py-3 text-sm font-medium pointer-fine:py-2 text-brand hover:bg-brand-soft/70"
                 >
                   Hammasi ({available} ta)
                 </Link>

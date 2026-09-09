@@ -19,7 +19,15 @@ export function Card({ className, ...props }: CardProps) {
 export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("mb-4 flex items-center justify-between gap-3", className)}
+      className={cn(
+        // `flex-wrap` mobil uchun: sarlavha yonidagi izoh matni (masalan
+        // "29 ta yakunlangan urinish · Qatorni bosing...") 390px ekranga
+        // sig'maydi va bitta qatorda qolsa butun sahifani kengaytirib
+        // yuboradi. O'ralganda u o'z qatoriga tushadi, desktopda esa
+        // avvalgidek yonma-yon qoladi.
+        "mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-1",
+        className
+      )}
       {...props}
     />
   );

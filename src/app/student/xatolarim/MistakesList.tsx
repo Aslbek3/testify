@@ -56,7 +56,7 @@ export function MistakesList({ items }: { items: MistakeItem[] }) {
               aria-selected={tab === value}
               onClick={() => setTab(value)}
               className={cn(
-                "px-3 py-1.5 text-xs font-medium transition-colors",
+                "px-3 py-3 text-xs font-medium pointer-fine:py-1.5 transition-colors",
                 tab === value
                   ? "bg-brand-soft text-brand"
                   : "bg-bg text-text-muted hover:bg-bg-subtle"

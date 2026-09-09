@@ -41,10 +41,16 @@ export function Modal({
   if (!open) return null;
 
   return (
+    // Fon o'zi scroll bo'ladi va ichki o'ram `min-h-full` bilan markazlashadi:
+    // baland modal (masalan savol qo'shish formasi — 1143px) 844px lik telefon
+    // ekraniga sig'masdi va `items-center` uni ikki tomondan kesib qo'yardi.
+    // Natijada "Saqlash" tugmasiga umuman yetib bo'lmasdi, ya'ni owner
+    // telefondan savol qo'sha olmasdi.
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 [animation:fade-in_150ms_ease-out]"
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/50 [animation:fade-in_150ms_ease-out]"
       onClick={onClose}
     >
+      <div className="flex min-h-full items-center justify-center p-4">
       <div
         ref={dialogRef}
         role="dialog"
@@ -58,6 +64,7 @@ export function Modal({
           {title}
         </h2>
         <div className="mt-4">{children}</div>
+      </div>
       </div>
     </div>
   );
