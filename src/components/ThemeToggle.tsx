@@ -41,6 +41,11 @@ export function ThemeToggle() {
       // localStorage bloklangan bo'lishi mumkin — tizim afzalligiga tushamiz
     }
     const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    // Mavzu `localStorage` va `prefers-color-scheme` dan o'qiladi; ikkalasi
+    // ham serverda mavjud emas. Render paytida o'qilsa SSR va klient boshqa
+    // natija berib, hidratsiya buziladi. Bu qoida istisno qiladigan
+    // "tashqi manba bilan sinxronlash" holati.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(stored === "light" || stored === "dark" ? stored : systemPrefersDark ? "dark" : "light");
   }, []);
 

@@ -13,14 +13,24 @@ import {
 import { Button } from "@/components/Button";
 import { Badge } from "@/components/Badge";
 import { optionLetter } from "@/lib/questionOptions";
-import type { QuestionListItem } from "@/services/questions";
+import type { QuestionListItem, QuestionQualityStat } from "@/services/questions";
 import { EditQuestionModal } from "./EditQuestionModal";
 
 function truncate(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max)}...` : text;
 }
 
-export function QuestionsTable({ questions }: { questions: QuestionListItem[] }) {
+export function QuestionsTable({
+  questions,
+  // Savol ID'si bo'yicha xato foizi. Bu yerda hisoblanmaydi, server
+  // komponentidan tayyor holda keladi — `needsReview` va chegara qarorlari
+  // ham service qatlamida (`SUSPICIOUS_WRONG_PERCENT`), shunda ustoz
+  // paneli va owner paneli bir xil qoidaga bo'ysunadi.
+  qualityByQuestionId,
+}: {
+  questions: QuestionListItem[];
+  qualityByQuestionId: Record<string, QuestionQualityStat>;
+}) {
   const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -67,6 +77,7 @@ export function QuestionsTable({ questions }: { questions: QuestionListItem[] })
             <TableHeaderCell>Savol matni</TableHeaderCell>
             <TableHeaderCell>To&apos;g&apos;ri javob</TableHeaderCell>
             <TableHeaderCell>YHQ havolasi</TableHeaderCell>
+            <TableHeaderCell align="right">Xato foizi</TableHeaderCell>
             <TableHeaderCell align="right">Amallar</TableHeaderCell>
           </TableRow>
         </TableHead>
@@ -89,6 +100,36 @@ export function QuestionsTable({ questions }: { questions: QuestionListItem[] })
                 ) : (
                   <Badge variant="warning">Havola yo&apos;q</Badge>
                 )}
+              </TableCell>
+              {/* Xato foizi — savolni tahrirlash tugmasi yonida turadi,
+                  chunki qaror shu yerda qabul qilinadi: "80% xato — matnni
+                  o'qib ko'ray". Javob berilmagan savolda "—", 5 tadan kam
+                  javobda esa foiz so'nik rangda: raqam bor, lekin unga
+                  tayanib savolni qayta yozish erta. */}
+              <TableCell align="right">
+                {(() => {
+                  const quality = qualityByQuestionId[question.id];
+                  if (!quality) {
+                    return <span className="text-text-muted">—</span>;
+                  }
+                  return (
+                    <div className="flex items-center justify-end gap-2">
+                      {quality.needsReview && (
+                        <Badge variant="danger">Tekshirish kerak</Badge>
+                      )}
+                      <span
+                        className={
+                          quality.hasEnoughData
+                            ? "font-semibold text-text"
+                            : "text-text-muted"
+                        }
+                        title={`${quality.answerCount} ta javob asosida`}
+                      >
+                        {quality.wrongPercent}%
+                      </span>
+                    </div>
+                  );
+                })()}
               </TableCell>
               <TableCell align="right">
                 <div className="flex flex-col items-end gap-1">
@@ -120,6 +161,13 @@ export function QuestionsTable({ questions }: { questions: QuestionListItem[] })
           ))}
         </TableBody>
       </Table>
+
+      <p className="mt-3 text-sm text-text-muted">
+        Xato foizi faqat yakunlangan imtihonlardagi javoblar bo&apos;yicha
+        hisoblanadi (mashq rejimi sanalmaydi). So&apos;nik rangdagi foiz —
+        javoblar hali kam, xulosa chiqarish erta; &quot;—&quot; esa savolga
+        imtihonda hali javob berilmagan degani.
+      </p>
 
       {editingQuestion && (
         <EditQuestionModal

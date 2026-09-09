@@ -2,39 +2,34 @@
 
 import { useState } from "react";
 import { Button } from "@/components/Button";
-import { GroupFormModal } from "./GroupFormModal";
+import { GroupFormModal, type GroupFormValues } from "./GroupFormModal";
 
 /**
- * "Guruh qo'shish" tugmasi. Formaning o'zi `GroupFormModal` da —
- * tahrirlash bilan bir xil forma ishlatiladi.
+ * Guruh sahifasidagi "Tahrirlash" tugmasi — jadvaldagi bilan AYNI
+ * formani (`GroupFormModal`) ochadi, faqat tugmasi boshqa joyda turadi.
  */
-export function NewGroupModal({
+export function EditGroupButton({
+  group,
   tutors,
   nameMaxLength,
 }: {
+  group: GroupFormValues;
   tutors: { id: string; name: string }[];
   nameMaxLength: number;
 }) {
   const [open, setOpen] = useState(false);
 
-  if (tutors.length === 0) {
-    return (
-      <p className="text-sm text-text-muted">
-        Guruh qo&apos;shish uchun avval kamida bitta ustoz kerak.
-      </p>
-    );
-  }
-
   return (
     <>
       <Button type="button" variant="secondary" onClick={() => setOpen(true)}>
-        + Guruh qo&apos;shish
+        Tahrirlash
       </Button>
 
       {open && (
         <GroupFormModal
           tutors={tutors}
           nameMaxLength={nameMaxLength}
+          group={group}
           onClose={() => setOpen(false)}
         />
       )}

@@ -52,7 +52,7 @@ export default async function MaratonPage({
         tooFewQuestions ? (
           <p className="text-sm text-text-muted">
             Maraton uchun bazada kamida {MARATHON_MIN_QUESTIONS} ta savol
-            bo'lishi kerak. Hozir {available} ta.
+            bo&apos;lishi kerak. Hozir {available} ta.
           </p>
         ) : (
           <div className="space-y-2">

@@ -1,6 +1,11 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth";
-import { getTopic, listQuestionsForTopic } from "@/services/questions";
+import {
+  getTopic,
+  listQuestionsForTopic,
+  getQuestionQualityForTopic,
+} from "@/services/questions";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
 import { NewQuestionModal } from "./NewQuestionModal";
 import { QuestionsTable } from "./QuestionsTable";
@@ -18,18 +23,24 @@ export default async function TopicDetailPage({
     notFound();
   }
 
-  const questions = await listQuestionsForTopic(topicId);
+  // Savollar ro'yxati va ularning xato foizi parallel olinadi — sifat
+  // statistikasi bitta qo'shimcha (mavzu bo'yicha guruhlangan) so'rov,
+  // savol boshiga alohida so'rov emas.
+  const [questions, qualityByQuestionId] = await Promise.all([
+    listQuestionsForTopic(topicId),
+    getQuestionQualityForTopic(topicId),
+  ]);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <a
+          <Link
             href="/owner/questions"
             className="text-sm text-text-muted hover:text-text"
           >
             &larr; Mavzular ro&apos;yxatiga qaytish
-          </a>
+          </Link>
           <h1 className="mt-1 text-xl font-semibold text-text">{topic.name}</h1>
           <p className="mt-1 text-sm text-text-muted">
             Ushbu mavzuga tegishli savollarni shu yerdan qo&apos;shing, tahrirlang
@@ -45,7 +56,10 @@ export default async function TopicDetailPage({
           <span className="text-sm text-text-muted">{questions.length} ta savol</span>
         </CardHeader>
 
-        <QuestionsTable questions={questions} />
+        <QuestionsTable
+          questions={questions}
+          qualityByQuestionId={qualityByQuestionId}
+        />
       </Card>
     </div>
   );

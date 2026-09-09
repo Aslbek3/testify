@@ -22,6 +22,7 @@ import { Badge } from "@/components/Badge";
 import { PLAN_LABEL, ORG_STATUS_LABEL, ORG_STATUS_VARIANT } from "@/lib/labels";
 import { formatDate } from "@/lib/format";
 import { NewOrganizationModal } from "./NewOrganizationModal";
+import { EditOrganizationModal } from "./EditOrganizationModal";
 import { NewDirectorModal } from "./NewDirectorModal";
 import { OrganizationFilters } from "./OrganizationFilters";
 import type { OrganizationStatus } from "@prisma/client";
@@ -199,6 +200,7 @@ export default async function OwnerPage({
                     {sortIndicator("createdAt")}
                   </Link>
                 </TableHeaderCell>
+                <TableHeaderCell align="right">Amallar</TableHeaderCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -215,6 +217,9 @@ export default async function OwnerPage({
                   <TableCell align="right">{org.tutorCount}</TableCell>
                   <TableCell align="right">{org.studentCount}</TableCell>
                   <TableCell>{formatDate(org.createdAt)}</TableCell>
+                  <TableCell align="right">
+                    <EditOrganizationModal organization={org} />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

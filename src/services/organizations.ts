@@ -1,6 +1,53 @@
 import { prisma } from "@/lib/prisma";
 import type { Plan, OrganizationStatus, Prisma } from "@prisma/client";
 
+/**
+ * Tashkilot bilan bog'liq domen xatolari (topilmadi, noto'g'ri qiymat).
+ * API route buni ushlab, foydalanuvchiga tushunarli xabar bilan 400/404
+ * qaytaradi — `services/questions.ts` dagi `QuestionBankError` bilan bir xil
+ * uslub.
+ */
+export class OrganizationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "OrganizationError";
+  }
+}
+
+/**
+ * Alohida tur — route uni 400 emas, 404 bilan qaytarishi uchun. Bitta
+ * `OrganizationError` bo'lsa, route xato MATNINI tekshirishga majbur
+ * bo'lardi (matn o'zgarganda status kod jimgina noto'g'ri bo'lib qolardi).
+ */
+export class OrganizationNotFoundError extends OrganizationError {
+  constructor() {
+    super("Tashkilot topilmadi");
+    this.name = "OrganizationNotFoundError";
+  }
+}
+
+/**
+ * Klientdan kelgan matnni enum qiymatiga aylantiradi (mos kelmasa `null`).
+ *
+ * Ro'yxatlar ataylab shu yerda — service qatlamida — turadi: ilgari ular
+ * faqat POST route ichida edi va PATCH route yozilganda ikkinchi nusxa
+ * paydo bo'lar edi. Enumga yangi tarif qo'shilsa bitta joy o'zgaradi.
+ */
+const VALID_PLANS: Plan[] = ["START", "STANDARD", "PRO"];
+const VALID_STATUSES: OrganizationStatus[] = ["ACTIVE", "TRIAL", "EXPIRED"];
+
+export function parsePlan(value: unknown): Plan | null {
+  return VALID_PLANS.includes(value as Plan) ? (value as Plan) : null;
+}
+
+export function parseOrganizationStatus(
+  value: unknown
+): OrganizationStatus | null {
+  return VALID_STATUSES.includes(value as OrganizationStatus)
+    ? (value as OrganizationStatus)
+    : null;
+}
+
 export type OrganizationWithCounts = {
   id: string;
   name: string;
@@ -12,6 +59,14 @@ export type OrganizationWithCounts = {
   tutorCount: number;
   /** Bloklanmagan va guruhga biriktirilgan o'quvchilar soni. */
   studentCount: number;
+  /**
+   * Bloklanmagan direktorlar soni. Jadvalda alohida ustun sifatida
+   * ko'rsatilmaydi — u tahrirlash modalidagi ogohlantirish uchun kerak:
+   * holat `EXPIRED` ga o'tkazilganda direktor ham qolgan hammasi bilan
+   * birga tizimdan chiqariladi, ya'ni "necha kishiga ta'sir qiladi"
+   * degan raqamda u ham bo'lishi shart.
+   */
+  directorCount: number;
 };
 
 // "studentCount" Prisma ustuni emas (alohida groupBy so'rovi bilan sanaladi),
@@ -76,18 +131,30 @@ export async function listOrganizations(
             isActive: true,
             OR: [
               { role: "TUTOR" },
+              { role: "DIRECTOR" },
               { role: "STUDENT", studentProfile: { isNot: null } },
             ],
           },
           _count: { _all: true },
         });
 
-  const countByOrg = new Map<string, { tutorCount: number; studentCount: number }>();
+  type OrgCounts = { tutorCount: number; studentCount: number; directorCount: number };
+  const emptyCounts = (): OrgCounts => ({
+    tutorCount: 0,
+    studentCount: 0,
+    directorCount: 0,
+  });
+
+  const countByOrg = new Map<string, OrgCounts>();
   for (const row of counts) {
     if (!row.organizationId) continue;
-    const entry = countByOrg.get(row.organizationId) ?? { tutorCount: 0, studentCount: 0 };
+    const entry = countByOrg.get(row.organizationId) ?? emptyCounts();
+    // `else` emas, aniq `switch` — ilgari "TUTOR bo'lmasa o'quvchi" degan
+    // shart bor edi va DIRECTOR qo'shilganda direktorlar jimgina
+    // o'quvchilar soniga qo'shilib ketardi.
     if (row.role === "TUTOR") entry.tutorCount = row._count._all;
-    else entry.studentCount = row._count._all;
+    else if (row.role === "DIRECTOR") entry.directorCount = row._count._all;
+    else if (row.role === "STUDENT") entry.studentCount = row._count._all;
     countByOrg.set(row.organizationId, entry);
   }
 
@@ -100,6 +167,7 @@ export async function listOrganizations(
     createdAt: org.createdAt,
     tutorCount: countByOrg.get(org.id)?.tutorCount ?? 0,
     studentCount: countByOrg.get(org.id)?.studentCount ?? 0,
+    directorCount: countByOrg.get(org.id)?.directorCount ?? 0,
   }));
 
   if (sortField === "studentCount") {
@@ -169,6 +237,83 @@ export async function listOrganizationOptions(): Promise<
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
+}
+
+/**
+ * Tashkilotni tahrirlash — nom, shahar, tarif rejasi va holat.
+ *
+ * Barcha maydonlar ixtiyoriy (qisman yangilash): berilmagan maydon
+ * bazada o'z holicha qoladi. Shu sababli `undefined` va "bo'sh qiymat"
+ * farqlanadi — `name: undefined` "tegma" degani, `name: ""` esa xato.
+ *
+ * `plan`/`status` bu yerda QAYTA tekshiriladi (route allaqachon tekshirsa
+ * ham): service qatlami o'ziga kelgan qiymatga ishonmaydi, chunki uni
+ * ertaga boshqa route yoki skript ham chaqirishi mumkin. Prisma tekshiruvi
+ * yetarli emas — u faqat baza xatosini beradi, foydalanuvchiga o'zbekcha
+ * xabar emas.
+ *
+ * ⚠️ `status: "EXPIRED"` — bu shunchaki yorliq emas: `getVerifiedSessionUser`
+ * (`src/lib/auth.ts`) har so'rovda tashkilot holatini tekshirgani uchun shu
+ * tashkilotning barcha direktor/ustoz/o'quvchilari darhol tizimdan
+ * chiqariladi va qayta kira olmaydi (login ham `OrganizationExpiredError`
+ * bilan rad etiladi). Shuning uchun `sessionVersion`ni oshirish kerak emas —
+ * mexanizm allaqachon holatga qarab ishlaydi; ogohlantirish esa UI'da
+ * (EditOrganizationModal) beriladi.
+ */
+export async function updateOrganization(
+  id: string,
+  input: {
+    name?: string;
+    city?: string;
+    plan?: Plan;
+    status?: OrganizationStatus;
+  }
+) {
+  const data: Prisma.OrganizationUpdateInput = {};
+
+  if (input.name !== undefined) {
+    const name = input.name.trim();
+    if (!name) {
+      throw new OrganizationError("Tashkilot nomi bo'sh bo'lishi mumkin emas");
+    }
+    data.name = name;
+  }
+
+  if (input.city !== undefined) {
+    const city = input.city.trim();
+    if (!city) {
+      throw new OrganizationError("Shahar bo'sh bo'lishi mumkin emas");
+    }
+    data.city = city;
+  }
+
+  if (input.plan !== undefined) {
+    if (!parsePlan(input.plan)) {
+      throw new OrganizationError("Noto'g'ri tarif rejasi");
+    }
+    data.plan = input.plan;
+  }
+
+  if (input.status !== undefined) {
+    if (!parseOrganizationStatus(input.status)) {
+      throw new OrganizationError("Noto'g'ri holat");
+    }
+    data.status = input.status;
+  }
+
+  if (Object.keys(data).length === 0) {
+    throw new OrganizationError("O'zgartirish uchun hech qanday maydon berilmadi");
+  }
+
+  const existing = await prisma.organization.findUnique({
+    where: { id },
+    select: { id: true },
+  });
+  if (!existing) {
+    throw new OrganizationNotFoundError();
+  }
+
+  return prisma.organization.update({ where: { id }, data });
 }
 
 export async function createOrganization(input: {

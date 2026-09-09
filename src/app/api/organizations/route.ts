@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { getVerifiedSessionUser } from "@/lib/auth";
 import { canManageOrganizations } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
-import { createOrganization } from "@/services/organizations";
-import type { Plan, OrganizationStatus } from "@prisma/client";
-
-const VALID_PLANS: Plan[] = ["START", "STANDARD", "PRO"];
-const VALID_STATUSES: OrganizationStatus[] = ["ACTIVE", "TRIAL", "EXPIRED"];
+import {
+  createOrganization,
+  parsePlan,
+  parseOrganizationStatus,
+} from "@/services/organizations";
 
 export async function POST(request: Request) {
   const user = await getVerifiedSessionUser();
@@ -17,10 +17,11 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const name = typeof body?.name === "string" ? body.name.trim() : "";
   const city = typeof body?.city === "string" ? body.city.trim() : "";
-  const plan = VALID_PLANS.includes(body?.plan) ? (body.plan as Plan) : null;
-  const status = VALID_STATUSES.includes(body?.status)
-    ? (body.status as OrganizationStatus)
-    : undefined;
+  // Enum tekshiruvi service qatlamiga ko'chirildi (`parsePlan` /
+  // `parseOrganizationStatus`) — PATCH route ham aynan shu ro'yxatlarga
+  // muhtoj edi va nusxa ko'chirilsa ikkisi vaqt o'tib ajralib ketardi.
+  const plan = parsePlan(body?.plan);
+  const status = parseOrganizationStatus(body?.status) ?? undefined;
 
   if (!name || !city || !plan) {
     return NextResponse.json(

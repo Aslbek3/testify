@@ -29,11 +29,20 @@ export function OrganizationFilters() {
 
   const [q, setQ] = useState(currentQ);
 
-  // Boshqa joydan URL o'zgarsa (masalan "Filtrni tozalash" bosilganda),
-  // input holatini sinxronlashtiramiz.
-  useEffect(() => {
+  // URL tashqaridan o'zgarsa (masalan "Filtrni tozalash" bosilganda yoki
+  // brauzerda orqaga qaytilganda) input holati unga moslashadi.
+  //
+  // Bu ATAYLAB `useEffect` emas, render paytida tuzatish: React'ning
+  // tavsiya qilgan naqshi. `useEffect` bilan qilinganda ekranga avval
+  // eski qiymat chiziladi, keyin ikkinchi render bilan almashadi —
+  // ko'zga tashlanadigan miltillash. Render paytida `setState` chaqirilsa
+  // React joriy render'ni tashlab, darhol yangi qiymat bilan qayta
+  // chizadi va oraliq holat umuman ekranga chiqmaydi.
+  const [syncedQ, setSyncedQ] = useState(currentQ);
+  if (syncedQ !== currentQ) {
+    setSyncedQ(currentQ);
     setQ(currentQ);
-  }, [currentQ]);
+  }
 
   function pushParams(next: { q?: string; status?: string }) {
     const nextQ = next.q !== undefined ? next.q : q;

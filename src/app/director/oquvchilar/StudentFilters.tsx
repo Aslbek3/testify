@@ -17,9 +17,20 @@ export function StudentFilters({ groups }: { groups: { id: string; name: string 
 
   const [q, setQ] = useState(currentQ);
 
-  useEffect(() => {
+  // URL tashqaridan o'zgarsa (masalan "Filtrni tozalash" bosilganda yoki
+  // brauzerda orqaga qaytilganda) input holati unga moslashadi.
+  //
+  // Bu ATAYLAB `useEffect` emas, render paytida tuzatish: React'ning
+  // tavsiya qilgan naqshi. `useEffect` bilan qilinganda ekranga avval
+  // eski qiymat chiziladi, keyin ikkinchi render bilan almashadi —
+  // ko'zga tashlanadigan miltillash. Render paytida `setState` chaqirilsa
+  // React joriy render'ni tashlab, darhol yangi qiymat bilan qayta
+  // chizadi va oraliq holat umuman ekranga chiqmaydi.
+  const [syncedQ, setSyncedQ] = useState(currentQ);
+  if (syncedQ !== currentQ) {
+    setSyncedQ(currentQ);
     setQ(currentQ);
-  }, [currentQ]);
+  }
 
   function pushParams(next: { q?: string; group?: string }) {
     const nextQ = next.q !== undefined ? next.q : q;

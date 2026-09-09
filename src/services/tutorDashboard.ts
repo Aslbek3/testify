@@ -36,6 +36,10 @@ export type StudentGroupContext = {
 
 export type StudentDetail = {
   name: string;
+  /** Hisob bloklanmaganmi — o'quvchi sahifasidagi "Bloklash" tugmasi uchun. */
+  isActive: boolean;
+  /** Qaysi guruhda ekani — sahifa sarlavhasida ko'rsatiladi. */
+  groupName: string | null;
   // O'quvchining o'z panelidagi bilan AYNI tip — ataylab: ikkala ekran bir
   // xil funksiyadan (studentDashboard'dagi getMasteryByTopic) oziqlanadi,
   // shuning uchun ustoz va o'quvchi hech qachon boshqa-boshqa foiz ko'rmaydi.
@@ -312,6 +316,25 @@ export async function getRosterForGroup(groupId: string): Promise<RosterEntry[]>
 }
 
 /**
+ * Guruhning o'rtacha bali — ro'yxatdagi (`getRosterForGroup`) o'quvchilar
+ * o'rtachalarining o'rtachasi.
+ *
+ * Bu yerda qayta hisob YO'Q: ball allaqachon `getRosterForGroup` ichida
+ * to'g'ri qoida bo'yicha (faqat yakunlangan EXAM urinishlari, faqat shu
+ * guruhdagilar) chiqarilgan. Funksiya alohida turadi, chunki ayni shu
+ * hisob ustoz panelida ham kerak — u yerda hozircha sahifa ichida
+ * takrorlangan (hisobotga qara).
+ */
+export function averageScoreFromRoster(roster: RosterEntry[]): number | null {
+  const scores = roster
+    .map((entry) => entry.averageScore)
+    .filter((score): score is number => score !== null);
+  if (scores.length === 0) return null;
+
+  return Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
+}
+
+/**
  * O'quvchi va uning guruhi haqida ruxsat tekshiruvi (canViewStudent) uchun
  * yetarli minimal ma'lumot. O'quvchi topilmasa null qaytadi.
  */
@@ -350,7 +373,11 @@ export async function getStudentDetailForTutor(
 ): Promise<StudentDetail | null> {
   const user = await prisma.user.findUnique({
     where: { id: studentId },
-    select: { name: true },
+    select: {
+      name: true,
+      isActive: true,
+      studentProfile: { select: { group: { select: { name: true } } } },
+    },
   });
   if (!user) return null;
 
@@ -377,5 +404,11 @@ export async function getStudentDetailForTutor(
     mode: a.mode,
   }));
 
-  return { name: user.name, masteryByTopic, attempts };
+  return {
+    name: user.name,
+    isActive: user.isActive,
+    groupName: user.studentProfile?.group.name ?? null,
+    masteryByTopic,
+    attempts,
+  };
 }

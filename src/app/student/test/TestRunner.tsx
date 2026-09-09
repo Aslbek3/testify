@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
@@ -140,6 +140,12 @@ export function TestRunner({
       return Math.max(0, examDurationSeconds - elapsed);
     }
 
+    // Qolgan vaqt `Date.now()` dan hisoblanadi va uni render paytida o'qib
+    // bo'lmaydi: server bilan klient turli lahzada hisoblab, hidratsiya
+    // nomuvofiqligini beradi. Shuning uchun boshlang'ich qiymat statik,
+    // haqiqiysi esa faqat klientda, effekt ichida qo'yiladi — bu aynan
+    // qoida istisno qiladigan "tashqi manba bilan sinxronlash" holati.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSecondsLeft(computeRemaining());
     const timer = setInterval(() => setSecondsLeft(computeRemaining()), 1000);
     return () => clearInterval(timer);

@@ -5,21 +5,14 @@ import {
   getTutorRanking,
   getGroupsOverview,
   listTutorsForOrganization,
+  GROUP_NAME_MAX_LENGTH,
 } from "@/services/directorDashboard";
 import { NewTutorModal } from "./NewTutorModal";
 import { NewGroupModal } from "./NewGroupModal";
 import { TutorRankingTable } from "./TutorRankingTable";
+import { GroupsTable } from "./GroupsTable";
 import { StatTile } from "@/components/StatTile";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
-import {
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableHeaderCell,
-  TableCell,
-} from "@/components/Table";
-import { formatDate } from "@/lib/format";
 
 export default async function DirectorPage() {
   const user = await requireRole("DIRECTOR");
@@ -54,7 +47,7 @@ export default async function DirectorPage() {
         </div>
         <div className="flex items-center gap-2">
           <NewTutorModal />
-          <NewGroupModal tutors={tutors} />
+          <NewGroupModal tutors={tutors} nameMaxLength={GROUP_NAME_MAX_LENGTH} />
         </div>
       </div>
 
@@ -103,36 +96,23 @@ export default async function DirectorPage() {
       <Card>
         <CardHeader>
           <CardTitle>Guruhlar</CardTitle>
-          <span className="text-sm text-text-muted">{groups.length} ta guruh</span>
+          <span className="text-sm text-text-muted">
+            {groups.length} ta guruh · Guruh nomini bosing — to&apos;liq tahlil
+            ochiladi
+          </span>
         </CardHeader>
 
         {groups.length === 0 ? (
-          <p className="text-sm text-text-muted">Hozircha guruhlar yo&apos;q.</p>
+          <p className="text-sm text-text-muted">
+            Hozircha guruhlar yo&apos;q. Yuqoridagi &quot;Guruh
+            qo&apos;shish&quot; tugmasi orqali birinchi guruhni yarating.
+          </p>
         ) : (
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeaderCell>Guruh</TableHeaderCell>
-                <TableHeaderCell>Ustoz</TableHeaderCell>
-                <TableHeaderCell align="right">O&apos;quvchilar</TableHeaderCell>
-                <TableHeaderCell>So&apos;nggi faollik</TableHeaderCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {groups.map((group) => (
-                <TableRow key={group.groupId}>
-                  <TableCell className="font-medium">{group.groupName}</TableCell>
-                  <TableCell>{group.tutorName}</TableCell>
-                  <TableCell align="right">{group.studentCount}</TableCell>
-                  <TableCell>
-                    {group.lastActivityAt
-                      ? formatDate(group.lastActivityAt)
-                      : "Faollik yo'q"}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <GroupsTable
+            groups={groups}
+            tutors={tutors}
+            nameMaxLength={GROUP_NAME_MAX_LENGTH}
+          />
         )}
       </Card>
     </div>
