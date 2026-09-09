@@ -41,3 +41,34 @@ export function formatDate(date: Date): string {
   const year = shifted.getUTCFullYear();
   return `${day}/${month}/${year}`;
 }
+
+
+/**
+ * Ajratgich sifatida uzilmas probel (` `) ishlatiladi: summa tor
+ * ustunda "1 200" va "000 so'm" bo'lib ikki qatorga bo'linib ketmasin.
+ */
+const THOUSANDS_SEPARATOR = " ";
+
+/** Har uch xonadan keyin ajratgich qo'yish uchun (o'ngdan chapga). */
+const THOUSANDS_GROUP = /\B(?=(\d{3})+(?!\d))/g;
+
+/**
+ * Summani so'mda ko'rsatadi: `1200000` → `1 200 000 so'm`.
+ *
+ * `Intl.NumberFormat` ATAYLAB ishlatilmaydi — yuqoridagi `formatDate`
+ * bilan bir xil sabab: "uz-UZ" lokali Node va brauzer ICU ma'lumotlarida
+ * turli ajratgich (probel, apostrof, vergul) berishi mumkin, ya'ni server
+ * bir xil, brauzer boshqa satr chizib hidratsiya xatosi kelib chiqardi.
+ * Uch xonadan guruhlash qoidasi esa hech qanday lokalga bog'liq emas.
+ *
+ * Bazada summa butun son va tiyin ishlatilmaydi (`prisma/schema.prisma`,
+ * `Payment.amount`), shuning uchun kasr qismi umuman formatlanmaydi.
+ */
+export function formatAmountUzs(amount: number): string {
+  const digits = String(Math.trunc(Math.abs(amount))).replace(
+    THOUSANDS_GROUP,
+    THOUSANDS_SEPARATOR
+  );
+  const sign = amount < 0 ? "-" : "";
+  return `${sign}${digits}${THOUSANDS_SEPARATOR}so'm`;
+}

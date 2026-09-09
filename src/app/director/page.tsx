@@ -7,6 +7,11 @@ import {
   listTutorsForOrganization,
   GROUP_NAME_MAX_LENGTH,
 } from "@/services/directorDashboard";
+import {
+  getSubscriptionSummary,
+  listPaymentsForOrganization,
+} from "@/services/payments";
+import { SubscriptionCard, PaymentHistoryCard } from "./SubscriptionCard";
 import { NewTutorModal } from "./NewTutorModal";
 import { NewGroupModal } from "./NewGroupModal";
 import { TutorRankingTable } from "./TutorRankingTable";
@@ -28,12 +33,15 @@ export default async function DirectorPage() {
 
   const organizationId = user.organizationId;
 
-  const [overview, tutorRanking, groups, tutors] = await Promise.all([
-    getOrganizationOverview(organizationId),
-    getTutorRanking(organizationId),
-    getGroupsOverview(organizationId),
-    listTutorsForOrganization(organizationId),
-  ]);
+  const [overview, tutorRanking, groups, tutors, subscription, payments] =
+    await Promise.all([
+      getOrganizationOverview(organizationId),
+      getTutorRanking(organizationId),
+      getGroupsOverview(organizationId),
+      listTutorsForOrganization(organizationId),
+      getSubscriptionSummary(organizationId),
+      listPaymentsForOrganization(organizationId),
+    ]);
 
   return (
     <div className="space-y-6">
@@ -50,6 +58,10 @@ export default async function DirectorPage() {
           <NewGroupModal tutors={tutors} nameMaxLength={GROUP_NAME_MAX_LENGTH} />
         </div>
       </div>
+
+      {/* Obuna kartochkasi tepada: muddat tugayotgan bo'lsa, direktor
+          buni statistikadan oldin ko'rishi kerak. */}
+      <SubscriptionCard summary={subscription} />
 
       {/* "primary" plitka ikki ustunni egallaydi (StatTile), shuning uchun
           to'rtta plitka jami beshta katak — setka ham shunga moslangan. */}
@@ -115,6 +127,10 @@ export default async function DirectorPage() {
           />
         )}
       </Card>
+
+      {/* Tarix eng pastda: u kundalik ish uchun emas, faqat "xabarim
+          qabul qilindimi / nega rad etildi" degan savol uchun kerak. */}
+      <PaymentHistoryCard payments={payments} />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { getSubscriptionState } from "@/lib/subscription";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { SessionUser } from "@/types/auth";
@@ -93,7 +94,7 @@ export async function getVerifiedSessionUser(): Promise<SessionUser | null> {
   // OWNER'ning tashkiloti yo'q (`organizationId: null`) — `organization` ham
   // null bo'lgani uchun bu shart unga hech qachon tegmaydi. Aynan
   // `verifyCredentials`dagi kabi.
-  if (state.organization?.status === "EXPIRED") {
+  if (getSubscriptionState(state.organization).kind === "blocked") {
     return null;
   }
 

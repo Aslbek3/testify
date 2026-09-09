@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { getSubscriptionState } from "@/lib/subscription";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import type { OrganizationStatus, Role } from "@prisma/client";
@@ -40,7 +41,9 @@ export async function verifyCredentials(
   // deb kirganda hech qachon topilmas edi.
   const user = await prisma.user.findUnique({
     where: { email: normalizeEmail(email) },
-    include: { organization: { select: { status: true } } },
+    include: {
+      organization: { select: { status: true, subscriptionEndsAt: true } },
+    },
   });
   if (!user) {
     // Natija ataylab tashlab yuboriladi — bu chaqiruv faqat javob vaqtini
@@ -58,7 +61,11 @@ export async function verifyCredentials(
 
   // OWNER'ning tashkiloti yo'q (organizationId null), shuning uchun bu
   // tekshiruv tabiiy ravishda faqat tashkilotga bog'liq rollarga tegadi.
-  if (user.organization?.status === "EXPIRED") {
+  // Ikkita sabab: owner qo'lda to'xtatgan (`EXPIRED`) yoki obuna muddati
+  // imtiyoz kunlari bilan birga o'tib ketgan. Ikkalasi ham
+  // `getSubscriptionState` da hisoblanadi — login va har so'rovdagi
+  // tekshiruv bir xil qoidada ishlashi uchun.
+  if (getSubscriptionState(user.organization).kind === "blocked") {
     throw new OrganizationExpiredError(
       "Tashkilotingizning tarif muddati tugagan. Iltimos, administratoringiz bilan bog'laning."
     );
@@ -77,7 +84,10 @@ export type UserSessionState = {
   organizationId: string | null;
   sessionVersion: number;
   isActive: boolean;
-  organization: { status: OrganizationStatus } | null;
+  organization: {
+    status: OrganizationStatus;
+    subscriptionEndsAt: Date | null;
+  } | null;
 } | null;
 
 /**
@@ -102,7 +112,7 @@ export async function getUserSessionState(userId: string): Promise<UserSessionSt
       organizationId: true,
       sessionVersion: true,
       isActive: true,
-      organization: { select: { status: true } },
+      organization: { select: { status: true, subscriptionEndsAt: true } },
     },
   });
 }

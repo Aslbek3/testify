@@ -39,9 +39,63 @@ model Organization {
   plan      Plan               @default(STANDARD)
   status    OrganizationStatus @default(TRIAL)
   createdAt DateTime           @default(now())
+  // Obuna qachongacha amal qiladi. `null` — muddat belgilanmagan
+  // (masalan sinov davri yoki eski tashkilot): bunda faqat `status`
+  // ishlaydi, avvalgidek.
+  //
+  // Nega kerak: ilgari tashkilot bir marta "Faol" qilingach ABADIY faol
+  // qolardi — hech narsa o'z-o'zidan tugamasdi va kimdir kalendarga
+  // qarab qo'lda o'chirishi kerak edi.
+  subscriptionEndsAt DateTime?
 
-  users  User[]
-  groups Group[]
+  users    User[]
+  groups   Group[]
+  payments Payment[]
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+/**
+ * To'lov haqida xabar.
+ *
+ * MVP'da to'lov tizimi bilan integratsiya yo'q: direktor to'lovni amalga
+ * oshirgach uning raqamini shu yerga kiritadi, owner esa bank ko'chirmasi
+ * bilan solishtirib tasdiqlaydi. Avtomatik to'lov keyinroq qo'shiladi —
+ * o'shanda ham model o'zgarmaydi, faqat yozuvni direktor emas, to'lov
+ * tizimining xabari yaratadi.
+ */
+model Payment {
+  id             String        @id @default(cuid())
+  organizationId String
+  /** So'mda, butun son — tiyin ishlatilmaydi. */
+  amount         Int
+  /** Necha oyga to'langan: 1, 6, 12 va h.k. */
+  months         Int
+  /** Qaysi tarif uchun — tasdiqlanganda tashkilot tarifi shunga o'tadi. */
+  plan           Plan
+  status         PaymentStatus @default(PENDING)
+  /** Bank/to'lov tizimidagi tranzaksiya yoki kvitansiya raqami. */
+  reference      String?
+  note           String?
+  createdAt      DateTime      @default(now())
+  /** Xabarni yuborgan direktor. */
+  submittedById  String
+  reviewedAt     DateTime?
+  /** Tasdiqlagan yoki rad etgan owner. */
+  reviewedById   String?
+  /** Rad etilgan bo'lsa — sababi. */
+  reviewNote     String?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  submittedBy  User         @relation("PaymentSubmittedBy", fields: [submittedById], references: [id])
+  reviewedBy   User?        @relation("PaymentReviewedBy", fields: [reviewedById], references: [id])
+
+  @@index([organizationId])
+  @@index([status])
 }
 
 model User {
@@ -63,6 +117,8 @@ model User {
   tutorOfGroups  Group[]         @relation("GroupTutor")
   studentProfile StudentProfile?
   attempts       Attempt[]
+  paymentsSubmitted Payment[] @relation("PaymentSubmittedBy")
+  paymentsReviewed  Payment[] @relation("PaymentReviewedBy")
 
   @@index([organizationId])
 }

@@ -55,6 +55,8 @@ export type OrganizationWithCounts = {
   plan: Plan;
   status: OrganizationStatus;
   createdAt: Date;
+  /** Obuna qachongacha amal qiladi. `null` — muddat belgilanmagan. */
+  subscriptionEndsAt: Date | null;
   /** Bloklanmagan (`isActive`) hisoblar soni — Qoida 5 ga qara. */
   tutorCount: number;
   /** Bloklanmagan va guruhga biriktirilgan o'quvchilar soni. */
@@ -165,6 +167,7 @@ export async function listOrganizations(
     plan: org.plan,
     status: org.status,
     createdAt: org.createdAt,
+    subscriptionEndsAt: org.subscriptionEndsAt,
     tutorCount: countByOrg.get(org.id)?.tutorCount ?? 0,
     studentCount: countByOrg.get(org.id)?.studentCount ?? 0,
     directorCount: countByOrg.get(org.id)?.directorCount ?? 0,

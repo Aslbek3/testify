@@ -21,11 +21,18 @@ import {
 import { Badge } from "@/components/Badge";
 import { PLAN_LABEL, ORG_STATUS_LABEL, ORG_STATUS_VARIANT } from "@/lib/labels";
 import { formatDate } from "@/lib/format";
+import { listPendingPayments } from "@/services/payments";
+import { extendSubscription, getSubscriptionState } from "@/lib/subscription";
 import { NewOrganizationModal } from "./NewOrganizationModal";
 import { EditOrganizationModal } from "./EditOrganizationModal";
 import { NewDirectorModal } from "./NewDirectorModal";
 import { OrganizationFilters } from "./OrganizationFilters";
+import {
+  PendingPaymentsCard,
+  type PendingPaymentReview,
+} from "./PendingPaymentsCard";
 import type { OrganizationStatus } from "@prisma/client";
+import type { OrganizationWithCounts } from "@/services/organizations";
 
 // `sort` searchParam kodlash: "<maydon>-<yo'nalish>", masalan "name-asc",
 // "studentCount-desc", "createdAt-asc". Standart (parametr bo'lmaganda):
@@ -61,6 +68,45 @@ function buildHref(params: { q?: string; status?: string; sort?: string }) {
   return qs ? `/owner?${qs}` : "/owner";
 }
 
+/**
+ * Jadvaldagi "Obuna muddati" katagi.
+ *
+ * Holat ATAYLAB bu yerda hisoblanmaydi — `getSubscriptionState()` yagona
+ * manba. Aks holda UI "tugagan" deb ko'rsatib, `requireRole()` esa hali
+ * imtiyoz muddati borligi uchun kirishga ruxsat berib turishi mumkin edi.
+ */
+function SubscriptionCell({ organization }: { organization: OrganizationWithCounts }) {
+  const endsAt = organization.subscriptionEndsAt;
+
+  // Muddat belgilanmagan (sinov davri yoki eski tashkilot) — faqat
+  // "Holat" ustuni ma'no beradi.
+  if (!endsAt) return <span className="text-text-muted">—</span>;
+
+  const state = getSubscriptionState({
+    status: organization.status,
+    subscriptionEndsAt: endsAt,
+  });
+
+  if (state.kind === "blocked") {
+    return <Badge variant="danger">{formatDate(endsAt)}</Badge>;
+  }
+
+  if (state.kind === "grace") {
+    // Imtiyoz muddati — sana o'tib ketgan, lekin kirish hali ochiq.
+    // Bu owner uchun eng muhim holat: aynan shu kunlarda to'lov kutiladi.
+    return (
+      <span className="text-warning">
+        ⚠ {formatDate(endsAt)}
+        <span className="block text-xs">
+          Imtiyoz muddati: {state.daysLeft} kun
+        </span>
+      </span>
+    );
+  }
+
+  return <>{formatDate(endsAt)}</>;
+}
+
 export default async function OwnerPage({
   searchParams,
 }: {
@@ -81,11 +127,32 @@ export default async function OwnerPage({
   // marta — filtrsiz — chaqirilar va natijasidan faqat uchta yig'indi
   // olinardi; endi shu yig'indilar bazada sanaladi. Jadval esa
   // filtrlangan/saralangan ro'yxatni ko'rsatadi.
-  const [overview, organizationOptions, organizations] = await Promise.all([
-    getPlatformOverview(),
-    listOrganizationOptions(),
-    listOrganizations({ q, status: statusFilter, sortField, sortDirection }),
-  ]);
+  const [overview, organizationOptions, organizations, pendingPayments] =
+    await Promise.all([
+      getPlatformOverview(),
+      listOrganizationOptions(),
+      listOrganizations({ q, status: statusFilter, sortField, sortDirection }),
+      listPendingPayments(),
+    ]);
+
+  // Tasdiqlansa obuna qaysi sanagacha uzayishini ko'rsatish uchun
+  // tashkilotning HOZIRGI muddati kerak — u `listPendingPayments()`
+  // qatoridayoq keladi (`organizationSubscriptionEndsAt`), shuning uchun
+  // bu yerda qo'shimcha so'rov yo'q.
+  //
+  // Sana ATAYLAB `extendSubscription()` bilan hisoblanadi — tasdiqlash
+  // paytida server ham aynan shu funksiyani chaqiradi. Formulani bu yerda
+  // takrorlash "ko'rsatilgan sana" bilan "haqiqiy sana" ni ajratib
+  // yuborardi.
+  const pendingReviews: PendingPaymentReview[] = pendingPayments.map(
+    (payment) => ({
+      payment,
+      nextEndsAt: extendSubscription(
+        payment.organizationSubscriptionEndsAt,
+        payment.months
+      ),
+    })
+  );
 
   function sortHref(field: OrganizationSortField) {
     const nextDirection: OrganizationSortDirection =
@@ -118,6 +185,11 @@ export default async function OwnerPage({
           <NewOrganizationModal />
         </div>
       </div>
+
+      {/* Kutayotgan to'lov statistikadan ham OLDIN turadi — u yagona
+          kechiktirib bo'lmaydigan ish. Kutayotgan to'lov bo'lmasa
+          komponent `null` qaytaradi va bu yerda hech narsa chizilmaydi. */}
+      <PendingPaymentsCard items={pendingReviews} />
 
       {/* Yorliqlarda "faol" so'zi ikki xil narsani anglatardi: hisob
           bloklanmaganini va tashkilot holati ACTIVE ekanini. Endi har bir
@@ -184,6 +256,10 @@ export default async function OwnerPage({
                 <TableHeaderCell>Shahar</TableHeaderCell>
                 <TableHeaderCell>Reja</TableHeaderCell>
                 <TableHeaderCell>Holat</TableHeaderCell>
+                {/* "Holat" tashkilot qaysi rejimda ekanini aytadi, bu ustun
+                    esa u QACHONGACHA amal qilishini — ikkalasi ham kerak:
+                    holat "Faol" bo'lsa ham muddat ertaga tugashi mumkin. */}
+                <TableHeaderCell>Obuna muddati</TableHeaderCell>
                 <TableHeaderCell align="right">Ustozlar</TableHeaderCell>
                 <TableHeaderCell align="right" className="!p-0">
                   <Link
@@ -213,6 +289,9 @@ export default async function OwnerPage({
                     <Badge variant={ORG_STATUS_VARIANT[org.status]}>
                       {ORG_STATUS_LABEL[org.status]}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <SubscriptionCell organization={org} />
                   </TableCell>
                   <TableCell align="right">{org.tutorCount}</TableCell>
                   <TableCell align="right">{org.studentCount}</TableCell>
