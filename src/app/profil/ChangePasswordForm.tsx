@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
-import { Field } from "@/components/Field";
+import { PasswordField } from "@/components/PasswordField";
 import { PASSWORD_MIN_LENGTH } from "@/lib/password";
 
 const EMPTY = { current: "", next: "", confirm: "" };
@@ -79,29 +79,26 @@ export function ChangePasswordForm() {
           </p>
         )}
 
-        <Field
+        <PasswordField
           id="current-password"
           label="Joriy parol"
-          type="password"
           autoComplete="current-password"
           required
           value={form.current}
           onChange={(e) => setField("current", e.target.value)}
         />
-        <Field
+        <PasswordField
           id="new-password"
           label="Yangi parol"
-          type="password"
           autoComplete="new-password"
           required
           minLength={PASSWORD_MIN_LENGTH}
           value={form.next}
           onChange={(e) => setField("next", e.target.value)}
         />
-        <Field
+        <PasswordField
           id="confirm-password"
           label="Yangi parolni tasdiqlang"
-          type="password"
           autoComplete="new-password"
           required
           value={form.confirm}

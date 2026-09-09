@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/Button";
 import { Field, SelectField } from "@/components/Field";
+import { PasswordField } from "@/components/PasswordField";
 
 export function NewStudentModal({
   groups,
@@ -110,10 +111,9 @@ export function NewStudentModal({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <Field
+          <PasswordField
             id="director-student-password"
             label="Vaqtinchalik parol"
-            type="password"
             required
             minLength={8}
             value={password}

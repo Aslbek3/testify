@@ -3,6 +3,7 @@
 import { Suspense, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Field } from "@/components/Field";
+import { PasswordField } from "@/components/PasswordField";
 import { Button } from "@/components/Button";
 import { ROLE_HOME } from "@/lib/roles";
 import type { Role } from "@prisma/client";
@@ -84,10 +85,9 @@ function LoginForm() {
           />
 
           <div className="space-y-1">
-            <Field
+            <PasswordField
               id="password"
               label="Parol"
-              type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}

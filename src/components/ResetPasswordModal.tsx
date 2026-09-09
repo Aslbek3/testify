@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/Button";
-import { Field } from "@/components/Field";
+import { PasswordField } from "@/components/PasswordField";
 
 /**
  * Ustoz o'z o'quvchisiga, direktor o'z ustoziga yangi parol belgilashi
@@ -60,10 +60,9 @@ export function ResetPasswordModal({
         {error && (
           <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
         )}
-        <Field
+        <PasswordField
           id="reset-password"
           label="Yangi parol"
-          type="password"
           required
           minLength={8}
           value={password}

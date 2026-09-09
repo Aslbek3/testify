@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/Button";
 import { Field } from "@/components/Field";
+import { PasswordField } from "@/components/PasswordField";
 
 export function NewTutorModal() {
   const router = useRouter();
@@ -82,10 +83,9 @@ export function NewTutorModal() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <Field
+          <PasswordField
             id="tutor-password"
             label="Vaqtinchalik parol"
-            type="password"
             required
             minLength={8}
             value={password}

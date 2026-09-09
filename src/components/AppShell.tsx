@@ -160,24 +160,47 @@ export function AppShell({
               </Link>
             );
           })}
+
+          {/* "Sozlamalar" — alohida guruh. Ilgari profilga faqat pastdagi
+              ism bloki orqali kirilardi va uni ko'z bilan topib bo'lmasdi:
+              u menyuga umuman o'xshamasdi. Endi u ham oddiy menyu bandi,
+              faqat sarlavha bilan ajratilgan.
+
+              Sarlavha ATAYLAB katta harflarda emas — CLAUDE.md dizayn
+              qoidasi ALL CAPS yorliqlarni taqiqlaydi. */}
+          <p className="px-3 pb-1 pt-5 text-xs font-medium text-white/35">
+            Sozlamalar
+          </p>
+          <Link
+            href="/profil"
+            onClick={() => setMobileOpen(false)}
+            aria-current={pathname === "/profil" ? "page" : undefined}
+            className={cn(
+              "block rounded-md px-3 py-3 text-sm font-medium transition-colors pointer-fine:py-2",
+              pathname === "/profil"
+                ? "bg-white/10 text-white"
+                : "text-white/60 hover:bg-white/5 hover:text-white"
+            )}
+          >
+            Profil
+          </Link>
         </nav>
 
         <div className="space-y-3 border-t border-white/10 px-3 py-4">
           <div className="flex items-center justify-between gap-2">
-            {/* Foydalanuvchi bloki — profilga kirish yo'li. Alohida menyu
-                bandi qilinmadi: hisob sozlamalarini odam aynan shu yerdan,
-                o'z ismi ustidan qidiradi. */}
+            {/* Ism bloki ham profilga olib boradi — konvensiya shunday va
+                odam uni shu yerdan ham qidiradi. Lekin endi u YAGONA yo'l
+                emas: yuqorida "Sozlamalar > Profil" bandi bor. */}
             <Link
               href="/profil"
               onClick={() => setMobileOpen(false)}
-              aria-current={pathname === "/profil" ? "page" : undefined}
               className={cn(
                 "min-w-0 flex-1 rounded-md px-2 py-2 transition-colors",
                 pathname === "/profil" ? "bg-white/10" : "hover:bg-white/5"
               )}
             >
               <p className="truncate text-sm font-medium text-white">{userName}</p>
-              <p className="text-xs text-white/50">{ROLE_LABEL[role]} · Profil</p>
+              <p className="text-xs text-white/50">{ROLE_LABEL[role]}</p>
             </Link>
             <ThemeToggle />
           </div>
