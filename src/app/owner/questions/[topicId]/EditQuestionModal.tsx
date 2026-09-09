@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRefresh } from "@/lib/useServerMutation";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/Button";
 import type { QuestionListItem } from "@/services/questions";
@@ -16,7 +16,7 @@ export function EditQuestionModal({
   open: boolean;
   onClose: () => void;
 }) {
-  const router = useRouter();
+  const { refresh, refreshing } = useRefresh();
   const questionForm = useQuestionForm({
     text: question.text,
     options: question.options,
@@ -27,6 +27,8 @@ export function EditQuestionModal({
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // `refreshing` — sahifa yangilanishi tugagunicha tugma band qoladi.
+  const busy = loading || refreshing;
 
   function close() {
     setError(null);
@@ -51,8 +53,9 @@ export function EditQuestionModal({
       return;
     }
 
+    await refresh();
+
     onClose();
-    router.refresh();
   }
 
   return (
@@ -70,8 +73,8 @@ export function EditQuestionModal({
           <Button type="button" variant="secondary" onClick={close}>
             Bekor qilish
           </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Saqlanmoqda..." : "Saqlash"}
+          <Button type="submit" disabled={busy}>
+            {busy ? "Saqlanmoqda..." : "Saqlash"}
           </Button>
         </div>
       </form>

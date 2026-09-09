@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRefresh } from "@/lib/useServerMutation";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/Button";
 import { Field, SelectField } from "@/components/Field";
@@ -27,7 +27,7 @@ export function EditOrganizationModal({
 }: {
   organization: OrganizationWithCounts;
 }) {
-  const router = useRouter();
+  const { refresh, refreshing } = useRefresh();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(organization.name);
   const [city, setCity] = useState(organization.city);
@@ -35,6 +35,8 @@ export function EditOrganizationModal({
   const [status, setStatus] = useState<OrganizationStatus>(organization.status);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // `refreshing` — sahifa yangilanishi tugagunicha tugma band qoladi.
+  const busy = loading || refreshing;
 
   // Ogohlantirish faqat holat HOZIR o'zgartirilayotgan bo'lsa chiqadi:
   // allaqachon "Muddati tugagan" tashkilotni tahrirlaganda (masalan
@@ -84,8 +86,9 @@ export function EditOrganizationModal({
       return;
     }
 
+    await refresh();
+
     setOpen(false);
-    router.refresh();
   }
 
   return (
@@ -171,8 +174,8 @@ export function EditOrganizationModal({
             <Button type="button" variant="secondary" onClick={close}>
               Bekor qilish
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saqlanmoqda..." : "Saqlash"}
+            <Button type="submit" disabled={busy}>
+              {busy ? "Saqlanmoqda..." : "Saqlash"}
             </Button>
           </div>
         </form>

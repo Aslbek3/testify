@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRefresh } from "@/lib/useServerMutation";
 import { Button } from "@/components/Button";
 import { Field } from "@/components/Field";
 
@@ -13,11 +13,13 @@ import { Field } from "@/components/Field";
  * sahifani shovqinli qiladi.
  */
 export function ProfileNameForm({ currentName }: { currentName: string }) {
-  const router = useRouter();
+  const { refresh, refreshing } = useRefresh();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(currentName);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // `refreshing` — sahifa yangilanishi tugagunicha tugma band qoladi.
+  const busy = loading || refreshing;
 
   function cancel() {
     setName(currentName);
@@ -43,7 +45,7 @@ export function ProfileNameForm({ currentName }: { currentName: string }) {
       setEditing(false);
       // Sidebar'dagi ism ham shu ma'lumotdan chiziladi — sahifani
       // yangilamasak, u eski ism bilan qolib ketardi.
-      router.refresh();
+      await refresh();
     } catch {
       setError("Tarmoq xatosi — qayta urinib ko'ring");
     } finally {
@@ -83,10 +85,10 @@ export function ProfileNameForm({ currentName }: { currentName: string }) {
         onChange={(e) => setName(e.target.value)}
       />
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={loading}>
-          {loading ? "Saqlanmoqda..." : "Saqlash"}
+        <Button type="submit" disabled={busy}>
+          {busy ? "Saqlanmoqda..." : "Saqlash"}
         </Button>
-        <Button type="button" variant="secondary" onClick={cancel} disabled={loading}>
+        <Button type="button" variant="secondary" onClick={cancel} disabled={busy}>
           Bekor qilish
         </Button>
       </div>

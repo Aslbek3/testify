@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useServerMutation } from "@/lib/useServerMutation";
 import {
   Table,
   TableHead,
@@ -22,41 +22,45 @@ export function StudentsTable({
   students: OrganizationStudentRow[];
   groups: { id: string; name: string }[];
 }) {
-  const router = useRouter();
+  // `pending` so'rov ham, sahifa yangilanishi ham tugaganini bildiradi —
+  // ilgari tugma darhol yoqilib, jadval esa bir necha soniya eski
+  // ma'lumot bilan turardi.
+  const { run, pending, error } = useServerMutation();
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [movingId, setMovingId] = useState<string | null>(null);
   const [resetPasswordFor, setResetPasswordFor] = useState<OrganizationStudentRow | null>(null);
 
   async function handleToggleActive(studentId: string, nextActive: boolean) {
     setTogglingId(studentId);
-    try {
-      const res = await fetch(`/api/tutor/students/${studentId}`, {
+    await run(() =>
+      fetch(`/api/tutor/students/${studentId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: nextActive }),
-      });
-      if (res.ok) router.refresh();
-    } finally {
-      setTogglingId(null);
-    }
+      })
+    );
+    setTogglingId(null);
   }
 
   async function handleChangeGroup(studentId: string, groupId: string) {
     setMovingId(studentId);
-    try {
-      const res = await fetch(`/api/director/students/${studentId}/group`, {
+    await run(() =>
+      fetch(`/api/director/students/${studentId}/group`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ groupId }),
-      });
-      if (res.ok) router.refresh();
-    } finally {
-      setMovingId(null);
-    }
+      })
+    );
+    setMovingId(null);
   }
 
   return (
     <>
+      {error && (
+        <p className="mb-3 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+          {error}
+        </p>
+      )}
       <Table>
         <TableHead>
           <TableRow>
@@ -72,8 +76,8 @@ export function StudentsTable({
         </TableHead>
         <TableBody>
           {students.map((student) => {
-            const isToggling = togglingId === student.studentId;
-            const isMoving = movingId === student.studentId;
+            const isToggling = togglingId === student.studentId && pending;
+            const isMoving = movingId === student.studentId && pending;
             return (
               <TableRow key={student.studentId}>
                 <TableCell className="font-medium">{student.name}</TableCell>

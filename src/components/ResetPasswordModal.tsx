@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRefresh } from "@/lib/useServerMutation";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/Button";
 import { PasswordField } from "@/components/PasswordField";
@@ -21,10 +21,12 @@ export function ResetPasswordModal({
   endpoint: string;
   userName: string;
 }) {
-  const router = useRouter();
+  const { refresh, refreshing } = useRefresh();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // `refreshing` — sahifa yangilanishi tugagunicha tugma band qoladi.
+  const busy = loading || refreshing;
 
   function close() {
     setPassword("");
@@ -51,7 +53,7 @@ export function ResetPasswordModal({
     }
 
     close();
-    router.refresh();
+    await refresh();
   }
 
   return (
@@ -72,8 +74,8 @@ export function ResetPasswordModal({
           <Button type="button" variant="secondary" onClick={close}>
             Bekor qilish
           </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Saqlanmoqda..." : "Parolni tiklash"}
+          <Button type="submit" disabled={busy}>
+            {busy ? "Saqlanmoqda..." : "Parolni tiklash"}
           </Button>
         </div>
       </form>

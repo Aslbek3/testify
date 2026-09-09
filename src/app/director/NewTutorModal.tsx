@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRefresh } from "@/lib/useServerMutation";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/Button";
 import { Field } from "@/components/Field";
 import { PasswordField } from "@/components/PasswordField";
 
 export function NewTutorModal() {
-  const router = useRouter();
+  const { refresh, refreshing } = useRefresh();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -16,6 +16,8 @@ export function NewTutorModal() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // `refreshing` — sahifa yangilanishi tugagunicha tugma band qoladi.
+  const busy = loading || refreshing;
 
   function close() {
     setOpen(false);
@@ -46,7 +48,7 @@ export function NewTutorModal() {
     setName("");
     setEmail("");
     setPassword("");
-    router.refresh();
+    await refresh();
   }
 
   return (
@@ -96,8 +98,8 @@ export function NewTutorModal() {
             <Button type="button" variant="secondary" onClick={close}>
               Yopish
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saqlanmoqda..." : "Saqlash"}
+            <Button type="submit" disabled={busy}>
+              {busy ? "Saqlanmoqda..." : "Saqlash"}
             </Button>
           </div>
         </form>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useServerMutation } from "@/lib/useServerMutation";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/Button";
 import { Field, SelectField } from "@/components/Field";
@@ -37,33 +37,25 @@ export function GroupFormModal({
   group?: GroupFormValues;
   onClose: () => void;
 }) {
-  const router = useRouter();
   const isEdit = group !== undefined;
   const [name, setName] = useState(group?.groupName ?? "");
   const [tutorId, setTutorId] = useState(group?.tutorId ?? tutors[0]?.id ?? "");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { run, pending, error } = useServerMutation();
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    setError(null);
-    setLoading(true);
 
-    const res = await fetch(isEdit ? `/api/groups/${group.groupId}` : "/api/groups", {
-      method: isEdit ? "PATCH" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, tutorId }),
-    });
-    const data = await res.json().catch(() => null);
-    setLoading(false);
-
-    if (!res.ok) {
-      setError(data?.error ?? "Xatolik yuz berdi");
-      return;
-    }
-
-    onClose();
-    router.refresh();
+    // Modal YANGILANISH TUGAGACH yopiladi. Ilgari u darhol yopilardi va
+    // direktor paneli 2-4 soniya eski ma'lumot bilan turardi — tashqaridan
+    // bu "saqladim, hech narsa o'zgarmadi" ko'rinishida edi.
+    const ok = await run(() =>
+      fetch(isEdit ? `/api/groups/${group.groupId}` : "/api/groups", {
+        method: isEdit ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, tutorId }),
+      })
+    );
+    if (ok) onClose();
   }
 
   return (
@@ -115,8 +107,8 @@ export function GroupFormModal({
           <Button type="button" variant="secondary" onClick={onClose}>
             Bekor qilish
           </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Saqlanmoqda..." : "Saqlash"}
+          <Button type="submit" disabled={pending}>
+            {pending ? "Saqlanmoqda..." : "Saqlash"}
           </Button>
         </div>
       </form>

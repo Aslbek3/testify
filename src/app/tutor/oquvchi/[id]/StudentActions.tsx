@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRefresh } from "@/lib/useServerMutation";
 import { Button } from "@/components/Button";
 import { ResetPasswordModal } from "@/components/ResetPasswordModal";
 
@@ -18,8 +18,10 @@ export function StudentActions({
   studentName: string;
   isActive: boolean;
 }) {
-  const router = useRouter();
+  const { refresh, refreshing } = useRefresh();
   const [toggling, setToggling] = useState(false);
+  // `refreshing` — sahifa yangilanishi tugagunicha tugma band qoladi.
+  const busy = toggling || refreshing;
   const [error, setError] = useState<string | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
 
@@ -37,7 +39,7 @@ export function StudentActions({
         setError(data?.error ?? "Amalni bajarib bo'lmadi");
         return;
       }
-      router.refresh();
+      await refresh();
     } catch {
       setError("Tarmoq xatosi — qayta urinib ko'ring");
     } finally {
@@ -54,10 +56,10 @@ export function StudentActions({
         <Button
           type="button"
           variant="secondary"
-          disabled={toggling}
+          disabled={busy}
           onClick={toggleActive}
         >
-          {toggling ? "..." : isActive ? "Bloklash" : "Tiklash"}
+          {busy ? "..." : isActive ? "Bloklash" : "Tiklash"}
         </Button>
       </div>
 

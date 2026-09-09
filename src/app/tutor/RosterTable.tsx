@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useRefresh } from "@/lib/useServerMutation";
 import Link from "next/link";
 import {
   Table,
@@ -28,6 +29,7 @@ import type { RosterEntry } from "@/services/tutorDashboard";
  */
 export function RosterTable({ roster }: { roster: RosterEntry[] }) {
   const router = useRouter();
+  const { refresh, refreshing } = useRefresh();
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [resetPasswordFor, setResetPasswordFor] = useState<RosterEntry | null>(null);
 
@@ -39,7 +41,7 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: nextActive }),
       });
-      if (res.ok) router.refresh();
+      if (res.ok) await refresh();
     } finally {
       setTogglingId(null);
     }
@@ -66,7 +68,9 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
         </TableHead>
         <TableBody>
           {roster.map((student) => {
-            const isToggling = togglingId === student.studentId;
+            // `refreshing` ham qo'shildi: tugma jadval HAQIQATAN yangilangunicha
+            // band holatda qoladi (batafsil izoh `useServerMutation` da).
+            const isToggling = togglingId === student.studentId || refreshing;
             const href = `/tutor/oquvchi/${student.studentId}`;
 
             return (

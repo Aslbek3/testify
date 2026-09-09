@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useServerMutation } from "@/lib/useServerMutation";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/Button";
 import type { GroupOverviewRow } from "@/services/directorDashboard";
@@ -23,25 +22,15 @@ export function DeleteGroupModal({
   group: GroupOverviewRow;
   onClose: () => void;
 }) {
-  const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { run, pending, error } = useServerMutation();
 
   async function handleDelete() {
-    setError(null);
-    setLoading(true);
-
-    const res = await fetch(`/api/groups/${group.groupId}`, { method: "DELETE" });
-    const data = await res.json().catch(() => null);
-    setLoading(false);
-
-    if (!res.ok) {
-      setError(data?.error ?? "Guruhni o'chirib bo'lmadi");
-      return;
-    }
-
-    onClose();
-    router.refresh();
+    // Modal ro'yxat haqiqatan yangilangach yopiladi — batafsil izoh
+    // `useServerMutation` da.
+    const ok = await run(() =>
+      fetch(`/api/groups/${group.groupId}`, { method: "DELETE" })
+    );
+    if (ok) onClose();
   }
 
   return (
@@ -76,8 +65,8 @@ export function DeleteGroupModal({
           <Button type="button" variant="secondary" onClick={onClose}>
             Bekor qilish
           </Button>
-          <Button type="button" disabled={loading} onClick={handleDelete}>
-            {loading ? "O'chirilmoqda..." : "O'chirish"}
+          <Button type="button" disabled={pending} onClick={handleDelete}>
+            {pending ? "O'chirilmoqda..." : "O'chirish"}
           </Button>
         </div>
       </div>

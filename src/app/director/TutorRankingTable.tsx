@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useServerMutation } from "@/lib/useServerMutation";
 import {
   Table,
   TableHead,
@@ -16,26 +16,35 @@ import { ResetPasswordModal } from "@/components/ResetPasswordModal";
 import type { TutorRankingRow } from "@/services/directorDashboard";
 
 export function TutorRankingTable({ rows }: { rows: TutorRankingRow[] }) {
-  const router = useRouter();
+  const { run, pending, error } = useServerMutation();
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [resetPasswordFor, setResetPasswordFor] = useState<TutorRankingRow | null>(null);
 
   async function handleToggleActive(tutorId: string, nextActive: boolean) {
+    // `togglingId` — qaysi QATOR band ekanini bildiradi; `pending` esa
+    // so'rov ham, sahifa yangilanishi ham tugaganini. Ikkalasi birga:
+    // tugma jadval haqiqatan yangilangunicha band holatda qoladi.
     setTogglingId(tutorId);
-    try {
-      const res = await fetch(`/api/tutors/${tutorId}`, {
+    await run(() =>
+      fetch(`/api/tutors/${tutorId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: nextActive }),
-      });
-      if (res.ok) router.refresh();
-    } finally {
-      setTogglingId(null);
-    }
+      })
+    );
+    setTogglingId(null);
   }
 
   return (
     <>
+    {/* Ilgari xato umuman ko'rsatilmasdi: so'rov muvaffaqiyatsiz bo'lsa
+        tugma shunchaki avvalgi holatiga qaytardi va foydalanuvchi nima
+        bo'lganini bilmasdi. */}
+    {error && (
+      <p className="mb-3 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+        {error}
+      </p>
+    )}
     <Table>
       <TableHead>
         <TableRow>
@@ -59,7 +68,7 @@ export function TutorRankingTable({ rows }: { rows: TutorRankingRow[] }) {
       </TableHead>
       <TableBody>
         {rows.map((row, index) => {
-          const isToggling = togglingId === row.tutorId;
+          const isToggling = togglingId === row.tutorId && pending;
           return (
             <TableRow key={row.tutorId}>
               <TableCell className="font-mono">{index + 1}</TableCell>

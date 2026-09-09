@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRefresh } from "@/lib/useServerMutation";
 import {
   Table,
   TableHead,
@@ -31,10 +31,18 @@ export function QuestionsTable({
   questions: QuestionListItem[];
   qualityByQuestionId: Record<string, QuestionQualityStat>;
 }) {
-  const router = useRouter();
+  const { refresh, refreshing } = useRefresh();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [errorById, setErrorById] = useState<Record<string, string>>({});
+
+  /**
+   * Tugma jadval HAQIQATAN yangilangunicha band qoladi. Ilgari
+   * `router.refresh()` bloklamagani uchun u darhol yoqilardi va o'chirilgan
+   * savol yana bir necha soniya ro'yxatda turardi — foydalanuvchi
+   * o'chirish ishlamadi deb o'ylardi.
+   */
+  const isDeleting = (id: string) => deletingId === id || refreshing;
 
   const editingQuestion = questions.find((q) => q.id === editingId) ?? null;
 
@@ -58,7 +66,7 @@ export function QuestionsTable({
       return;
     }
 
-    router.refresh();
+    await refresh();
   }
 
   if (questions.length === 0) {
@@ -144,10 +152,10 @@ export function QuestionsTable({
                     <Button
                       type="button"
                       variant="secondary"
-                      disabled={deletingId === question.id}
+                      disabled={isDeleting(question.id)}
                       onClick={() => handleDelete(question.id)}
                     >
-                      {deletingId === question.id ? "O'chirilmoqda..." : "O'chirish"}
+                      {isDeleting(question.id) ? "O'chirilmoqda..." : "O'chirish"}
                     </Button>
                   </div>
                   {errorById[question.id] && (

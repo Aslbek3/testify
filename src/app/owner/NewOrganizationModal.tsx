@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRefresh } from "@/lib/useServerMutation";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/Button";
 import { Field, SelectField } from "@/components/Field";
 
 export function NewOrganizationModal() {
-  const router = useRouter();
+  const { refresh, refreshing } = useRefresh();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
@@ -15,6 +15,8 @@ export function NewOrganizationModal() {
   const [status, setStatus] = useState("TRIAL");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // `refreshing` — sahifa yangilanishi tugagunicha tugma band qoladi.
+  const busy = loading || refreshing;
 
   function close() {
     setOpen(false);
@@ -41,8 +43,8 @@ export function NewOrganizationModal() {
 
     setName("");
     setCity("");
+    await refresh();
     setOpen(false);
-    router.refresh();
   }
 
   return (
@@ -97,8 +99,8 @@ export function NewOrganizationModal() {
             <Button type="button" variant="secondary" onClick={close}>
               Bekor qilish
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saqlanmoqda..." : "Saqlash"}
+            <Button type="submit" disabled={busy}>
+              {busy ? "Saqlanmoqda..." : "Saqlash"}
             </Button>
           </div>
         </form>
