@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/auth";
+import { requireActiveStudent } from "@/lib/auth";
 import {
   startAttempt,
   getAttemptForResume,
@@ -17,7 +17,7 @@ export default async function TestPage({
 }: {
   searchParams: Promise<{ attemptId?: string; mode?: string; savollar?: string }>;
 }) {
-  const user = await requireRole("STUDENT");
+  const user = await requireActiveStudent();
   const { attemptId, mode, savollar } = await searchParams;
 
   // Urinish allaqachon boshlangan — davom ettiramiz (sahifa yangilansa ham

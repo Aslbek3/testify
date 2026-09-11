@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requireActiveStudent } from "@/lib/auth";
 import {
   countAvailableQuestions,
   MARATHON_MIN_QUESTIONS,
@@ -19,7 +19,7 @@ export default async function MaratonPage({
 }: {
   searchParams: Promise<{ xato?: string }>;
 }) {
-  await requireRole("STUDENT");
+  await requireActiveStudent();
   const { xato } = await searchParams;
 
   const available = await countAvailableQuestions();

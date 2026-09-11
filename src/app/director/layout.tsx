@@ -5,6 +5,8 @@ import { getSubscriptionSummary } from "@/services/payments";
 import { getSubscriptionState } from "@/lib/subscription";
 import { AppShell } from "@/components/AppShell";
 import { SubscriptionWarningBanner } from "./SubscriptionCard";
+import { ORGANIZATION_BILLING_UI_ENABLED } from "@/lib/payments";
+import { countPendingStudentPayments } from "@/services/studentPayments";
 
 export default async function DirectorLayout({ children }: { children: ReactNode }) {
   const user = await requireRole("DIRECTOR");
@@ -18,9 +20,17 @@ export default async function DirectorLayout({ children }: { children: ReactNode
   //
   // Tashkilotsiz direktor (`organizationId` null) sahifada alohida
   // xabar ko'radi, bu yerda esa hech narsa so'ralmaydi.
-  const subscription = user.organizationId
-    ? await getSubscriptionSummary(user.organizationId)
-    : null;
+  //
+  // Avtomaktab → owner to'lovi ekranlari o'chiq bo'lsa banner ham
+  // chiqmaydi: u "Obuna" kartochkasiga yo'naltiradi, u esa yashirilgan.
+  const [subscription, pendingStudentPayments] = await Promise.all([
+    user.organizationId && ORGANIZATION_BILLING_UI_ENABLED
+      ? getSubscriptionSummary(user.organizationId)
+      : null,
+    // Menyudagi "To'lovlar (N)" — direktor qaysi sahifada bo'lmasin,
+    // yangi chek kelganini ko'rsin.
+    user.organizationId ? countPendingStudentPayments(user.organizationId) : 0,
+  ]);
   const state = getSubscriptionState(
     subscription
       ? {
@@ -31,7 +41,11 @@ export default async function DirectorLayout({ children }: { children: ReactNode
   );
 
   return (
-    <AppShell role="DIRECTOR" userName={userName}>
+    <AppShell
+      role="DIRECTOR"
+      userName={userName}
+      badges={{ "/director/tolovlar": pendingStudentPayments }}
+    >
       {/* "blocked" holati bu yerga yetib kelmaydi: sessiya tekshiruvi
           (`requireRole`) bunday foydalanuvchini allaqachon chiqarib
           yuborgan bo'ladi. Shu sabab faqat imtiyoz muddati tekshiriladi. */}

@@ -12,6 +12,7 @@ import {
   listPaymentsForOrganization,
 } from "@/services/payments";
 import { SubscriptionCard, PaymentHistoryCard } from "./SubscriptionCard";
+import { ORGANIZATION_BILLING_UI_ENABLED } from "@/lib/payments";
 import { NewTutorModal } from "./NewTutorModal";
 import { NewGroupModal } from "./NewGroupModal";
 import { TutorRankingTable } from "./TutorRankingTable";
@@ -39,8 +40,9 @@ export default async function DirectorPage() {
       getTutorRanking(organizationId),
       getGroupsOverview(organizationId),
       listTutorsForOrganization(organizationId),
-      getSubscriptionSummary(organizationId),
-      listPaymentsForOrganization(organizationId),
+      // O'chiq bo'lsa so'rov umuman yuborilmaydi — natija baribir chizilmaydi.
+      ORGANIZATION_BILLING_UI_ENABLED ? getSubscriptionSummary(organizationId) : null,
+      ORGANIZATION_BILLING_UI_ENABLED ? listPaymentsForOrganization(organizationId) : null,
     ]);
 
   return (
@@ -61,7 +63,7 @@ export default async function DirectorPage() {
 
       {/* Obuna kartochkasi tepada: muddat tugayotgan bo'lsa, direktor
           buni statistikadan oldin ko'rishi kerak. */}
-      <SubscriptionCard summary={subscription} />
+      {subscription && <SubscriptionCard summary={subscription} />}
 
       {/* "primary" plitka ikki ustunni egallaydi (StatTile), shuning uchun
           to'rtta plitka jami beshta katak — setka ham shunga moslangan. */}
@@ -130,7 +132,7 @@ export default async function DirectorPage() {
 
       {/* Tarix eng pastda: u kundalik ish uchun emas, faqat "xabarim
           qabul qilindimi / nega rad etildi" degan savol uchun kerak. */}
-      <PaymentHistoryCard payments={payments} />
+      {payments && <PaymentHistoryCard payments={payments} />}
     </div>
   );
 }

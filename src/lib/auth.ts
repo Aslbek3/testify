@@ -6,6 +6,7 @@ import type { SessionUser } from "@/types/auth";
 import type { Role } from "@prisma/client";
 import { ROLE_HOME } from "@/lib/roles";
 import { getUserSessionState } from "@/services/auth";
+import { getStudentAccessForUser } from "@/services/studentPayments";
 
 function requireJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
@@ -138,5 +139,27 @@ export async function requireRole(role: Role): Promise<SessionUser> {
 
   if (user.role !== role) redirect(ROLE_HOME[user.role]);
 
+  return user;
+}
+
+/**
+ * O'quvchi sahifalari uchun: `requireRole("STUDENT")` + to'lov muddati.
+ * Muddati (imtiyoz kunlari bilan) o'tgan o'quvchi to'lov sahifasiga
+ * yo'naltiriladi.
+ *
+ * Nega har SAHIFADA, layout'da emas: App Router layout va sahifani
+ * PARALLEL chizadi — layout'dagi `redirect()` sahifaning chizilishini
+ * to'xtatmaydi va uning mazmuni baribir HTML'ga tushib qoladi (bu
+ * tekshirib ko'rilgan). Shuning uchun tekshiruv mazmunni chizadigan
+ * joyning o'zida.
+ *
+ * `/student/tolov` bundan ATAYLAB foydalanmaydi — yopiq o'quvchi aynan
+ * o'sha yerda to'laydi. Haqiqiy cheklov baribir serverda: `startAttempt()`
+ * yopiq o'quvchiga API orqali ham test boshlatmaydi.
+ */
+export async function requireActiveStudent(): Promise<SessionUser> {
+  const user = await requireRole("STUDENT");
+  const access = await getStudentAccessForUser(user.id);
+  if (access.kind === "blocked") redirect("/student/tolov");
   return user;
 }

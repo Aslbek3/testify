@@ -14,13 +14,26 @@ import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
 import { ResetPasswordModal } from "@/components/ResetPasswordModal";
 import type { OrganizationStudentRow } from "@/services/directorDashboard";
+import type { StudentAccessLabel } from "@/lib/labels";
+import { StudentAccessBadge } from "@/components/StudentAccessBadge";
+import type { StudentPaymentMonths } from "@/lib/payments";
+import { CashPaymentModal } from "./CashPaymentModal";
 
 export function StudentsTable({
   students,
   groups,
+  payments,
 }: {
   students: OrganizationStudentRow[];
   groups: { id: string; name: string }[];
+  /**
+   * O'quvchi to'lovi yoqilgan bo'lsa — har o'quvchining holati va narxlar
+   * ("Naqd" tugmasi uchun). `null` — to'lov o'chiq, ustun ko'rsatilmaydi.
+   */
+  payments: {
+    byStudent: Record<string, StudentAccessLabel>;
+    prices: Record<StudentPaymentMonths, number>;
+  } | null;
 }) {
   // `pending` so'rov ham, sahifa yangilanishi ham tugaganini bildiradi —
   // ilgari tugma darhol yoqilib, jadval esa bir necha soniya eski
@@ -29,6 +42,7 @@ export function StudentsTable({
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [movingId, setMovingId] = useState<string | null>(null);
   const [resetPasswordFor, setResetPasswordFor] = useState<OrganizationStudentRow | null>(null);
+  const [cashFor, setCashFor] = useState<OrganizationStudentRow | null>(null);
 
   async function handleToggleActive(studentId: string, nextActive: boolean) {
     setTogglingId(studentId);
@@ -71,6 +85,7 @@ export function StudentsTable({
             <TableHeaderCell align="right">O&apos;rtacha ball</TableHeaderCell>
             <TableHeaderCell>Holat</TableHeaderCell>
             <TableHeaderCell>Hisob</TableHeaderCell>
+            {payments && <TableHeaderCell>To&apos;lov</TableHeaderCell>}
             <TableHeaderCell>Amallar</TableHeaderCell>
           </TableRow>
         </TableHead>
@@ -108,8 +123,22 @@ export function StudentsTable({
                     {student.isActive ? "Faol" : "Bloklangan"}
                   </Badge>
                 </TableCell>
+                {payments && (
+                  <TableCell>
+                    <StudentAccessBadge status={payments.byStudent[student.studentId]} />
+                  </TableCell>
+                )}
                 <TableCell>
                   <div className="flex flex-wrap gap-2">
+                    {payments && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => setCashFor(student)}
+                      >
+                        Naqd
+                      </Button>
+                    )}
                     <Button
                       type="button"
                       variant="secondary"
@@ -132,6 +161,15 @@ export function StudentsTable({
           })}
         </TableBody>
       </Table>
+
+      {cashFor && payments && (
+        <CashPaymentModal
+          studentId={cashFor.studentId}
+          studentName={cashFor.name}
+          prices={payments.prices}
+          onClose={() => setCashFor(null)}
+        />
+      )}
 
       {resetPasswordFor && (
         <ResetPasswordModal

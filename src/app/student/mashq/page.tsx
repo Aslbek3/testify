@@ -1,4 +1,4 @@
-import { requireRole } from "@/lib/auth";
+import { requireActiveStudent } from "@/lib/auth";
 import { QUESTION_COUNT } from "@/lib/examRules";
 import { ModeStartCard } from "../ModeStartCard";
 
@@ -7,7 +7,7 @@ export default async function MashqPage({
 }: {
   searchParams: Promise<{ xato?: string }>;
 }) {
-  await requireRole("STUDENT");
+  await requireActiveStudent();
   const { xato } = await searchParams;
 
   return (

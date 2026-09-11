@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requireActiveStudent } from "@/lib/auth";
 import { StatTile } from "@/components/StatTile";
 import { Button } from "@/components/Button";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
@@ -31,7 +31,7 @@ function masteryVariant(masteryPercent: number): BadgeVariant {
 }
 
 export default async function StudentPage() {
-  const user = await requireRole("STUDENT");
+  const user = await requireActiveStudent();
 
   // Yorliq yopilib tashlab ketilgan imtihonlarni server tomonda hech kim
   // yopmaydi — shuning uchun panel yuklanishida "yalqov" yakunlaymiz.

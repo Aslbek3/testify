@@ -10,6 +10,11 @@ import { Card, CardHeader, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { StudentFilters } from "./StudentFilters";
 import { StudentsTable } from "./StudentsTable";
+import { describeStudentAccess } from "@/lib/labels";
+import {
+  getStudentAccessMap,
+  getStudentPaymentSettings,
+} from "@/services/studentPayments";
 import { NewStudentModal } from "./NewStudentModal";
 
 export default async function DirectorStudentsPage({
@@ -34,11 +39,18 @@ export default async function DirectorStudentsPage({
   // "Umuman o'quvchi bormi?" (bo'sh holat) va "filtrga hech narsa tushmadi"
   // ikki xil holat. Birinchisi uchun ilgari butun ro'yxat ikkinchi marta
   // yuklanardi va undan faqat `.length` olinardi — endi oddiy `count`.
-  const [totalStudentCount, students, groups] = await Promise.all([
+  const [totalStudentCount, students, groups, paymentSettings] = await Promise.all([
     countStudentsForOrganization(organizationId),
     listStudentsForOrganization(organizationId, { q, groupId: group }),
     listGroupsForOrganization(organizationId),
+    getStudentPaymentSettings(organizationId),
   ]);
+  // To'lov holati ro'yxatdagi o'quvchilar uchun — bitta so'rovda.
+  const accessMap = await getStudentAccessMap(students.map((s) => s.studentId));
+  const paymentColumn = students.map((s) => ({
+    studentId: s.studentId,
+    ...describeStudentAccess(accessMap.get(s.studentId) ?? { kind: "free" }),
+  }));
 
   return (
     <div className="space-y-6">
@@ -79,7 +91,24 @@ export default async function DirectorStudentsPage({
           </div>
         ) : (
           <div className="mt-4">
-            <StudentsTable students={students} groups={groups} />
+            <StudentsTable
+              students={students}
+              groups={groups}
+              // To'lov o'chiq bo'lsa ustun ham, "Naqd" tugmasi ham ko'rsatilmaydi.
+              payments={
+                paymentSettings.enabled
+                  ? {
+                      byStudent: Object.fromEntries(
+                        paymentColumn.map(({ studentId, ...rest }) => [studentId, rest])
+                      ),
+                      prices: {
+                        1: paymentSettings.priceOneMonth!,
+                        6: paymentSettings.priceSixMonths!,
+                      },
+                    }
+                  : null
+              }
+            />
           </div>
         )}
       </Card>

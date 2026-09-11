@@ -11,6 +11,8 @@ import {
 } from "@/services/tutorDashboard";
 import { GroupSelect } from "./GroupSelect";
 import { RosterTable } from "./RosterTable";
+import { describeStudentAccess } from "@/lib/labels";
+import { getStudentAccessMap } from "@/services/studentPayments";
 import { NewStudentModal } from "./NewStudentModal";
 
 export default async function TutorPage({
@@ -61,6 +63,17 @@ export default async function TutorPage({
     getRosterForGroup(selectedGroup.id),
     getRecentExamAttemptCount(selectedGroup.id),
   ]);
+  // To'lov holati — ustoz faqat KO'RADI (nega o'quvchi test ishlay
+  // olmayotganini tushunishi uchun), tasdiqlash direktorda.
+  const accessMap = await getStudentAccessMap(roster.map((r) => r.studentId));
+  const paymentStatus = Object.fromEntries(
+    roster.map((r) => [
+      r.studentId,
+      describeStudentAccess(accessMap.get(r.studentId) ?? { kind: "free" }),
+    ])
+  );
+  // Avtomaktab to'lovni yoqmagan bo'lsa ustun ma'nosiz — ko'rsatilmaydi.
+  const showPayments = [...accessMap.values()].some((a) => a.kind !== "free");
 
   // Hisob direktor guruh sahifasi bilan AYNI funksiyadan — ilgari u shu
   // yerda qo'lda yozilgan edi va ikki panel ajralib ketishi mumkin edi.
@@ -125,7 +138,7 @@ export default async function TutorPage({
           natijalari eski ustozida qoladi. O&apos;quvchining guruhini
           o&apos;zgartirish kerak bo&apos;lsa, direktorga murojaat qiling.
         </p>
-        <RosterTable roster={roster} />
+        <RosterTable roster={roster} paymentStatus={showPayments ? paymentStatus : null} />
       </Card>
     </div>
   );

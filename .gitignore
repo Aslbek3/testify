@@ -47,3 +47,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# To'lov cheklari (lib/receiptStorage.ts) — maxfiy, faqat serverda
+/storage/

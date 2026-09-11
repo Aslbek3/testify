@@ -167,6 +167,23 @@ crontab -e
 
 Qo'lda ishga tushirish: `./scripts/backup.sh`
 
+### To'lov cheklari
+
+O'quvchilar yuklagan cheklar **bazada emas, diskda** saqlanadi:
+`storage/receipts/` (yoki `.env` dagi `RECEIPTS_DIR`). Papka ochiq
+`public/` dan tashqarida — fayl faqat ruxsat tekshirilgandan keyin
+`/api/student-payments/[id]/receipt` orqali beriladi (chekda karta
+raqami va ism bor).
+
+- `backup.sh` ularni `backups/receipts/` ga yig'iladigan nusxa sifatida
+  ko'chiradi (`rsync`, yo'q bo'lsa `cp`). Faqat bazani tiklash yetmaydi:
+  yozuvlar chekka ishora qiladi, fayl bo'lmasa direktor chekni ocholmaydi.
+- Papka huquqlari: faqat ilova foydalanuvchisi o'qisin —
+  `chmod 700 storage/receipts`.
+- Nginx `client_max_body_size` chek chegarasidan (5 MB) katta bo'lishi
+  shart — namunada `10m`. Kichik bo'lsa Nginx so'rovni ilovaga
+  yetkazmay `413` qaytaradi va o'quvchi tushunarsiz xato ko'radi.
+
 ### Tiklash (restore)
 
 ```bash
@@ -182,6 +199,8 @@ pm2 start testify
 
 > Tiklashdan oldin joriy bazani ham zaxiralab qo'ying
 > (`./scripts/backup.sh`) — ehtiyot chorasi sifatida.
+
+Cheklarni tiklash: `rsync -a backups/receipts/ storage/receipts/`
 
 ## 7. Ishga tushirgandan keyin tekshiruv ro'yxati
 

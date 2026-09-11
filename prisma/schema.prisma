@@ -33,12 +33,12 @@ enum AttemptMode {
 }
 
 model Organization {
-  id        String             @id @default(cuid())
-  name      String
-  city      String
-  plan      Plan               @default(STANDARD)
-  status    OrganizationStatus @default(TRIAL)
-  createdAt DateTime           @default(now())
+  id                 String             @id @default(cuid())
+  name               String
+  city               String
+  plan               Plan               @default(STANDARD)
+  status             OrganizationStatus @default(TRIAL)
+  createdAt          DateTime           @default(now())
   // Obuna qachongacha amal qiladi. `null` — muddat belgilanmagan
   // (masalan sinov davri yoki eski tashkilot): bunda faqat `status`
   // ishlaydi, avvalgidek.
@@ -48,9 +48,36 @@ model Organization {
   // qarab qo'lda o'chirishi kerak edi.
   subscriptionEndsAt DateTime?
 
-  users    User[]
-  groups   Group[]
-  payments Payment[]
+  // ---- O'quvchi to'lovi (o'quvchi → avtomaktab) ----
+  //
+  // Yoqilgan vaqt. `null` — avtomaktab o'quvchi to'lovini tizim orqali
+  // qabul qilmaydi va hech bir o'quvchi to'lov sababli bloklanmaydi.
+  //
+  // Nega shunchaki `Boolean` emas: yoqilgan KUN kerak. Funksiya yoqilganda
+  // eski o'quvchilarning ko'pchiligi ro'yxatdan o'tganiga allaqachon
+  // sinov muddatidan ko'p bo'lgan — sinov ularning `createdAt` idan
+  // hisoblansa, yoqilgan zahoti hammasi birdaniga yopilib qolardi. Shu
+  // sabab sinov `max(createdAt, studentPaymentsEnabledAt)` dan hisoblanadi.
+  studentPaymentsEnabledAt DateTime?
+  /**
+   * O'quvchi pul o'tkazadigan karta — to'liq ko'rsatiladi (qabul qiluvchi karta).
+   */
+  paymentCardNumber        String?
+  paymentCardHolder        String?
+  /**
+   * So'mda, butun son.
+   */
+  priceOneMonth            Int?
+  priceSixMonths           Int?
+  /**
+   * Yangi o'quvchining bepul kunlari.
+   */
+  trialDays                Int       @default(7)
+
+  users           User[]
+  groups          Group[]
+  payments        Payment[]
+  studentPayments StudentPayment[]
 }
 
 enum PaymentStatus {
@@ -61,7 +88,6 @@ enum PaymentStatus {
 
 /**
  * To'lov haqida xabar.
- *
  * MVP'da to'lov tizimi bilan integratsiya yo'q: direktor to'lovni amalga
  * oshirgach uning raqamini shu yerga kiritadi, owner esa bank ko'chirmasi
  * bilan solishtirib tasdiqlaydi. Avtomatik to'lov keyinroq qo'shiladi —
@@ -71,23 +97,37 @@ enum PaymentStatus {
 model Payment {
   id             String        @id @default(cuid())
   organizationId String
-  /** So'mda, butun son — tiyin ishlatilmaydi. */
+  /**
+   * So'mda, butun son — tiyin ishlatilmaydi.
+   */
   amount         Int
-  /** Necha oyga to'langan: 1, 6, 12 va h.k. */
+  /**
+   * Necha oyga to'langan: 1, 6, 12 va h.k.
+   */
   months         Int
-  /** Qaysi tarif uchun — tasdiqlanganda tashkilot tarifi shunga o'tadi. */
+  /**
+   * Qaysi tarif uchun — tasdiqlanganda tashkilot tarifi shunga o'tadi.
+   */
   plan           Plan
   status         PaymentStatus @default(PENDING)
-  /** Bank/to'lov tizimidagi tranzaksiya yoki kvitansiya raqami. */
+  /**
+   * Bank/to'lov tizimidagi tranzaksiya yoki kvitansiya raqami.
+   */
   reference      String?
   note           String?
   createdAt      DateTime      @default(now())
-  /** Xabarni yuborgan direktor. */
+  /**
+   * Xabarni yuborgan direktor.
+   */
   submittedById  String
   reviewedAt     DateTime?
-  /** Tasdiqlagan yoki rad etgan owner. */
+  /**
+   * Tasdiqlagan yoki rad etgan owner.
+   */
   reviewedById   String?
-  /** Rad etilgan bo'lsa — sababi. */
+  /**
+   * Rad etilgan bo'lsa — sababi.
+   */
   reviewNote     String?
 
   organization Organization @relation(fields: [organizationId], references: [id])
@@ -96,6 +136,64 @@ model Payment {
 
   @@index([organizationId])
   @@index([status])
+}
+
+enum StudentPaymentMethod {
+  /**
+   * Karta orqali, chek bilan — direktor tasdiqlaydi.
+   */
+  CARD
+  /**
+   * Avtomaktab kassasiga naqd — direktor chekisiz belgilaydi.
+   */
+  CASH
+}
+
+/**
+ * O'quvchining avtomaktabga to'lovi.
+ * `Payment` dan (avtomaktab → owner) ATAYLAB alohida: to'lovchi, oluvchi,
+ * tasdiqlovchi va kirishga ta'siri boshqa. Bittaga birlashtirilsa, har
+ * so'rovda "bu qaysi turdagi to'lov" deb tekshirib yurishga to'g'ri
+ * kelardi va bittasini boshqasining ro'yxatiga aralashtirib yuborish oson
+ * bo'lardi.
+ */
+model StudentPayment {
+  id             String               @id @default(cuid())
+  organizationId String
+  studentId      String
+  /**
+   * So'mda — yuborilgan paytdagi narx (keyin narx o'zgarsa ham tarix buzilmaydi).
+   */
+  amount         Int
+  /**
+   * 1 yoki 6.
+   */
+  months         Int
+  method         StudentPaymentMethod
+  status         PaymentStatus        @default(PENDING)
+  /**
+   * Chek faylining saqlash kaliti (yo'l emas) — `lib/receiptStorage.ts`.
+   * Naqd to'lovda `null`.
+   */
+  receiptKey     String?
+  receiptMime    String?
+  createdAt      DateTime             @default(now())
+  reviewedAt     DateTime?
+  /**
+   * Tasdiqlagan/rad etgan yoki naqd to'lovni belgilagan direktor.
+   */
+  reviewedById   String?
+  /**
+   * Rad etilgan bo'lsa — sababi.
+   */
+  reviewNote     String?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  student      User         @relation("StudentPaymentStudent", fields: [studentId], references: [id])
+  reviewedBy   User?        @relation("StudentPaymentReviewer", fields: [reviewedById], references: [id])
+
+  @@index([organizationId, status])
+  @@index([studentId])
 }
 
 model User {
@@ -113,12 +211,14 @@ model User {
   sessionVersion Int      @default(0)
   isActive       Boolean  @default(true)
 
-  organization   Organization?   @relation(fields: [organizationId], references: [id])
-  tutorOfGroups  Group[]         @relation("GroupTutor")
-  studentProfile StudentProfile?
-  attempts       Attempt[]
-  paymentsSubmitted Payment[] @relation("PaymentSubmittedBy")
-  paymentsReviewed  Payment[] @relation("PaymentReviewedBy")
+  organization            Organization?    @relation(fields: [organizationId], references: [id])
+  tutorOfGroups           Group[]          @relation("GroupTutor")
+  studentProfile          StudentProfile?
+  attempts                Attempt[]
+  paymentsSubmitted       Payment[]        @relation("PaymentSubmittedBy")
+  paymentsReviewed        Payment[]        @relation("PaymentReviewedBy")
+  studentPayments         StudentPayment[] @relation("StudentPaymentStudent")
+  studentPaymentsReviewed StudentPayment[] @relation("StudentPaymentReviewer")
 
   @@index([organizationId])
 }
@@ -139,9 +239,13 @@ model Group {
 }
 
 model StudentProfile {
-  id      String @id @default(cuid())
-  userId  String @unique
-  groupId String
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  groupId   String
+  // To'langan muddat qachongacha. `null` — hali hech qachon to'lamagan
+  // (bunda faqat sinov muddati ishlaydi). Faqat tasdiqlangan to'lov
+  // (karta yoki naqd) uzaytiradi — `services/studentPayments.ts`.
+  paidUntil DateTime?
 
   user  User  @relation(fields: [userId], references: [id])
   group Group @relation(fields: [groupId], references: [id])
@@ -157,9 +261,9 @@ model Topic {
 }
 
 model Question {
-  id      String @id @default(cuid())
-  topicId String
-  text    String
+  id                 String  @id @default(cuid())
+  topicId            String
+  text               String
   // Variantlar ro'yxati (string[]). Soni qat'iy 4 ta emas — haqiqiy YHQ
   // savollarida 2 tadan 5 tagacha variant uchraydi. Chegara
   // `src/lib/questionOptions.ts` dagi MIN_OPTIONS/MAX_OPTIONS bilan
@@ -173,7 +277,7 @@ model Question {
   // asosi. Masalan: "YHQ 21-bobi 128-bandiga asosan" yoki "YHQ 1-ilovasi 3.27".
   // Ustoz o'quvchi bilan "nega bu javob to'g'ri?" deb bahslashganda aynan shu
   // bandga ko'rsata oladi. Ixtiyoriy: barcha savolda ham havola bo'lavermaydi.
-  legalReference String?
+  legalReference     String?
 
   topic   Topic           @relation(fields: [topicId], references: [id])
   answers AttemptAnswer[]

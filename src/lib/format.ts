@@ -72,3 +72,12 @@ export function formatAmountUzs(amount: number): string {
   const sign = amount < 0 ? "-" : "";
   return `${sign}${digits}${THOUSANDS_SEPARATOR}so'm`;
 }
+
+/**
+ * Karta raqamini 4 xonadan guruhlaydi: `8600123456789012` →
+ * `8600 1234 5678 9012`. O'quvchi raqamni bank ilovasiga qo'lda
+ * ko'chirganda guruhlangani xato qilishni kamaytiradi.
+ */
+export function formatCardNumber(digits: string): string {
+  return digits.replace(/(\d{4})(?=\d)/g, "$1 ");
+}

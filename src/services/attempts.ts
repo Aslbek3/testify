@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { canTakeAttempt } from "@/lib/permissions";
 import { toStringArray } from "@/lib/json";
 import type { SessionUser } from "@/types/auth";
+import { getStudentAccessForUser } from "@/services/studentPayments";
 
 /**
  * Test urinishlari bilan bog'liq domen xatolari — "topilmadi", "ruxsat
@@ -113,6 +114,23 @@ export async function startAttempt(input: {
 }> {
   if (input.user.role !== "STUDENT") {
     throw new AttemptError("Faqat o'quvchilar test boshlashi mumkin", 403);
+  }
+
+  // To'lov muddati (imtiyoz kunlari bilan) o'tgan o'quvchi yangi test
+  // boshlay olmaydi. Tekshiruv SHU YERDA — sahifada emas: sahifadagi
+  // cheklovni API'ga to'g'ridan-to'g'ri so'rov yuborib chetlab o'tish
+  // mumkin edi.
+  //
+  // Faqat BOSHLASH yopiladi, allaqachon boshlangan testga javob berish
+  // emas: muddat imtihon o'rtasida tugasa, o'quvchi uni oxiriga yetkaza
+  // oladi — yarim yo'lda uzib qo'yish natijani ham, o'quvchini ham
+  // behuda kuydirardi.
+  const access = await getStudentAccessForUser(input.user.id);
+  if (access.kind === "blocked") {
+    throw new AttemptError(
+      "To'lov muddati tugagan. Testlarni davom ettirish uchun to'lovni amalga oshiring.",
+      402
+    );
   }
 
   const where =

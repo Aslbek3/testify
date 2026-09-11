@@ -3,7 +3,7 @@ import { PLAN_LABEL } from "@/lib/labels";
 import { formatDate, formatAmountUzs } from "@/lib/format";
 import type { PaymentRow } from "@/services/payments";
 
-import { PaymentReviewActions } from "./PaymentReviewActions";
+import { PaymentReviewActions } from "@/components/PaymentReviewActions";
 
 export type PendingPaymentReview = {
   payment: PaymentRow;
@@ -107,10 +107,11 @@ export function PendingPaymentsCard({ items }: { items: PendingPaymentReview[] }
                   o'qiladi. */}
               <div className="md:shrink-0">
                 <PaymentReviewActions
-                  paymentId={payment.id}
-                  organizationName={payment.organizationName}
+                  endpoint={`/api/payments/${payment.id}`}
+                  payerName={payment.organizationName}
                   amountLabel={amountLabel}
                   nextEndsAtLabel={formatDate(nextEndsAt)}
+                  rejectNotice="Obuna uzaytirilmaydi, sabab direktorga ko'rinadi."
                 />
               </div>
             </li>

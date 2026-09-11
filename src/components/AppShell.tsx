@@ -18,6 +18,7 @@ const NAV_ITEMS: Record<Role, NavItem[]> = {
   DIRECTOR: [
     { label: "Umumiy", href: "/director" },
     { label: "O'quvchilar", href: "/director/oquvchilar" },
+    { label: "To'lovlar", href: "/director/tolovlar" },
   ],
   TUTOR: [{ label: "Umumiy", href: "/tutor" }],
   STUDENT: [
@@ -29,6 +30,7 @@ const NAV_ITEMS: Record<Role, NavItem[]> = {
     { label: "Maraton", href: "/student/maraton" },
     { label: "Imtihon", href: "/student/imtihon" },
     { label: "Xatolarim", href: "/student/xatolarim" },
+    { label: "To'lov", href: "/student/tolov" },
   ],
 };
 
@@ -52,16 +54,27 @@ function getActiveHref(pathname: string, items: NavItem[]): string | undefined {
 export function AppShell({
   role,
   userName,
+  hiddenHrefs,
+  badges,
   children,
 }: {
   role: Role;
   userName: string;
+  /**
+   * Shu foydalanuvchiga keraksiz bandlar — masalan avtomaktab to'lovni
+   * tizim orqali qabul qilmasa, o'quvchida "To'lov" bandi ko'rinmaydi.
+   * Ro'yxatning o'zi (`NAV_ITEMS`) bitta joyda qoladi, bu yerda faqat
+   * yashiriladi.
+   */
+  hiddenHrefs?: string[];
+  /** Band yonidagi son (masalan tasdiq kutayotgan to'lovlar). 0 — ko'rsatilmaydi. */
+  badges?: Record<string, number>;
   children: ReactNode;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
-  const items = NAV_ITEMS[role];
+  const items = NAV_ITEMS[role].filter((item) => !hiddenHrefs?.includes(item.href));
   const activeHref = getActiveHref(pathname, items);
 
   const hamburgerRef = useRef<HTMLButtonElement>(null);
@@ -150,13 +163,18 @@ export function AppShell({
                 className={cn(
                   // Mobilda 44px balandlik (py-3) — telefonda bu asosiy navigatsiya
                   // va 36px nishonga barmoq bilan tegish noqulay edi.
-                  "block rounded-md px-3 py-3 text-sm font-medium transition-colors pointer-fine:py-2",
+                  "flex items-center justify-between gap-2 rounded-md px-3 py-3 text-sm font-medium transition-colors pointer-fine:py-2",
                   isActive
                     ? "bg-white/10 text-white"
                     : "text-white/60 hover:bg-white/5 hover:text-white"
                 )}
               >
                 {item.label}
+                {badges?.[item.href] ? (
+                  <span className="rounded-full bg-brand px-2 py-0.5 text-xs font-semibold text-white">
+                    {badges[item.href]}
+                  </span>
+                ) : null}
               </Link>
             );
           })}

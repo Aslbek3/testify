@@ -300,24 +300,60 @@ aniq bo'lavermaydi.
 Eslatma: ikonkalar neytral va hurmatli bo'lishi kerak; "qiz/o'g'il" degan
 yorliq qo'yilmaydi — foydalanuvchi shunchaki o'ziga yoqqanini tanlaydi.
 
-### To'lov: onlayn, admin tasdig'i bilan
+### To'lov: o'quvchi → avtomaktab, chek + direktor tasdig'i (kelishildi 2026-09-11)
 
-To'lov tizimi hozir umuman yo'q — `Organization.plan` va `status` bor,
-lekin ular shunchaki yorliq.
+⚠️ **Avvalgi tushunmovchilik:** 2026-09-09 da bu yerda "owner
+tasdiqlaydi" deb yozilgan va shunga ko'ra **direktor → owner** to'lovi
+qurilgan edi (`358de4b`, `e749ea4`). Aslida gap **o'quvchi →
+avtomaktab** to'lovi haqida bo'lgan; "har oy yoki 6 oylik" ham o'quvchi
+uchun. Direktor → owner tarifi keyin alohida kelishiladi — o'sha kod
+(`Payment` jadvali, `services/payments.ts`) saqlanadi, faqat ekranlari
+tarif kelishilguncha yashiriladi.
 
-**Kelishilgan model:** to'lov onlayn amalga oshiriladi, lekin obuna
-**admin tasdig'idan keyin** faollashadi. Ya'ni avtomatik emas —
-to'lovni owner ko'rib chiqib tasdiqlaydi.
+**Oqim:**
 
-Bu bizda allaqachon borlarga yaxshi tushadi: owner tashkilotning `plan`
-va `status` ini o'zgartira oladi (2026-09-09 da qo'shildi), `EXPIRED`
-esa sessiyani darhol bekor qiladi. Ya'ni tasdiqlash mexanizmining
-"qo'lda" qismi tayyor — qolgani to'lov qabul qilish va uni owner ko'radigan
-ro'yxatga ulash.
+```
+O'quvchi: 1 yoki 6 oy tanlaydi → summa avtomaktab narxidan chiqadi
+       → avtomaktab kartasiga bank ilovasidan o'tkazadi
+       → chekni yuklaydi (rasm yoki PDF)
+Direktor: "To'lovlar (3)" → chekni ochadi → tasdiqlaydi / sabab bilan rad etadi
+       → tasdiqlansa o'quvchining to'langan muddati uzayadi
+```
 
-Hal qilinishi kerak: qaysi to'lov tizimi (Payme/Click/UZUM), to'lov
-yozuvlari uchun model, va owner uchun "tasdiqlash kutayotgan to'lovlar"
-ro'yxati.
+**Kelishilgan qarorlar:**
+
+| Masala | Qaror |
+|---|---|
+| Kim kimga to'laydi | O'quvchi avtomaktabga. Direktor → owner — keyin |
+| Qanday to'laydi | Karta raqamiga o'tkazma (Click/Payme/bank ilovasi) |
+| Muddatlar | 1 oy yoki 6 oy |
+| Narxni kim qo'yadi | Har avtomaktab o'zi (direktor sozlamasi) |
+| Chek | Rasm (JPG/PNG) yoki PDF, 5 MB gacha |
+| Kim tasdiqlaydi | Faqat direktor — pul uning kartasiga tushadi |
+| Yangi o'quvchi | Bepul sinov muddati, kun sonini direktor qo'yadi |
+| Muddat tugasa | 3 kun ogohlantirish, keyin testlar yopiladi |
+| Naqd to'lov | Direktor chekisiz "naqd to'landi" deb belgilaydi |
+| Xabarnoma | Faqat panelda — menyuda kutayotganlar soni |
+
+**Loyihalash paytida aniqlangan nuqtalar:**
+
+- **Bloklangan o'quvchi tizimga KIRADI**, lekin faqat to'lov va profil
+  sahifalari ochiq bo'ladi. Aks holda muddati o'tgan o'quvchi to'lash
+  uchun ham kira olmay qolardi. Testlar serverda (API darajasida)
+  yopiladi, faqat ekranda emas.
+- **Avtomaktab uchun ixtiyoriy (yoqiladigan).** Direktor karta va
+  narxni kiritib, "o'quvchi to'lovini yoqish" ni bosmaguncha hech kim
+  bloklanmaydi. Aks holda deploy qilingan zahoti eski o'quvchilarning
+  hammasi (sinov muddati allaqachon o'tgan) birdaniga yopilib qolardi.
+  Yoqilgan kundan boshlab mavjud o'quvchilarga ham sinov muddati beriladi.
+- **Chek maxfiy.** Unda karta raqami va ism bor — fayl ochiq papkada
+  emas, faqat ruxsat bilan ochiladi (o'quvchining o'zi va o'sha
+  avtomaktab direktori). Fayl turi kengaytmadan emas, ichidagi
+  baytlardan tekshiriladi.
+- **Backup:** `scripts/backup.sh` hozir faqat bazani saqlaydi —
+  cheklar papkasi ham qo'shilishi kerak.
+- Ustoz o'z guruhida o'quvchining to'lov holatini **ko'radi** (nega
+  test ishlay olmayotganini tushunishi uchun), lekin tasdiqlamaydi.
 
 ### Yutuqlar (achievements)
 

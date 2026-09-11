@@ -21,24 +21,34 @@ import { MAX_TEXT_LENGTH } from "@/lib/payments";
  * `router.refresh()` to'g'ridan-to'g'ri chaqirilmaydi.
  */
 export function PaymentReviewActions({
-  paymentId,
-  organizationName,
+  endpoint,
+  payerName,
   amountLabel,
   nextEndsAtLabel,
+  rejectNotice,
 }: {
-  paymentId: string;
-  organizationName: string;
+  /**
+   * PATCH `{ action, reason? }` qabul qiladigan manzil. Ikki joyda
+   * ishlatiladi: owner (`/api/payments/[id]` — avtomaktab obunasi) va
+   * direktor (`/api/student-payments/[id]` — o'quvchi to'lovi). Mantiq
+   * bir xil, faqat kim to'lagani va nima uzayishi farq qiladi.
+   */
+  endpoint: string;
+  /** Kim to'lagan — rad etish oynasida ko'rsatiladi. */
+  payerName: string;
   /** Tayyor formatlangan summa — matnda takror ko'rsatish uchun. */
   amountLabel: string;
-  /** Tasdiqlansa obuna qaysi sanagacha uzayadi (formatlangan). */
+  /** Tasdiqlansa muddat qaysi sanagacha uzayadi (formatlangan). */
   nextEndsAtLabel: string;
+  /** Rad etish oynasidagi tushuntirish: nima bo'lmasligi va sababni kim ko'rishi. */
+  rejectNotice: string;
 }) {
   const { run, pending, error, setError } = useServerMutation();
   const [rejectOpen, setRejectOpen] = useState(false);
   const [reason, setReason] = useState("");
 
   function patch(body: Record<string, unknown>) {
-    return fetch(`/api/payments/${paymentId}`, {
+    return fetch(endpoint, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -51,8 +61,8 @@ export function PaymentReviewActions({
 
   async function handleReject(event: FormEvent) {
     event.preventDefault();
-    // Sabab MAJBURIY: direktor "nega rad etildi" degan savolga javob
-    // olmasa, xuddi shu to'lovni qayta yuboradi va aylanma boshlanadi.
+    // Sabab MAJBURIY: to'lovchi "nega rad etildi" degan savolga javob
+    // olmasa, xuddi shu chekni qayta yuboradi va aylanma boshlanadi.
     const trimmed = reason.trim();
     if (!trimmed) {
       setError("Rad etish sababini yozing");
@@ -98,9 +108,9 @@ export function PaymentReviewActions({
         </Button>
       </div>
 
-      {/* Owner nimani tasdiqlayotganini KO'RMASDAN bosmasligi kerak:
-          tasdiqlash obunani uzaytiradi va uni ortga qaytarish uchun
-          alohida amal yo'q. Sana tugmaning aynan ostida turadi. */}
+      {/* Tasdiqlovchi nimani tasdiqlayotganini KO'RMASDAN bosmasligi
+          kerak: tasdiqlash muddatni uzaytiradi va uni ortga qaytarish
+          uchun alohida amal yo'q. Sana tugmaning aynan ostida turadi. */}
       <p className="text-sm text-text-muted">
         Tasdiqlansa:{" "}
         <span className="font-mono text-text">{nextEndsAtLabel}</span> gacha
@@ -119,13 +129,12 @@ export function PaymentReviewActions({
           )}
 
           <p className="text-sm text-text-muted">
-            <span className="font-medium text-text">{organizationName}</span> —{" "}
-            <span className="font-mono">{amountLabel}</span>. Obuna
-            uzaytirilmaydi, sabab direktorga ko&apos;rinadi.
+            <span className="font-medium text-text">{payerName}</span> —{" "}
+            <span className="font-mono">{amountLabel}</span>. {rejectNotice}
           </p>
 
           <Field
-            id={`reject-reason-${paymentId}`}
+            id={`reject-reason-${endpoint}`}
             label="Rad etish sababi"
             required
             maxLength={MAX_TEXT_LENGTH}

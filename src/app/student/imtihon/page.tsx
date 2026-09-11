@@ -1,4 +1,4 @@
-import { requireRole } from "@/lib/auth";
+import { requireActiveStudent } from "@/lib/auth";
 import { QUESTION_COUNT, EXAM_DURATION_SECONDS, EXAM_MAX_WRONG } from "@/lib/examRules";
 import { ModeStartCard } from "../ModeStartCard";
 
@@ -7,7 +7,7 @@ export default async function ImtihonPage({
 }: {
   searchParams: Promise<{ xato?: string }>;
 }) {
-  await requireRole("STUDENT");
+  await requireActiveStudent();
   const { xato } = await searchParams;
 
   const minutes = Math.round(EXAM_DURATION_SECONDS / 60);

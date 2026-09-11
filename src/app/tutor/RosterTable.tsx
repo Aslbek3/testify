@@ -13,6 +13,8 @@ import {
   TableCell,
 } from "@/components/Table";
 import { Badge } from "@/components/Badge";
+import { StudentAccessBadge } from "@/components/StudentAccessBadge";
+import type { StudentAccessLabel } from "@/lib/labels";
 import { Button } from "@/components/Button";
 import { ResetPasswordModal } from "@/components/ResetPasswordModal";
 import { formatDate } from "@/lib/format";
@@ -27,7 +29,14 @@ import type { RosterEntry } from "@/services/tutorDashboard";
  * havola berish mumkin — ustoz uni ochib qoldirib, keyin qaytib kelishi
  * yoki kollegasiga yuborishi mumkin.
  */
-export function RosterTable({ roster }: { roster: RosterEntry[] }) {
+export function RosterTable({
+  roster,
+  paymentStatus,
+}: {
+  roster: RosterEntry[];
+  /** O'quvchi to'lovi holati (faqat ko'rish uchun). `null` — to'lov o'chiq. */
+  paymentStatus: Record<string, StudentAccessLabel> | null;
+}) {
   const router = useRouter();
   const { refresh, refreshing } = useRefresh();
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -63,6 +72,7 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
             <TableHeaderCell align="right">O&apos;rtacha ball</TableHeaderCell>
             <TableHeaderCell>Holat</TableHeaderCell>
             <TableHeaderCell>Hisob</TableHeaderCell>
+            {paymentStatus && <TableHeaderCell>To&apos;lov</TableHeaderCell>}
             <TableHeaderCell>Amallar</TableHeaderCell>
           </TableRow>
         </TableHead>
@@ -109,6 +119,11 @@ export function RosterTable({ roster }: { roster: RosterEntry[] }) {
                     {student.isActive ? "Faol" : "Bloklangan"}
                   </Badge>
                 </TableCell>
+                {paymentStatus && (
+                  <TableCell>
+                    <StudentAccessBadge status={paymentStatus[student.studentId]} />
+                  </TableCell>
+                )}
                 <TableCell>
                   <div className="flex flex-wrap gap-2">
                     <Button

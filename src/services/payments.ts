@@ -239,14 +239,21 @@ export async function confirmPayment(input: {
       throw new PaymentError("Bu to'lov allaqachon ko'rib chiqilgan", 409);
     }
 
-    await tx.payment.update({
-      where: { id: input.paymentId },
+    // Holat sharti `WHERE` ichida — yuqoridagi tekshiruv yetarli emas:
+    // ikki so'rov bir vaqtda kelsa ikkalasi ham "PENDING" deb o'qib,
+    // obunani ikki marta uzaytirardi. Bu yerda esa faqat bittasi qatorni
+    // o'zgartira oladi, ikkinchisi 0 qator bilan qaytadi.
+    const { count } = await tx.payment.updateMany({
+      where: { id: input.paymentId, status: "PENDING" },
       data: {
         status: "CONFIRMED",
         reviewedAt: new Date(),
         reviewedById: input.reviewedById,
       },
     });
+    if (count !== 1) {
+      throw new PaymentError("Bu to'lov allaqachon ko'rib chiqilgan", 409);
+    }
 
     await tx.organization.update({
       where: { id: payment.organizationId },
@@ -284,8 +291,8 @@ export async function rejectPayment(input: {
     throw new PaymentError("Bu to'lov allaqachon ko'rib chiqilgan", 409);
   }
 
-  await prisma.payment.update({
-    where: { id: input.paymentId },
+  const { count } = await prisma.payment.updateMany({
+    where: { id: input.paymentId, status: "PENDING" },
     data: {
       status: "REJECTED",
       reviewedAt: new Date(),
@@ -293,6 +300,9 @@ export async function rejectPayment(input: {
       reviewNote: reason,
     },
   });
+  if (count !== 1) {
+    throw new PaymentError("Bu to'lov allaqachon ko'rib chiqilgan", 409);
+  }
 }
 
 /**

@@ -32,6 +32,7 @@ import {
   type PendingPaymentReview,
 } from "./PendingPaymentsCard";
 import { PaymentHistoryCard } from "./PaymentHistoryCard";
+import { ORGANIZATION_BILLING_UI_ENABLED } from "@/lib/payments";
 import type { OrganizationStatus } from "@prisma/client";
 import type { OrganizationWithCounts } from "@/services/organizations";
 
@@ -138,8 +139,8 @@ export default async function OwnerPage({
       getPlatformOverview(),
       listOrganizationOptions(),
       listOrganizations({ q, status: statusFilter, sortField, sortDirection }),
-      listPendingPayments(),
-      listRecentPayments(),
+      ORGANIZATION_BILLING_UI_ENABLED ? listPendingPayments() : [],
+      ORGANIZATION_BILLING_UI_ENABLED ? listRecentPayments() : [],
     ]);
 
   // Tasdiqlansa obuna qaysi sanagacha uzayishini ko'rsatish uchun
@@ -196,7 +197,7 @@ export default async function OwnerPage({
       {/* Kutayotgan to'lov statistikadan ham OLDIN turadi — u yagona
           kechiktirib bo'lmaydigan ish. Kutayotgan to'lov bo'lmasa
           komponent `null` qaytaradi va bu yerda hech narsa chizilmaydi. */}
-      <PendingPaymentsCard items={pendingReviews} />
+      {ORGANIZATION_BILLING_UI_ENABLED && <PendingPaymentsCard items={pendingReviews} />}
 
       {/* Yorliqlarda "faol" so'zi ikki xil narsani anglatardi: hisob
           bloklanmaganini va tashkilot holati ACTIVE ekanini. Endi har bir
@@ -317,7 +318,7 @@ export default async function OwnerPage({
           yerda turadi. Tepadagi "tasdiq kutayotgan" kartochkasi ish
           bo'lmasa yo'qoladi — agar tarix ham yo'qolsa, owner uchun
           to'lov degan bo'lim umuman yo'qdek ko'rinardi. */}
-      <PaymentHistoryCard payments={recentPayments} />
+      {ORGANIZATION_BILLING_UI_ENABLED && <PaymentHistoryCard payments={recentPayments} />}
     </div>
   );
 }

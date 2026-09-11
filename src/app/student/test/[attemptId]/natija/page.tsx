@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { requireRole } from "@/lib/auth";
+import { requireActiveStudent } from "@/lib/auth";
 import { getAttemptResult, AttemptError } from "@/services/attempts";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
@@ -18,7 +18,7 @@ export default async function AttemptResultPage({
 }: {
   params: Promise<{ attemptId: string }>;
 }) {
-  const user = await requireRole("STUDENT");
+  const user = await requireActiveStudent();
   const { attemptId } = await params;
 
   let result;

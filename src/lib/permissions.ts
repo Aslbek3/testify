@@ -128,3 +128,29 @@ export function canManageTutor(
 export function canTakeAttempt(user: SessionUser, attempt: AttemptRef): boolean {
   return isStudent(user) && user.id === attempt.studentId;
 }
+
+/**
+ * O'quvchi to'lovlarini boshqarish (sozlamalar, chekni tasdiqlash/rad
+ * etish, naqd to'lovni belgilash): FAQAT shu tashkilot Direktori.
+ *
+ * Ustoz ATAYLAB yo'q — pul avtomaktab kartasiga tushadi va uni faqat
+ * direktor ko'radi. Ustoz kartaga pul tushganini tekshira olmaydi, ya'ni
+ * faqat chek rasmiga ishonib tasdiqlagan bo'lardi. Owner ham yo'q: bu
+ * avtomaktabning ichki puli, platforma egasining ishi emas.
+ */
+export function canManageStudentPayments(user: SessionUser, organizationId: string): boolean {
+  return isDirector(user) && user.organizationId !== null && user.organizationId === organizationId;
+}
+
+/**
+ * To'lov yozuvi va chekini ko'rish: o'quvchining o'zi yoki shu
+ * tashkilot Direktori. Chekda karta raqami va ism bor — boshqa hech kim
+ * (ustoz, owner, boshqa o'quvchi) ko'rmaydi.
+ */
+export function canViewStudentPayment(
+  user: SessionUser,
+  payment: { studentId: string; organizationId: string }
+): boolean {
+  if (isStudent(user)) return user.id === payment.studentId;
+  return canManageStudentPayments(user, payment.organizationId);
+}

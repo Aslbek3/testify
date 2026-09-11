@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requireActiveStudent } from "@/lib/auth";
 import { Button } from "@/components/Button";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
@@ -8,7 +8,7 @@ import { finalizeExpiredAttempts } from "@/services/attempts";
 import { MistakesList } from "./MistakesList";
 
 export default async function StudentMistakesPage() {
-  const user = await requireRole("STUDENT");
+  const user = await requireActiveStudent();
 
   // Panel bilan bir xil "yalqov" yakunlash: yorliq yopilib tashlab ketilgan
   // imtihonni server tomonda hech kim yopmaydi, u esa `finishedAt: null`
