@@ -219,6 +219,7 @@ model User {
   paymentsReviewed        Payment[]        @relation("PaymentReviewedBy")
   studentPayments         StudentPayment[] @relation("StudentPaymentStudent")
   studentPaymentsReviewed StudentPayment[] @relation("StudentPaymentReviewer")
+  assignmentsCreated      Assignment[]     @relation("AssignmentCreatedBy")
 
   @@index([organizationId])
 }
@@ -233,9 +234,63 @@ model Group {
   organization Organization     @relation(fields: [organizationId], references: [id])
   students     StudentProfile[]
   attempts     Attempt[]
+  assignments  Assignment[]
 
   @@index([organizationId])
   @@index([tutorId])
+}
+
+enum AssignmentKind {
+  /**
+   * "Muddatgacha N ta imtihon" — muddat ichida yakunlangan ISTALGAN imtihon
+   * sanaladi (vazifa tugmasidan boshlanmagan bo'lsa ham).
+   */
+  EXAM
+  /**
+   * "Shu mavzulardan N ta mashq" — faqat vazifa orqali boshlangan mashq
+   * sanaladi (`Attempt.assignmentId`), chunki oddiy mashq mavzu tanlamaydi.
+   */
+  PRACTICE
+}
+
+/**
+ * Ustozning guruhga bergan vazifasi.
+ * Bajarilgani ATAYLAB saqlanmaydi (masalan `doneCount` ustuni yo'q) — u
+ * har safar urinishlardan hisoblanadi (`services/assignments.ts`). Aks
+ * holda bir fakt ikki joyda yashab, urinish yakunlanganda yoki muddati
+ * o'tib avtomatik yopilganda sonni ham yangilash kerak bo'lardi va bittasi
+ * unutilsa ikki panel boshqa-boshqa raqam ko'rsatardi.
+ */
+model Assignment {
+  id          String         @id @default(cuid())
+  groupId     String
+  /**
+   * Vazifani bergan ustoz. Guruh keyin boshqa ustozga berilsa ham tarix
+   * uchun saqlanadi; boshqaruv huquqi esa guruhning HOZIRGI ustozida.
+   */
+  createdById String
+  kind        AssignmentKind
+  /**
+   * Faqat PRACTICE uchun — qaysi mavzulardan. EXAM uchun bo'sh: imtihon
+   * haqiqiy imtihon kabi butun bazadan tuziladi.
+   */
+  topicIds    String[]       @default([])
+  /**
+   * Necha marta bajarish kerak (imtihonlar yoki mashqlar soni).
+   */
+  targetCount Int
+  /**
+   * Muddat — tanlangan kunning oxiri, O'zbekiston vaqti bilan.
+   */
+  dueAt       DateTime
+  note        String?
+  createdAt   DateTime       @default(now())
+
+  group     Group     @relation(fields: [groupId], references: [id])
+  createdBy User      @relation("AssignmentCreatedBy", fields: [createdById], references: [id])
+  attempts  Attempt[]
+
+  @@index([groupId, dueAt])
 }
 
 model StudentProfile {
@@ -286,24 +341,30 @@ model Question {
 }
 
 model Attempt {
-  id          String      @id @default(cuid())
-  studentId   String
-  startedAt   DateTime    @default(now())
-  finishedAt  DateTime?
-  score       Int?
-  mode        AttemptMode @default(PRACTICE)
-  groupId     String?
+  id           String      @id @default(cuid())
+  studentId    String
+  startedAt    DateTime    @default(now())
+  finishedAt   DateTime?
+  score        Int?
+  mode         AttemptMode @default(PRACTICE)
+  groupId      String?
   // Boshlanishda tanlangan savollar ID'lari, tartibi bilan — shu orqali
   // finishAttempt "jami savollar soni"ni biladi (javobsiz qolganlar ham
   // hisobga olinishi uchun) va kelajakda urinishni davom ettirish mumkin.
-  questionIds String[]    @default([])
+  questionIds  String[]    @default([])
+  // Vazifa tugmasi orqali boshlangan bo'lsa — qaysi vazifa. Vazifa
+  // o'chirilsa urinish yo'qolmaydi, faqat bog'lanish uziladi: urinish
+  // o'quvchining natijasi, vazifaniki emas.
+  assignmentId String?
 
-  student User            @relation(fields: [studentId], references: [id])
-  group   Group?          @relation(fields: [groupId], references: [id])
-  answers AttemptAnswer[]
+  student    User            @relation(fields: [studentId], references: [id])
+  group      Group?          @relation(fields: [groupId], references: [id])
+  assignment Assignment?     @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+  answers    AttemptAnswer[]
 
   @@index([studentId])
   @@index([groupId])
+  @@index([assignmentId])
 }
 
 model AttemptAnswer {

@@ -12,9 +12,11 @@ import {
   getAttemptHistory,
 } from "@/services/studentDashboard";
 import { finalizeExpiredAttempts } from "@/services/attempts";
+import { listAssignmentsForStudent } from "@/services/assignments";
 import { readinessFromScore } from "@/lib/readiness";
 import { ProgressRing } from "./ProgressRing";
 import { AttemptHistoryTable } from "./AttemptHistoryTable";
+import { StudentAssignmentsCard } from "./StudentAssignmentsCard";
 
 /**
  * Mavzu foizining rangi tayyorgarlik holati bilan AYNI chegaralardan
@@ -30,8 +32,15 @@ function masteryVariant(masteryPercent: number): BadgeVariant {
   return readinessFromScore(masteryPercent).variant;
 }
 
-export default async function StudentPage() {
+export default async function StudentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ xato?: string }>;
+}) {
   const user = await requireActiveStudent();
+  // Vazifani boshlab bo'lmaganda (masalan muddati o'tgan) test sahifasi
+  // shu yerga sababi bilan qaytaradi — `/student/test` ga qara.
+  const { xato } = await searchParams;
 
   // Yorliq yopilib tashlab ketilgan imtihonlarni server tomonda hech kim
   // yopmaydi — shuning uchun panel yuklanishida "yalqov" yakunlaymiz.
@@ -41,10 +50,11 @@ export default async function StudentPage() {
   // statistikada ko'rmasligi mumkin.
   await finalizeExpiredAttempts(user.id);
 
-  const [overview, mastery, history] = await Promise.all([
+  const [overview, mastery, history, assignments] = await Promise.all([
     getStudentOverview(user.id),
     getMasteryByTopic(user.id),
     getAttemptHistory(user.id),
+    listAssignmentsForStudent(user.id),
   ]);
 
   return (
@@ -61,6 +71,12 @@ export default async function StudentPage() {
           <Button type="button">Test boshlash</Button>
         </Link>
       </div>
+
+      {xato && (
+        <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{xato}</p>
+      )}
+
+      <StudentAssignmentsCard assignments={assignments} />
 
       <Card>
           <div className="flex flex-wrap items-center gap-8">

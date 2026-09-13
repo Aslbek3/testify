@@ -473,6 +473,9 @@ export async function deleteGroup(groupId: string) {
       );
     }
 
+    // Vazifalar guruhsiz ma'nosiz. Bu nuqtada ularga bog'langan urinish
+    // ham yo'q (yuqoridagi shart), ya'ni hech qanday natija yo'qolmaydi.
+    await tx.assignment.deleteMany({ where: { groupId } });
     return tx.group.delete({ where: { id: groupId } });
   });
 }

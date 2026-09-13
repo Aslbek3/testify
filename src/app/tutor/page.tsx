@@ -13,7 +13,12 @@ import { GroupSelect } from "./GroupSelect";
 import { RosterTable } from "./RosterTable";
 import { describeStudentAccess } from "@/lib/labels";
 import { getStudentAccessMap } from "@/services/studentPayments";
+import { listAssignmentsForGroup } from "@/services/assignments";
+import { listTopicsWithQuestionCount } from "@/services/questions";
+import { assignmentDueDateBounds } from "@/lib/assignments";
+import { GroupAssignmentsCard } from "@/components/GroupAssignmentsCard";
 import { NewStudentModal } from "./NewStudentModal";
+import { NewAssignmentModal } from "./NewAssignmentModal";
 
 export default async function TutorPage({
   searchParams,
@@ -58,10 +63,12 @@ export default async function TutorPage({
   // Mavzu bo'yicha xato foizi va eng ko'p xato qilingan savollar bitta
   // so'rovdan chiqadi — ilgari ikkalasi alohida chaqirilib, guruhning
   // butun javoblar jadvali har yuklanishda ikki marta tortilardi.
-  const [analytics, roster, recentExamCount] = await Promise.all([
+  const [analytics, roster, recentExamCount, assignments, topics] = await Promise.all([
     getGroupAnalytics(selectedGroup.id),
     getRosterForGroup(selectedGroup.id),
     getRecentExamAttemptCount(selectedGroup.id),
+    listAssignmentsForGroup(selectedGroup.id),
+    listTopicsWithQuestionCount(),
   ]);
   // To'lov holati — ustoz faqat KO'RADI (nega o'quvchi test ishlay
   // olmayotganini tushunishi uchun), tasdiqlash direktorda.
@@ -121,6 +128,19 @@ export default async function TutorPage({
           sub="Yakunlanganlari"
         />
       </div>
+
+      <GroupAssignmentsCard
+        assignments={assignments}
+        canManage={true}
+        action={
+          <NewAssignmentModal
+            groupId={selectedGroup.id}
+            groupName={selectedGroup.name}
+            topics={topics.filter((t) => t.questionCount > 0)}
+            dueBounds={assignmentDueDateBounds()}
+          />
+        }
+      />
 
       <GroupAnalyticsCards analytics={analytics} />
 

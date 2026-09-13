@@ -107,6 +107,13 @@ export async function startAttempt(input: {
    * topshirib 100% olishi mumkin edi.
    */
   questionCount?: number;
+  /**
+   * Vazifa orqali boshlanganda — `services/assignments.ts` dagi
+   * `startAssignmentAttempt` beradi (u egalik va muddatni o'zi tekshiradi).
+   * `/api/attempts` bu maydonni tanadan ATAYLAB o'qimaydi: aks holda
+   * o'quvchi istalgan mashqini begona vazifaga "bajarildi" deb yozdira olardi.
+   */
+  assignmentId?: string;
 }): Promise<{
   attemptId: string;
   mode: AttemptMode;
@@ -158,6 +165,7 @@ export async function startAttempt(input: {
       mode: input.mode,
       groupId: input.groupId ?? null,
       questionIds: selectedIds,
+      assignmentId: input.assignmentId ?? null,
     },
   });
 

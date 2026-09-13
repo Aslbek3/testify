@@ -7,6 +7,7 @@ import {
   EXAM_DURATION_SECONDS,
 } from "@/services/attempts";
 import { getStudentGroupId } from "@/services/studentDashboard";
+import { startAssignmentAttempt, AssignmentError } from "@/services/assignments";
 import { TestRunner } from "./TestRunner";
 import type { AttemptMode } from "@prisma/client";
 
@@ -15,10 +16,10 @@ const VALID_MODES: AttemptMode[] = ["PRACTICE", "EXAM"];
 export default async function TestPage({
   searchParams,
 }: {
-  searchParams: Promise<{ attemptId?: string; mode?: string; savollar?: string }>;
+  searchParams: Promise<{ attemptId?: string; mode?: string; savollar?: string; vazifa?: string }>;
 }) {
   const user = await requireActiveStudent();
-  const { attemptId, mode, savollar } = await searchParams;
+  const { attemptId, mode, savollar, vazifa } = await searchParams;
 
   // Urinish allaqachon boshlangan — davom ettiramiz (sahifa yangilansa ham
   // progress yo'qolmasligi shu orqali ta'minlanadi).
@@ -38,6 +39,21 @@ export default async function TestPage({
     }
 
     return <TestRunner attempt={resumed} examDurationSeconds={EXAM_DURATION_SECONDS} />;
+  }
+
+  // Vazifa orqali — rejim va mavzularni vazifaning o'zi belgilaydi, URL'dagi
+  // `mode`ga qaralmaydi. Egalik va muddat service ichida tekshiriladi.
+  if (vazifa) {
+    let started;
+    try {
+      started = await startAssignmentAttempt({ user, assignmentId: vazifa });
+    } catch (error) {
+      if (error instanceof AssignmentError || error instanceof AttemptError) {
+        redirect(`/student?xato=${encodeURIComponent(error.message)}`);
+      }
+      throw error;
+    }
+    redirect(`/student/test?attemptId=${started.attemptId}`);
   }
 
   // Yangi urinish — boshlab, kanonik URL'ga (attemptId bilan) yo'naltiramiz,

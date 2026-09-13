@@ -130,6 +130,33 @@ export function canTakeAttempt(user: SessionUser, attempt: AttemptRef): boolean 
 }
 
 /**
+ * Vazifa berish va o'chirish: FAQAT guruhning HOZIRGI ustozi.
+ *
+ * Direktor ATAYLAB yo'q (mahsulot qarori): vazifa — ustozning o'quv
+ * ishi, direktor uni guruh sahifasida faqat ko'radi (`canViewGroup`).
+ * Tekshiruv vazifani kim yaratganiga emas, guruhga qaraydi: guruh boshqa
+ * ustozga berilsa, eski vazifalarni ham yangi ustoz boshqaradi.
+ */
+export function canManageAssignment(user: SessionUser, group: GroupRef): boolean {
+  return isTutor(user) && user.id === group.tutorId;
+}
+
+/**
+ * Vazifani bajarish (vazifa orqali test boshlash): shu guruhdagi o'quvchi.
+ *
+ * O'quvchining guruhi sessiyada yo'q — chaqiruvchi uni bazadan olib
+ * beradi (`getStudentGroupId`). `null` (guruhsiz o'quvchi) hech qachon
+ * mos kelmaydi.
+ */
+export function canTakeAssignment(
+  user: SessionUser,
+  assignment: { groupId: string },
+  studentGroupId: string | null
+): boolean {
+  return isStudent(user) && studentGroupId !== null && studentGroupId === assignment.groupId;
+}
+
+/**
  * O'quvchi to'lovlarini boshqarish (sozlamalar, chekni tasdiqlash/rad
  * etish, naqd to'lovni belgilash): FAQAT shu tashkilot Direktori.
  *

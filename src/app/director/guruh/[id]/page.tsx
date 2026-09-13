@@ -17,6 +17,8 @@ import { StatTile } from "@/components/StatTile";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
 import { GroupRosterTable } from "../../GroupRosterTable";
 import { GroupAnalyticsCards } from "@/components/GroupAnalyticsCards";
+import { GroupAssignmentsCard } from "@/components/GroupAssignmentsCard";
+import { listAssignmentsForGroup } from "@/services/assignments";
 import { EditGroupButton } from "../../EditGroupButton";
 
 export default async function DirectorGroupPage({
@@ -33,11 +35,12 @@ export default async function DirectorGroupPage({
   // boshqa avtomaktabda qaysi guruhlar borligini aniqlay olardi.
   if (!group || !canViewGroup(user, group)) notFound();
 
-  const [roster, analytics, recentExamCount, tutors] = await Promise.all([
+  const [roster, analytics, recentExamCount, tutors, assignments] = await Promise.all([
     getRosterForGroup(groupId),
     getGroupAnalytics(groupId),
     getRecentExamAttemptCount(groupId),
     listTutorsForOrganization(group.organizationId),
+    listAssignmentsForGroup(groupId),
   ]);
 
   const averageScore = averageScoreFromRoster(roster);
@@ -91,6 +94,12 @@ export default async function DirectorGroupPage({
           sub="Yakunlanganlari"
         />
       </div>
+
+      <GroupAssignmentsCard
+        assignments={assignments}
+        canManage={false}
+        hint={`Vazifalarni guruh ustozi (${group.tutorName}) beradi — bu yerda faqat ko'rinadi.`}
+      />
 
       <GroupAnalyticsCards analytics={analytics} />
 
