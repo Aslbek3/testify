@@ -42,6 +42,20 @@ export function formatDate(date: Date): string {
   return `${day}/${month}/${year}`;
 }
 
+/**
+ * `kk/oo/yyyy ss:dd` — `formatDate` bilan bir xil qoida (O'zbekiston vaqti,
+ * lokalsiz). Bildirishnomalar kabi bir kunda bir nechta hodisa bo'ladigan
+ * joylar uchun: faqat sana "qaysi biri oldin" degan savolga javob bermaydi.
+ */
+export function formatDateTime(date: Date): string {
+  const shifted = new Date(
+    date.getTime() + UZBEKISTAN_UTC_OFFSET_MINUTES * 60 * 1000
+  );
+  const hours = String(shifted.getUTCHours()).padStart(2, "0");
+  const minutes = String(shifted.getUTCMinutes()).padStart(2, "0");
+  return `${formatDate(date)} ${hours}:${minutes}`;
+}
+
 
 /**
  * Ajratgich sifatida uzilmas probel (` `) ishlatiladi: summa tor

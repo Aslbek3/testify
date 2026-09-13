@@ -18,6 +18,8 @@ import {
   type StudentPaymentMonths,
 } from "@/lib/payments";
 import { deleteReceipt, saveReceipt } from "@/lib/receiptStorage";
+import { formatAmountUzs, formatDate } from "@/lib/format";
+import { createNotifications } from "@/services/notifications";
 
 export class StudentPaymentError extends Error {
   status: number;
@@ -227,18 +229,39 @@ async function lockStudent(tx: Prisma.TransactionClient, studentId: string) {
   await tx.$queryRaw`SELECT id FROM "StudentProfile" WHERE "userId" = ${studentId} FOR UPDATE`;
 }
 
-/** Muddatni uzaytiradi — faqat `lockStudent` dan keyin, tranzaksiya ichida. */
+/**
+ * Muddatni uzaytiradi — faqat `lockStudent` dan keyin, tranzaksiya ichida.
+ * Yangi muddatni qaytaradi (o'quvchiga bildirishnomada aytiladi).
+ */
 async function extendStudent(
   tx: Prisma.TransactionClient,
   studentId: string,
   months: number
-): Promise<void> {
+): Promise<Date> {
   const input = await loadAccessInput(tx, studentId);
   if (!input) throw new StudentPaymentError("O'quvchi topilmadi", 404);
+  const paidUntil = extendSubscription(getCoveredUntil(input), months);
   await tx.studentProfile.update({
     where: { userId: studentId },
-    data: { paidUntil: extendSubscription(getCoveredUntil(input), months) },
+    data: { paidUntil },
   });
+  return paidUntil;
+}
+
+/** O'quvchiga "to'lov tasdiqlandi" — karta va naqd uchun bir xil matn. */
+async function notifyPaymentConfirmed(
+  tx: Prisma.TransactionClient,
+  input: { studentId: string; months: number; paidUntil: Date; method: StudentPaymentMethod }
+) {
+  await createNotifications(tx, [
+    {
+      userId: input.studentId,
+      type: "PAYMENT_CONFIRMED",
+      title: input.method === "CASH" ? "Naqd to'lovingiz qayd etildi" : "To'lovingiz tasdiqlandi",
+      body: `${input.months} oy · Testlar ${formatDate(input.paidUntil)} gacha ochiq`,
+      link: "/student/tolov",
+    },
+  ]);
 }
 
 // ---------------------------------------------------------------------------
@@ -342,6 +365,7 @@ export async function submitStudentPayment(input: {
   const student = await prisma.user.findUnique({
     where: { id: input.studentId },
     select: {
+      name: true,
       organizationId: true,
       organization: { select: settingsSelect },
     },
@@ -394,6 +418,22 @@ export async function submitStudentPayment(input: {
           receiptMime: saved.mime,
         },
       });
+      // Tashkilotning barcha faol direktorlariga — chekni istalgani ko'rib
+      // chiqa oladi (`canManageStudentPayments`).
+      const directors = await tx.user.findMany({
+        where: { organizationId: student.organizationId!, role: "DIRECTOR", isActive: true },
+        select: { id: true },
+      });
+      await createNotifications(
+        tx,
+        directors.map((d) => ({
+          userId: d.id,
+          type: "PAYMENT_SUBMITTED" as const,
+          title: `Yangi chek: ${student.name}`,
+          body: `${input.months} oy · ${formatAmountUzs(amount)}`,
+          link: "/director/tolovlar",
+        }))
+      );
     });
   } catch (error) {
     await deleteReceipt(saved.key);
@@ -433,7 +473,13 @@ export async function recordCashPayment(input: {
         reviewedById: input.reviewerId,
       },
     });
-    await extendStudent(tx, input.studentId, input.months);
+    const paidUntil = await extendStudent(tx, input.studentId, input.months);
+    await notifyPaymentConfirmed(tx, {
+      studentId: input.studentId,
+      months: input.months,
+      paidUntil,
+      method: "CASH",
+    });
   });
 }
 
@@ -489,7 +535,13 @@ export async function confirmStudentPayment(input: {
       reviewedAt: new Date(),
       reviewedById: input.reviewerId,
     });
-    await extendStudent(tx, payment.studentId, payment.months);
+    const paidUntil = await extendStudent(tx, payment.studentId, payment.months);
+    await notifyPaymentConfirmed(tx, {
+      studentId: payment.studentId,
+      months: payment.months,
+      paidUntil,
+      method: "CARD",
+    });
   });
 }
 
@@ -505,6 +557,12 @@ export async function rejectStudentPayment(input: {
     throw new StudentPaymentError(`Sabab ${MAX_TEXT_LENGTH} belgidan oshmasligi kerak`);
   }
 
+  const payment = await prisma.studentPayment.findUnique({
+    where: { id: input.paymentId },
+    select: { studentId: true },
+  });
+  if (!payment) throw new StudentPaymentError("To'lov topilmadi", 404);
+
   await prisma.$transaction(async (tx) => {
     await closePending(tx, input.paymentId, {
       status: "REJECTED",
@@ -512,6 +570,15 @@ export async function rejectStudentPayment(input: {
       reviewedById: input.reviewerId,
       reviewNote: reason,
     });
+    await createNotifications(tx, [
+      {
+        userId: payment.studentId,
+        type: "PAYMENT_REJECTED",
+        title: "Chekingiz rad etildi",
+        body: `Sabab: ${reason} · Chekni qayta yuborishingiz mumkin`,
+        link: "/student/tolov",
+      },
+    ]);
   });
 }
 

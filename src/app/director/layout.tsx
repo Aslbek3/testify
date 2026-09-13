@@ -7,6 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { SubscriptionWarningBanner } from "./SubscriptionCard";
 import { ORGANIZATION_BILLING_UI_ENABLED } from "@/lib/payments";
 import { countPendingStudentPayments } from "@/services/studentPayments";
+import { countUnreadNotifications } from "@/services/notifications";
 
 export default async function DirectorLayout({ children }: { children: ReactNode }) {
   const user = await requireRole("DIRECTOR");
@@ -23,13 +24,14 @@ export default async function DirectorLayout({ children }: { children: ReactNode
   //
   // Avtomaktab → owner to'lovi ekranlari o'chiq bo'lsa banner ham
   // chiqmaydi: u "Obuna" kartochkasiga yo'naltiradi, u esa yashirilgan.
-  const [subscription, pendingStudentPayments] = await Promise.all([
+  const [subscription, pendingStudentPayments, unreadNotifications] = await Promise.all([
     user.organizationId && ORGANIZATION_BILLING_UI_ENABLED
       ? getSubscriptionSummary(user.organizationId)
       : null,
     // Menyudagi "To'lovlar (N)" — direktor qaysi sahifada bo'lmasin,
     // yangi chek kelganini ko'rsin.
     user.organizationId ? countPendingStudentPayments(user.organizationId) : 0,
+    countUnreadNotifications(user.id),
   ]);
   const state = getSubscriptionState(
     subscription
@@ -45,6 +47,7 @@ export default async function DirectorLayout({ children }: { children: ReactNode
       role="DIRECTOR"
       userName={userName}
       badges={{ "/director/tolovlar": pendingStudentPayments }}
+      unreadNotifications={unreadNotifications}
     >
       {/* "blocked" holati bu yerga yetib kelmaydi: sessiya tekshiruvi
           (`requireRole`) bunday foydalanuvchini allaqachon chiqarib

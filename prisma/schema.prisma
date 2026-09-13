@@ -220,8 +220,57 @@ model User {
   studentPayments         StudentPayment[] @relation("StudentPaymentStudent")
   studentPaymentsReviewed StudentPayment[] @relation("StudentPaymentReviewer")
   assignmentsCreated      Assignment[]     @relation("AssignmentCreatedBy")
+  notifications           Notification[]
 
   @@index([organizationId])
+}
+
+enum NotificationType {
+  /**
+   * O'quvchiga: ustoz yangi vazifa berdi.
+   */
+  ASSIGNMENT_NEW
+  /**
+   * Direktorga: o'quvchi chek yubordi.
+   */
+  PAYMENT_SUBMITTED
+  /**
+   * O'quvchiga: to'lov tasdiqlandi (chek yoki naqd).
+   */
+  PAYMENT_CONFIRMED
+  /**
+   * O'quvchiga: chek rad etildi.
+   */
+  PAYMENT_REJECTED
+}
+
+/**
+ * Sayt ichidagi bildirishnoma (menyudagi qo'ng'iroqcha).
+ * Matn yaratilgan paytda TAYYOR holda saqlanadi, turi va ID'lardan har
+ * safar qayta yig'ilmaydi: "12/10/2026 gacha to'landi" degan xabar keyin
+ * muddat yana uzaytirilsa ham o'sha paytdagi faktni aytib turishi kerak.
+ * `type` esa filtr va kelajakdagi kanallar (Telegram) uchun.
+ * Muddat eslatmalari ("vazifa ertaga tugaydi") bu yerga YOZILMAYDI — ular
+ * sahifa ochilganda hisoblanadi. Aks holda ularni o'z vaqtida yaratadigan
+ * fon vazifasi (cron) kerak bo'lardi.
+ */
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String?
+  /**
+   * Bosilganda ochiladigan sahifa (ichki yo'l, masalan `/student`).
+   */
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
 }
 
 model Group {

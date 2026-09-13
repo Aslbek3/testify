@@ -2,20 +2,23 @@ import type { ReactNode } from "react";
 import { requireRole } from "@/lib/auth";
 import { getUserName } from "@/services/users";
 import { getStudentAccessForUser } from "@/services/studentPayments";
+import { countUnreadNotifications } from "@/services/notifications";
 import { AppShell } from "@/components/AppShell";
 import { StudentAccessBanner } from "./StudentAccessBanner";
 
 export default async function StudentLayout({ children }: { children: ReactNode }) {
   const user = await requireRole("STUDENT");
-  const [userName, access] = await Promise.all([
+  const [userName, access, unreadNotifications] = await Promise.all([
     getUserName(user.id),
     getStudentAccessForUser(user.id),
+    countUnreadNotifications(user.id),
   ]);
 
   return (
     <AppShell
       role="STUDENT"
       userName={userName ?? "O'quvchi"}
+      unreadNotifications={unreadNotifications}
       // Avtomaktab to'lovni tizim orqali qabul qilmasa, "To'lov" bandi
       // bo'sh sahifaga olib borardi — ko'rsatilmaydi.
       hiddenHrefs={access.kind === "free" ? ["/student/tolov"] : undefined}

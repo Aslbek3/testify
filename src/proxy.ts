@@ -11,15 +11,18 @@ const ROLE_PREFIX: Record<string, Role> = {
   student: "STUDENT",
 };
 
+const SHARED_SEGMENTS = ["profil", "bildirishnomalar"];
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const segment = pathname.split("/")[1];
   const requiredRole = ROLE_PREFIX[segment];
 
-  // Profil — barcha rollar uchun umumiy sahifa: rol tekshirilmaydi, faqat
-  // sessiya bor-yo'qligi. Shuning uchun u ROLE_PREFIX'ga kirmaydi, lekin
-  // himoyasiz ham qolmasligi kerak.
-  const isSharedPage = segment === "profil";
+  // Profil va bildirishnomalar — barcha rollar uchun umumiy sahifalar
+  // (`app/(umumiy)`): rol tekshirilmaydi, faqat sessiya bor-yo'qligi.
+  // Shuning uchun ular ROLE_PREFIX'ga kirmaydi, lekin himoyasiz ham
+  // qolmasligi kerak.
+  const isSharedPage = SHARED_SEGMENTS.includes(segment);
   if (!requiredRole && !isSharedPage) return NextResponse.next();
 
   const token = request.cookies.get(SESSION_COOKIE)?.value;
@@ -45,5 +48,6 @@ export const config = {
     "/tutor/:path*",
     "/student/:path*",
     "/profil/:path*",
+    "/bildirishnomalar/:path*",
   ],
 };

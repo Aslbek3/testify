@@ -51,11 +51,22 @@ function getActiveHref(pathname: string, items: NavItem[]): string | undefined {
     .sort((a, b) => b.length - a.length)[0];
 }
 
+const NOTIFICATIONS_HREF = "/bildirishnomalar";
+
+function CountBadge({ count }: { count: number }) {
+  return (
+    <span className="rounded-full bg-brand px-2 py-0.5 text-xs font-semibold text-white">
+      {count}
+    </span>
+  );
+}
+
 export function AppShell({
   role,
   userName,
   hiddenHrefs,
   badges,
+  unreadNotifications = 0,
   children,
 }: {
   role: Role;
@@ -69,6 +80,8 @@ export function AppShell({
   hiddenHrefs?: string[];
   /** Band yonidagi son (masalan tasdiq kutayotgan to'lovlar). 0 — ko'rsatilmaydi. */
   badges?: Record<string, number>;
+  /** O'qilmagan bildirishnomalar — menyuda va mobil sarlavhadagi qo'ng'iroqchada. */
+  unreadNotifications?: number;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -170,14 +183,28 @@ export function AppShell({
                 )}
               >
                 {item.label}
-                {badges?.[item.href] ? (
-                  <span className="rounded-full bg-brand px-2 py-0.5 text-xs font-semibold text-white">
-                    {badges[item.href]}
-                  </span>
-                ) : null}
+                {badges?.[item.href] ? <CountBadge count={badges[item.href]} /> : null}
               </Link>
             );
           })}
+
+          {/* Bildirishnomalar — barcha rollar uchun umumiy band, rolning
+              o'z bo'limlaridan keyin. `NAV_ITEMS` ga qo'shilmagan: u yerda
+              har rolga alohida takrorlanishi kerak bo'lardi. */}
+          <Link
+            href={NOTIFICATIONS_HREF}
+            onClick={() => setMobileOpen(false)}
+            aria-current={pathname === NOTIFICATIONS_HREF ? "page" : undefined}
+            className={cn(
+              "flex items-center justify-between gap-2 rounded-md px-3 py-3 text-sm font-medium transition-colors pointer-fine:py-2",
+              pathname === NOTIFICATIONS_HREF
+                ? "bg-white/10 text-white"
+                : "text-white/60 hover:bg-white/5 hover:text-white"
+            )}
+          >
+            Bildirishnomalar
+            {unreadNotifications > 0 && <CountBadge count={unreadNotifications} />}
+          </Link>
 
           {/* "Sozlamalar" — alohida guruh. Ilgari profilga faqat pastdagi
               ism bloki orqali kirilardi va uni ko'z bilan topib bo'lmasdi:
@@ -258,6 +285,32 @@ export function AppShell({
             </svg>
           </button>
           <span className="text-sm font-semibold text-text">Testify</span>
+          {/* Mobilda menyu yopiq turadi — yangi bildirishnoma borligini
+              uni ochmasdan ham ko'rish uchun. */}
+          <Link
+            href={NOTIFICATIONS_HREF}
+            aria-label={
+              unreadNotifications > 0
+                ? `Bildirishnomalar: ${unreadNotifications} ta o'qilmagan`
+                : "Bildirishnomalar"
+            }
+            className="relative ml-auto flex h-11 w-11 items-center justify-center rounded-md text-text hover:bg-bg-subtle"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path
+                d="M5 8a5 5 0 0 1 10 0c0 4 1.5 5.5 1.5 5.5h-13S5 12 5 8ZM8.5 16.5a1.5 1.5 0 0 0 3 0"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            {unreadNotifications > 0 && (
+              <span className="absolute right-1 top-1 min-w-5 rounded-full bg-brand px-1 text-center text-xs font-semibold leading-5 text-white">
+                {unreadNotifications}
+              </span>
+            )}
+          </Link>
         </header>
 
         <main className="flex-1 p-6 md:p-8">

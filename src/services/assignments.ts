@@ -12,9 +12,11 @@ import {
   parseAssignmentDueDate,
   validateAssignmentDueAt,
 } from "@/lib/assignments";
+import { formatDate } from "@/lib/format";
 import type { SessionUser } from "@/types/auth";
 import { countAvailableQuestions, startAttempt } from "@/services/attempts";
 import { getStudentGroupId } from "@/services/studentDashboard";
+import { createNotifications } from "@/services/notifications";
 
 /**
  * Vazifa bilan bog'liq domen xatolari. API route va sahifalar `status`ni
@@ -67,6 +69,7 @@ export async function createAssignment(input: {
   }
 
   let topicIds: string[] = [];
+  let topicNames: string[] = [];
   if (input.kind === "PRACTICE") {
     topicIds = [...new Set(input.topicIds)];
     if (topicIds.length === 0) {
@@ -77,12 +80,15 @@ export async function createAssignment(input: {
     }
     // Savolsiz mavzu ham rad etiladi: o'quvchi vazifani ocholmay
     // "savollar topilmadi" xatosiga urilgandagina bu ma'lum bo'lardi.
-    const topicsWithQuestions = await prisma.topic.count({
+    const topics = await prisma.topic.findMany({
       where: { id: { in: topicIds }, questions: { some: {} } },
+      select: { id: true, name: true },
     });
-    if (topicsWithQuestions !== topicIds.length) {
+    if (topics.length !== topicIds.length) {
       throw new AssignmentError("Tanlangan mavzulardan biri topilmadi yoki unda savol yo'q");
     }
+    const nameById = new Map(topics.map((t) => [t.id, t.name]));
+    topicNames = topicIds.map((id) => nameById.get(id) as string);
   } else {
     // Imtihon butun bazadan tuziladi. Savollar yetmasa, o'quvchi uni
     // boshlay olmaydi — bajarib bo'lmaydigan vazifani berishga yo'l
@@ -94,17 +100,41 @@ export async function createAssignment(input: {
     }
   }
 
-  return prisma.assignment.create({
-    data: {
-      groupId: input.groupId,
-      createdById: input.createdById,
-      kind: input.kind,
-      topicIds,
-      targetCount: input.targetCount,
-      dueAt,
-      note: note || null,
-    },
-    select: { id: true },
+  return prisma.$transaction(async (tx) => {
+    const assignment = await tx.assignment.create({
+      data: {
+        groupId: input.groupId,
+        createdById: input.createdById,
+        kind: input.kind,
+        topicIds,
+        targetCount: input.targetCount,
+        dueAt,
+        note: note || null,
+      },
+      select: { id: true },
+    });
+
+    // Faqat HOZIR guruhda turgan, bloklanmagan o'quvchilarga. Keyin
+    // qo'shilgan o'quvchi xabar olmaydi, lekin vazifani "Vazifalarim" da
+    // baribir ko'radi — ro'yxat guruhdan hisoblanadi.
+    const students = await tx.studentProfile.findMany({
+      where: { groupId: input.groupId, user: { isActive: true } },
+      select: { userId: true },
+    });
+    const title = `Yangi vazifa: ${describeAssignment(input.kind, input.targetCount, topicNames)}`;
+    const body = [`Muddat: ${formatDate(dueAt)}`, note].filter(Boolean).join(" · ");
+    await createNotifications(
+      tx,
+      students.map((s) => ({
+        userId: s.userId,
+        type: "ASSIGNMENT_NEW" as const,
+        title,
+        body,
+        link: "/student",
+      }))
+    );
+
+    return assignment;
   });
 }
 
