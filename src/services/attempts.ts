@@ -1,4 +1,4 @@
-import { Prisma, type AttemptMode } from "@prisma/client";
+import { Prisma, type AttemptMode, type AttemptSource } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { canTakeAttempt } from "@/lib/permissions";
 import { toStringArray } from "@/lib/json";
@@ -114,6 +114,16 @@ export async function startAttempt(input: {
    * o'quvchi istalgan mashqini begona vazifaga "bajarildi" deb yozdira olardi.
    */
   assignmentId?: string;
+  /**
+   * Urinish qayerdan boshlangani — faqat yorliq va "Xatolarim" filtri uchun.
+   * Qoidalarni `mode` boshqaraveradi (`schema.prisma`, `AttemptSource`).
+   */
+  source?: AttemptSource;
+  /**
+   * Savollar ro'yxati oldindan ma'lum bo'lsa (xatolar ustida ishlash) —
+   * tanlov shu ro'yxat ichidan qilinadi. `topicIds` dan ustun turadi.
+   */
+  questionIds?: string[];
 }): Promise<{
   attemptId: string;
   mode: AttemptMode;
@@ -141,9 +151,11 @@ export async function startAttempt(input: {
   }
 
   const where =
-    input.topicIds && input.topicIds.length > 0
-      ? { topicId: { in: input.topicIds } }
-      : {};
+    input.questionIds && input.questionIds.length > 0
+      ? { id: { in: input.questionIds } }
+      : input.topicIds && input.topicIds.length > 0
+        ? { topicId: { in: input.topicIds } }
+        : {};
 
   const candidates = await prisma.question.findMany({ where, select: { id: true } });
   if (candidates.length === 0) {
@@ -166,6 +178,7 @@ export async function startAttempt(input: {
       groupId: input.groupId ?? null,
       questionIds: selectedIds,
       assignmentId: input.assignmentId ?? null,
+      source: input.source ?? null,
     },
   });
 

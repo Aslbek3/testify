@@ -8,6 +8,8 @@ import {
 } from "@/services/attempts";
 import { getStudentGroupId } from "@/services/studentDashboard";
 import { startAssignmentAttempt, AssignmentError } from "@/services/assignments";
+import { startMistakesAttempt } from "@/services/mistakes";
+import { parseMistakeSources, parseTopicIds } from "@/lib/mistakeFilters";
 import { TestRunner } from "./TestRunner";
 import type { AttemptMode } from "@prisma/client";
 
@@ -16,10 +18,18 @@ const VALID_MODES: AttemptMode[] = ["PRACTICE", "EXAM"];
 export default async function TestPage({
   searchParams,
 }: {
-  searchParams: Promise<{ attemptId?: string; mode?: string; savollar?: string; vazifa?: string }>;
+  searchParams: Promise<{
+    attemptId?: string;
+    mode?: string;
+    savollar?: string;
+    vazifa?: string;
+    xatolar?: string;
+    manba?: string;
+    mavzu?: string;
+  }>;
 }) {
   const user = await requireActiveStudent();
-  const { attemptId, mode, savollar, vazifa } = await searchParams;
+  const { attemptId, mode, savollar, vazifa, xatolar, manba, mavzu } = await searchParams;
 
   // Urinish allaqachon boshlangan — davom ettiramiz (sahifa yangilansa ham
   // progress yo'qolmasligi shu orqali ta'minlanadi).
@@ -39,6 +49,24 @@ export default async function TestPage({
     }
 
     return <TestRunner attempt={resumed} examDurationSeconds={EXAM_DURATION_SECONDS} />;
+  }
+
+  // Xatolar ustida ishlash — savollar ro'yxatini "Xatolarim" filtri
+  // belgilaydi (URL'dagi filtr aynan o'sha sahifadagidek qo'llanadi).
+  if (xatolar) {
+    let started;
+    try {
+      started = await startMistakesAttempt({
+        user,
+        filters: { sources: parseMistakeSources(manba), topicIds: parseTopicIds(mavzu) },
+      });
+    } catch (error) {
+      if (error instanceof AttemptError) {
+        redirect(`/student/xatolarim?xato=${encodeURIComponent(error.message)}`);
+      }
+      throw error;
+    }
+    redirect(`/student/test?attemptId=${started.attemptId}`);
   }
 
   // Vazifa orqali — rejim va mavzularni vazifaning o'zi belgilaydi, URL'dagi
@@ -75,6 +103,11 @@ export default async function TestPage({
         mode: mode as AttemptMode,
         groupId,
         questionCount,
+        // Maraton alohida rejim emas (mashqning varianti) — uni faqat
+        // savollar soni tanlanganidan bilamiz. `source` shu farqni saqlab
+        // qoladi, "Xatolarim" filtri esa shunga tayanadi.
+        source:
+          mode === "EXAM" ? "EXAM" : questionCount !== undefined ? "MARATHON" : "PRACTICE",
       });
     } catch (error) {
       // Masalan "Imtihon uchun savollar yetarli emas" yoki noto'g'ri

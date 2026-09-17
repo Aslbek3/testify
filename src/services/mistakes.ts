@@ -1,12 +1,30 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { toStringArray } from "@/lib/json";
+import {
+  filterMistakes,
+  type MistakeFilters,
+  type MistakeSource,
+} from "@/lib/mistakeFilters";
+import type { SessionUser } from "@/types/auth";
+import { startAttempt, AttemptError } from "@/services/attempts";
+import { getStudentGroupId } from "@/services/studentDashboard";
+import { QUESTION_COUNT } from "@/lib/examRules";
 
 /** "Xatolarim" ro'yxatining bitta qatori — bitta SAVOL (bitta javob emas). */
 export type MistakeItem = {
   questionId: string;
   text: string;
+  /** Mavzu bo'yicha filtr uchun. */
+  topicId: string;
   topicName: string;
+  /**
+   * Shu savolda xato qilingan urinishlarning manbalari (takrorsiz) —
+   * "Imtihonda xato qilganmi yoki mashqdami" degan savolga javob.
+   * Eski urinishlarda `source` bo'sh: ular `mode` ga qarab "Imtihon" yoki
+   * "Mashq" deb hisoblanadi.
+   */
+  sources: MistakeSource[];
   /**
    * O'quvchining shu savolga bergan OXIRGI javobi matni.
    *
@@ -35,6 +53,8 @@ export type StudentMistakes = {
   items: MistakeItem[];
   stillWrongCount: number;
   fixedCount: number;
+  /** Jami noto'g'ri javoblar soni — bitta savol bir necha marta sanaladi. */
+  totalWrongAnswers: number;
   /**
    * Umuman yakunlangan urinish bormi. Bo'sh ro'yxatning ikki xil sababini
    * ajratish uchun kerak: "hali test yechmagansiz" va "test yechgansiz,
@@ -49,6 +69,8 @@ export type StudentMistakes = {
 type MistakeRow = {
   questionId: string;
   text: string;
+  topicId: string;
+  sources: string[];
   options: Prisma.JsonValue;
   correctOptionIndex: number;
   explanation: string | null;
@@ -99,7 +121,13 @@ export async function getStudentMistakes(studentId: string): Promise<StudentMist
           aa."isCorrect",
           aa."selectedOptionIndex",
           aa."answeredAt",
-          aa."id"
+          aa."id",
+          -- Eski urinishlarda source ustuni bo'sh (maydon keyin qo'shilgan) —
+          -- ular rejimiga qarab "Imtihon" yoki "Mashq" deb hisoblanadi.
+          COALESCE(
+            a."source"::text,
+            CASE WHEN a."mode" = 'EXAM' THEN 'EXAM' ELSE 'PRACTICE' END
+          ) AS "source"
         FROM "AttemptAnswer" aa
         JOIN "Attempt" a ON a."id" = aa."attemptId"
         WHERE a."studentId" = ${studentId}
@@ -125,7 +153,11 @@ export async function getStudentMistakes(studentId: string): Promise<StudentMist
           (array_agg("isCorrect" ORDER BY "answeredAt" DESC, "id" DESC))[1]
             AS "lastIsCorrect",
           (array_agg("selectedOptionIndex" ORDER BY "answeredAt" DESC, "id" DESC))[1]
-            AS "lastSelectedOptionIndex"
+            AS "lastSelectedOptionIndex",
+          -- Faqat XATO javoblarning manbalari: savolni mashqda to'g'ri,
+          -- imtihonda noto'g'ri ishlagan bo'lsa, u "Imtihon" filtrida
+          -- chiqishi kerak, "Mashq" da emas.
+          array_agg(DISTINCT "source") FILTER (WHERE NOT "isCorrect") AS "sources"
         FROM answers
         GROUP BY "questionId"
         -- Hech qachon xato qilinmagan savol bu ro'yxatga umuman kirmaydi.
@@ -138,7 +170,9 @@ export async function getStudentMistakes(studentId: string): Promise<StudentMist
         q."correctOptionIndex" AS "correctOptionIndex",
         q."explanation"        AS "explanation",
         q."legalReference"     AS "legalReference",
+        q."topicId"            AS "topicId",
         t."name"               AS "topicName",
+        p."sources",
         p."wrongCount",
         p."lastWrongAt",
         p."lastIsCorrect",
@@ -160,7 +194,9 @@ export async function getStudentMistakes(studentId: string): Promise<StudentMist
     return {
       questionId: row.questionId,
       text: row.text,
+      topicId: row.topicId,
       topicName: row.topicName,
+      sources: (row.sources ?? []) as MistakeSource[],
       lastAnswerText: options[row.lastSelectedOptionIndex] ?? null,
       correctAnswerText: options[row.correctOptionIndex] ?? "",
       explanation: row.explanation,
@@ -177,6 +213,44 @@ export async function getStudentMistakes(studentId: string): Promise<StudentMist
     // raqamlarni ko'rsatadi, ikki joyda qayta filtrlanmaydi.
     stillWrongCount: items.filter((item) => !item.isFixed).length,
     fixedCount: items.filter((item) => item.isFixed).length,
+    totalWrongAnswers: items.reduce((sum, item) => sum + item.wrongCount, 0),
     hasFinishedAttempt: finishedAttemptCount > 0,
   };
+}
+
+/**
+ * "Xatolardan test" — faqat hal qilinmagan xatolardan tuzilgan mashq.
+ *
+ * Nega oddiy urinish mexanizmi orqali (alohida yo'l emas): javoblar
+ * odatdagidek `AttemptAnswer` ga yoziladi, ya'ni o'quvchi to'g'ri ishlagan
+ * savol shu ro'yxatdan O'ZI chiqib ketadi (`isFixed`). Alohida yo'l
+ * qilinganda statistika ikkiga bo'linib, ro'yxat hech qachon qisqarmasdi.
+ *
+ * Tanlov: eng ko'p xato qilingan savollardan boshlab (`getStudentMistakes`
+ * allaqachon shu tartibda qaytaradi) `QUESTION_COUNT.PRACTICE` tagacha
+ * olinadi; tartib esa urinish ichida aralashtiriladi.
+ */
+export async function startMistakesAttempt(input: {
+  user: SessionUser;
+  filters: MistakeFilters;
+}): Promise<{ attemptId: string }> {
+  const mistakes = await getStudentMistakes(input.user.id);
+  const stillWrong = filterMistakes(
+    mistakes.items.filter((item) => !item.isFixed),
+    input.filters
+  );
+
+  if (stillWrong.length === 0) {
+    throw new AttemptError("Tanlangan filtrda hal qilinmagan xato yo'q");
+  }
+
+  const [groupId] = await Promise.all([getStudentGroupId(input.user.id)]);
+  const started = await startAttempt({
+    user: input.user,
+    mode: "PRACTICE",
+    source: "MISTAKES",
+    groupId,
+    questionIds: stillWrong.slice(0, QUESTION_COUNT.PRACTICE).map((m) => m.questionId),
+  });
+  return { attemptId: started.attemptId };
 }

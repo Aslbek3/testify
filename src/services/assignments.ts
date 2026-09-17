@@ -422,6 +422,7 @@ export async function startAssignmentAttempt(input: {
   const started = await startAttempt({
     user: input.user,
     mode: assignment.kind,
+    source: "ASSIGNMENT",
     topicIds: assignment.kind === "PRACTICE" ? assignment.topicIds : undefined,
     groupId: studentGroupId,
     assignmentId: assignment.id,

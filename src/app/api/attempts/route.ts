@@ -44,7 +44,15 @@ export async function POST(request: Request) {
   const groupId = await getStudentGroupId(user.id);
 
   try {
-    const result = await startAttempt({ user, mode, topicIds, groupId, questionCount });
+    const result = await startAttempt({
+      user,
+      mode,
+      topicIds,
+      groupId,
+      questionCount,
+      source:
+        mode === "EXAM" ? "EXAM" : questionCount !== undefined ? "MARATHON" : "PRACTICE",
+    });
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
     if (error instanceof AttemptError) {

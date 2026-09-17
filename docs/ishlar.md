@@ -12,16 +12,16 @@ Holat: ⬜ boshlanmagan · 🔵 jarayonda · ✅ tayyor
   ochiq turgan parol bilan ishlayapti. `RESET_TEST_PASSWORD` bilan
   almashtirish (`scripts/reset-test-accounts.ts`).
 
-## 1. Xatolarim — xatolardan test
+## 1. Xatolarim — xatolardan test ✅ (bajarildi)
 
-- ⬜ `Attempt.source` maydoni (mashq · maraton · imtihon · vazifa · xatolar) —
+- ✅ `Attempt.source` maydoni (mashq · maraton · imtihon · vazifa · xatolar) —
   faqat yorliq uchun; qoidalarni avvalgidek `mode` boshqaradi
-- ⬜ Manba filtri, bir nechtasini birga tanlash
-- ⬜ Mavzu bo'yicha filtr
-- ⬜ Uchinchi ko'rsatkich: Hali xato · Tuzatilgan · Jami xato
-- ⬜ "Xatolardan test": 10 ta savol, tanlangan filtr bo'yicha, oddiy test ekranida
-- ⬜ Yuqoridagi "Test boshlash" tugmasi shu testga ulanadi (hozir mashqqa boradi)
-- ⬜ Xato qolmagan holat ekrani
+- ✅ Manba filtri, bir nechtasini birga tanlash
+- ✅ Mavzu bo'yicha filtr
+- ✅ Uchinchi ko'rsatkich: Hali xato · Tuzatilgan · Jami xato
+- ✅ "Xatolardan test": 10 ta savol, tanlangan filtr bo'yicha, oddiy test ekranida
+- ✅ Yuqoridagi "Test boshlash" tugmasi shu testga ulanadi (hozir mashqqa boradi)
+- ✅ Xato qolmagan holat ekrani
 - Qidiruv: **kerak emas** (qaror qabul qilingan)
 
 ## 2. Dizayn (tasdiqlangan yo'nalishlar)

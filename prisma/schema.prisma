@@ -32,6 +32,27 @@ enum AttemptMode {
   EXAM
 }
 
+/**
+ * Urinish qayerdan boshlangani — FAQAT yorliq va filtr uchun.
+ * Qoidalarni (savollar soni, taymer, o'tish balli) avvalgidek `AttemptMode`
+ * boshqaradi. Nega alohida: "Maraton" mashqning varianti, u yangi `mode`
+ * bo'lsa `QUESTION_COUNT`, barcha `mode: "EXAM"` filtrlari va tayyorgarlik
+ * hisobi qayta ko'rilishi kerak bo'lardi — bittasi unutilsa statistika
+ * jimgina noto'g'ri bo'lib qolardi (`services/attempts.ts` dagi izohga qara).
+ * `null` — eski urinishlar (bu maydon qo'shilishidan oldingi). Ular
+ * ro'yxatlarda `mode` bo'yicha "Mashq" yoki "Imtihon" deb ko'rsatiladi.
+ */
+enum AttemptSource {
+  PRACTICE
+  MARATHON
+  EXAM
+  ASSIGNMENT
+  /**
+   * "Xatolarim" bo'limidan boshlangan takrorlash testi.
+   */
+  MISTAKES
+}
+
 model Organization {
   id                 String             @id @default(cuid())
   name               String
@@ -390,17 +411,20 @@ model Question {
 }
 
 model Attempt {
-  id           String      @id @default(cuid())
+  id           String         @id @default(cuid())
   studentId    String
-  startedAt    DateTime    @default(now())
+  startedAt    DateTime       @default(now())
   finishedAt   DateTime?
   score        Int?
-  mode         AttemptMode @default(PRACTICE)
+  mode         AttemptMode    @default(PRACTICE)
   groupId      String?
   // Boshlanishda tanlangan savollar ID'lari, tartibi bilan — shu orqali
   // finishAttempt "jami savollar soni"ni biladi (javobsiz qolganlar ham
   // hisobga olinishi uchun) va kelajakda urinishni davom ettirish mumkin.
-  questionIds  String[]    @default([])
+  questionIds  String[]       @default([])
+  // Qayerdan boshlangani — yorliq va "Xatolarim" filtri uchun (yuqoridagi
+  // `AttemptSource` izohiga qara). Qoidalar `mode` da qoladi.
+  source       AttemptSource?
   // Vazifa tugmasi orqali boshlangan bo'lsa — qaysi vazifa. Vazifa
   // o'chirilsa urinish yo'qolmaydi, faqat bog'lanish uziladi: urinish
   // o'quvchining natijasi, vazifaniki emas.
