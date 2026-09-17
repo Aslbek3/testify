@@ -16,6 +16,7 @@ import {
   TableCell,
 } from "@/components/Table";
 import { NewTopicModal } from "./NewTopicModal";
+import { ImportQuestionsModal } from "./ImportQuestionsModal";
 
 export default async function QuestionBankPage() {
   await requireRole("OWNER");
@@ -34,7 +35,8 @@ export default async function QuestionBankPage() {
             savollar boshqariladi.
           </p>
         </div>
-        <NewTopicModal />
+        <ImportQuestionsModal />
+          <NewTopicModal />
       </div>
 
       <Card>

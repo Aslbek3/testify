@@ -60,8 +60,8 @@ Holat: ⬜ boshlanmagan · 🔵 jarayonda · ✅ tayyor
 
 ## 5. Kontent (eng katta to'siq)
 
-- ⬜ Savolga **rasm yuklash** (hozir API faqat `imageAlt` ni qabul qiladi)
-- ⬜ Savollarni ommaviy import qilish
+- ✅ Savolga **rasm yuklash**
+- ✅ Savollarni ommaviy import qilish (JSON, owner panelida)
 - ⬜ Savollar bazasini to'ldirish — production'da 20 ta, raqobatchida 1 220 ta.
   Tashqi manbadan olish faqat **yozma ruxsat** bilan, savolda `source` belgisi
   bilan (ruxsat bekor qilinsa, bitta buyruq bilan olib tashlash uchun)
