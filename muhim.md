@@ -63,6 +63,22 @@ Next.js eslatmalari:
    ko'rsatish sharti. Olingan savollarga `source` belgisi qo'yiladi.
 8. **Dizayn yo'nalishlari tasdiqlangan** — `docs/ishlar.md` 2-bo'limi.
 
+9. **Savol rasmlari** `public/` da EMAS — `storage/question-images/` da va
+   `/api/question-images/[key]` orqali, sessiya bilan beriladi. Sabab:
+   savollar bazasi mahsulotning asosiy qiymati; ochiq papkada tursa
+   butunlay ko'chirib olinardi. Tur fayl nomidan emas, baytlardan
+   aniqlanadi; SVG qabul qilinmaydi.
+10. **Import qoidalari:** bitta xato bo'lsa hech narsa yozilmaydi; takror
+    savol o'tkazib yuboriladi (qayta yuborish xavfsiz); mavzu yo'q bo'lsa
+    ochiladi va hisobotda aytiladi; bir urinishda 500 tagacha.
+11. **Bilet** — alohida jadval emas, `Question.ticketNumber` va
+    `ticketOrder`. Bilet mashq rejimida ishlaydi, savollar har safar bir
+    xil tartibda.
+12. **Agent tajribasi:** qabulxona roli fon agentiga berilgan edi, u
+    ~40% da to'xtab qoldi (RAM yetmasligi). Ishi worktree'da saqlanib,
+    qo'lda yakunlandi. Bu kompyuterda uzoq davom etadigan fon agentiga
+    tayanmaslik kerak.
+
 ## Ochiq savollar
 
 - Tayyor ikkita ish (vazifa, bildirishnoma) production'ga qachon chiqadi?

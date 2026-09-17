@@ -33,11 +33,11 @@ Holat: ⬜ boshlanmagan · 🔵 jarayonda · ✅ tayyor
 - ✅ **d** — o'quvchi sahifasida "keyingi qadam" tavsiyasi
 - ⬜ **a** — panellar "kim orqada qolyapti" ga javob bersin
 
-## 3. Guruh oynasi va ustoz profili
+## 3. Guruh oynasi va ustoz profili ✅
 
-- ⬜ Guruh sahifasi ustoz uchun ham (direktorda bor): 4 ko'rsatkich,
+- ✅ Guruh sahifasi ustoz uchun ham (direktorda bor): 4 ko'rsatkich,
   "diqqat talab qiladi" bloki, mavzular tahlili, vazifalar, o'quvchilar
-- ⬜ `/tutor` — guruhlar ro'yxatiga aylanadi (hozir ochiladigan ro'yxat)
+- ✅ `/tutor` — guruhlar ro'yxatiga aylanadi (hozir ochiladigan ro'yxat)
 - ✅ Ustoz profili direktor uchun (`/director/ustoz/[id]`): guruhlari,
   umumiy statistika, bergan vazifalari va bajarilishi, direktor amallari
 - ⚠️ Ustozni faqat o'quvchilarining o'rtacha bali bilan baholamaslik —
@@ -58,13 +58,18 @@ Holat: ⬜ boshlanmagan · 🔵 jarayonda · ✅ tayyor
 - ⬜ Ommaviy import (Excel/CSV dan o'quvchilar)
 - ⬜ Ustozdan ma'muriy amallarni olish — **importdan keyin**
 
-## 5. Kontent (eng katta to'siq)
+## 5. Kontent (vositalar tayyor, savollar kerak)
 
 - ✅ Savolga **rasm yuklash**
 - ✅ Savollarni ommaviy import qilish (JSON, owner panelida)
-- ⬜ Savollar bazasini to'ldirish — production'da 20 ta, raqobatchida 1 220 ta.
-  Tashqi manbadan olish faqat **yozma ruxsat** bilan, savolda `source` belgisi
-  bilan (ruxsat bekor qilinsa, bitta buyruq bilan olib tashlash uchun)
+- ⬜ **Savollar bazasini to'ldirish** — yagona qolgan to'siq. Vositalar
+  tayyor (import, rasm, bilet), manba kerak:
+  1. autotestlar.uz egasidan yozma ruxsat, keyin ularning ro'yxatini
+     import formatiga o'tkazish
+  2. yoki o'zingizdagi tayyor ro'yxat (Excel/Word/PDF) — JSON'ga o'tkaziladi
+  3. yoki rasmiy manba
+  ⚠️ Savollar o'ylab topilmaydi: YHQ savoli huquqiy hujjatga asoslanadi,
+  to'qilgan javob o'quvchini imtihonda yiqitadi
 - ✅ Bilet rejimi — savolda ticketNumber/ticketOrder, o'quvchida "Biletlar" bo'limi
 
 ## 6. Qolganlar
