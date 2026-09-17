@@ -24,12 +24,18 @@ export default async function TestPage({
     savollar?: string;
     vazifa?: string;
     xatolar?: string;
+    /** Mavzu bo'yicha mashq — "keyingi qadam" tavsiyasi shu havolani beradi. */
+    mavzuMashq?: string;
     manba?: string;
     mavzu?: string;
   }>;
 }) {
   const user = await requireActiveStudent();
   const { attemptId, mode, savollar, vazifa, xatolar, manba, mavzu } = await searchParams;
+  // `mavzu` ikki joyda ishlatiladi: xatolar filtrida (yuqoridagi) va oddiy
+  // mashqda mavzu tanlashda (quyida) — ikkalasi bir-biriga xalaqit bermaydi,
+  // chunki ular boshqa-boshqa shart ichida ishlaydi.
+  const topicIds = mavzu ? mavzu.split(",").filter(Boolean) : undefined;
 
   // Urinish allaqachon boshlangan — davom ettiramiz (sahifa yangilansa ham
   // progress yo'qolmasligi shu orqali ta'minlanadi).
@@ -103,6 +109,7 @@ export default async function TestPage({
         mode: mode as AttemptMode,
         groupId,
         questionCount,
+        topicIds: mode === "EXAM" ? undefined : topicIds,
         // Maraton alohida rejim emas (mashqning varianti) — uni faqat
         // savollar soni tanlanganidan bilamiz. `source` shu farqni saqlab
         // qoladi, "Xatolarim" filtri esa shunga tayanadi.

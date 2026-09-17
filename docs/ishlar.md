@@ -26,11 +26,11 @@ Holat: ⬜ boshlanmagan · 🔵 jarayonda · ✅ tayyor
 
 ## 2. Dizayn (tasdiqlangan yo'nalishlar)
 
-- ⬜ **b** — o'quvchi uchun pastki panel (telefonda): Umumiy · Mashq · Imtihon · Vazifalar · Xatolarim
-- ⬜ **c** — test ekranida diqqat rejimi: menyu va sarlavha yashiriladi
-- ⬜ **f** — bo'sh holatlar: har birida keyingi qadam tugmasi
-- ⬜ **e** — rang intizomi: qizil faqat haqiqiy muammo uchun
-- ⬜ **d** — o'quvchi sahifasida "keyingi qadam" tavsiyasi
+- ✅ **b** — o'quvchi uchun pastki panel (telefonda): Umumiy · Mashq · Imtihon · Vazifalar · Xatolarim
+- ✅ **c** — test ekranida diqqat rejimi: menyu va sarlavha yashiriladi
+- ✅ **f** — bo'sh holatlar: har birida keyingi qadam tugmasi
+- ✅ **e** — rang intizomi: qizil faqat haqiqiy muammo uchun
+- ✅ **d** — o'quvchi sahifasida "keyingi qadam" tavsiyasi
 - ⬜ **a** — panellar "kim orqada qolyapti" ga javob bersin
 
 ## 3. Guruh oynasi va ustoz profili

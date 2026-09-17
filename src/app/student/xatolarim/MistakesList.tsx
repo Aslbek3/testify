@@ -83,9 +83,12 @@ export function MistakesList({ items }: { items: MistakeItem[] }) {
                 <span
                   className={cn(
                     "shrink-0 rounded-md border px-2 py-0.5 text-xs font-semibold",
+                    // Rang intizomi: qizil — haqiqiy muammo uchun (bloklangan
+                    // hisob, o'tib ketgan muddat). Hal qilinmagan xato esa
+                    // ishlash kerak bo'lgan material, jazo emas — sariq.
                     item.isFixed
                       ? "border-success/40 bg-success/10 text-success"
-                      : "border-danger/40 bg-danger/10 text-danger"
+                      : "border-warning/40 bg-warning/10 text-warning"
                   )}
                 >
                   {item.isFixed ? "Tuzatilgan" : "Hali xato"}

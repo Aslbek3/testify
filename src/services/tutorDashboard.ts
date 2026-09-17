@@ -412,3 +412,48 @@ export async function getStudentDetailForTutor(
     attempts,
   };
 }
+
+export type TutorGroupSummary = {
+  id: string;
+  name: string;
+  studentCount: number;
+  averageScore: number | null;
+  /** So'nggi haftadagi yakunlangan imtihonlar. */
+  recentExamCount: number;
+  lastActivityAt: Date | null;
+};
+
+/**
+ * Ustozning guruhlari va har birining qisqa ko'rsatkichlari — ustoz
+ * panelidagi ro'yxat uchun.
+ *
+ * Guruhlar soni oz (odatda 1-5 ta), shuning uchun har biri uchun mavjud
+ * funksiyalar qayta ishlatiladi: hisob qoidasi guruh sahifasidagi bilan
+ * AYNI bo'lsin — aks holda ro'yxatdagi o'rtacha ball guruh sahifasidagidan
+ * farq qilib qolardi.
+ */
+export async function getGroupSummariesForTutor(
+  tutorId: string
+): Promise<TutorGroupSummary[]> {
+  const groups = await getGroupsForTutor(tutorId);
+  return Promise.all(
+    groups.map(async (group) => {
+      const [roster, recentExamCount] = await Promise.all([
+        getRosterForGroup(group.id),
+        getRecentExamAttemptCount(group.id),
+      ]);
+      const activityTimes = roster
+        .map((entry) => entry.lastActivityAt)
+        .filter((date): date is Date => date !== null)
+        .map((date) => date.getTime());
+      return {
+        id: group.id,
+        name: group.name,
+        studentCount: roster.length,
+        averageScore: averageScoreFromRoster(roster),
+        recentExamCount,
+        lastActivityAt: activityTimes.length > 0 ? new Date(Math.max(...activityTimes)) : null,
+      };
+    })
+  );
+}

@@ -1,34 +1,37 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
-import { StatTile } from "@/components/StatTile";
-import { GroupAnalyticsCards } from "@/components/GroupAnalyticsCards";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
+import { Badge } from "@/components/Badge";
 import {
-  getGroupsForTutor,
-  getGroupAnalytics,
-  getRosterForGroup,
-  getRecentExamAttemptCount,
-  averageScoreFromRoster,
-} from "@/services/tutorDashboard";
-import { GroupSelect } from "./GroupSelect";
-import { RosterTable } from "./RosterTable";
-import { describeStudentAccess } from "@/lib/labels";
-import { getStudentAccessMap } from "@/services/studentPayments";
-import { listAssignmentsForGroup } from "@/services/assignments";
-import { listTopicsWithQuestionCount } from "@/services/questions";
-import { assignmentDueDateBounds } from "@/lib/assignments";
-import { GroupAssignmentsCard } from "@/components/GroupAssignmentsCard";
-import { NewStudentModal } from "./NewStudentModal";
-import { NewAssignmentModal } from "./NewAssignmentModal";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+} from "@/components/Table";
+import { getGroupSummariesForTutor } from "@/services/tutorDashboard";
+import { readinessFromScore } from "@/lib/readiness";
+import { formatDate } from "@/lib/format";
 
-export default async function TutorPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ group?: string }>;
-}) {
+/**
+ * Ustoz paneli — guruhlar ro'yxati.
+ *
+ * Ilgari bu sahifa BITTA guruhning paneli edi, guruh esa yuqoridagi
+ * ochiladigan ro'yxatdan tanlanardi. Endi har bir guruh o'z sahifasiga ega
+ * (`/tutor/guruh/[id]`), bu yerda esa ularning qisqa ko'rsatkichlari
+ * yonma-yon turadi — bir nechta guruhi bor ustoz qaysi biriga e'tibor
+ * berish kerakligini bir qarashda ko'radi.
+ *
+ * Bitta guruhi bor ustoz uchun ro'yxat ortiqcha bosish bo'lardi — u
+ * to'g'ridan-to'g'ri guruh sahifasiga o'tadi.
+ */
+export default async function TutorPage() {
   const user = await requireRole("TUTOR");
-  const { group: groupParam } = await searchParams;
+  const groups = await getGroupSummariesForTutor(user.id);
 
-  const groups = await getGroupsForTutor(user.id);
+  if (groups.length === 1) redirect(`/tutor/guruh/${groups[0].id}`);
 
   if (groups.length === 0) {
     return (
@@ -36,8 +39,7 @@ export default async function TutorPage({
         <div>
           <h1 className="text-xl font-semibold text-text">Ustoz paneli</h1>
           <p className="mt-1 text-sm text-text-muted">
-            Guruhingiz qaysi mavzularda ko&apos;p xato qilayotganini va har bir
-            o&apos;quvchining progressini shu yerdan kuzatasiz.
+            Guruhingizdagi o&apos;quvchilarning progressini shu yerdan kuzatasiz.
           </p>
         </div>
         <Card className="flex flex-col items-center gap-4 py-16 text-center">
@@ -45,9 +47,7 @@ export default async function TutorPage({
             —
           </div>
           <div className="space-y-1">
-            <p className="text-base font-semibold text-text">
-              Guruh biriktirilmagan
-            </p>
+            <p className="text-base font-semibold text-text">Guruh biriktirilmagan</p>
             <p className="max-w-sm text-sm leading-relaxed text-text-muted">
               Sizga hali o&apos;quvchilar guruhi biriktirilmagan. Statistikani
               ko&apos;rish uchun direktoringiz sizga guruh biriktirishi kerak.
@@ -58,107 +58,66 @@ export default async function TutorPage({
     );
   }
 
-  const selectedGroup = groups.find((g) => g.id === groupParam) ?? groups[0];
-
-  // Mavzu bo'yicha xato foizi va eng ko'p xato qilingan savollar bitta
-  // so'rovdan chiqadi — ilgari ikkalasi alohida chaqirilib, guruhning
-  // butun javoblar jadvali har yuklanishda ikki marta tortilardi.
-  const [analytics, roster, recentExamCount, assignments, topics] = await Promise.all([
-    getGroupAnalytics(selectedGroup.id),
-    getRosterForGroup(selectedGroup.id),
-    getRecentExamAttemptCount(selectedGroup.id),
-    listAssignmentsForGroup(selectedGroup.id),
-    listTopicsWithQuestionCount(),
-  ]);
-  // To'lov holati — ustoz faqat KO'RADI (nega o'quvchi test ishlay
-  // olmayotganini tushunishi uchun), tasdiqlash direktorda.
-  const accessMap = await getStudentAccessMap(roster.map((r) => r.studentId));
-  const paymentStatus = Object.fromEntries(
-    roster.map((r) => [
-      r.studentId,
-      describeStudentAccess(accessMap.get(r.studentId) ?? { kind: "free" }),
-    ])
-  );
-  // Avtomaktab to'lovni yoqmagan bo'lsa ustun ma'nosiz — ko'rsatilmaydi.
-  const showPayments = [...accessMap.values()].some((a) => a.kind !== "free");
-
-  // Hisob direktor guruh sahifasi bilan AYNI funksiyadan — ilgari u shu
-  // yerda qo'lda yozilgan edi va ikki panel ajralib ketishi mumkin edi.
-  const averageScore = averageScoreFromRoster(roster);
-  const activeStudentCount = roster.filter((r) => r.isActive).length;
-  const totalAttempts = roster.reduce(
-    (sum, r) => sum + r.examAttemptCount + r.practiceAttemptCount,
-    0
-  );
-
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-text">Ustoz paneli</h1>
-          <p className="mt-1 text-sm text-text-muted">
-            Guruhingiz qaysi mavzularda ko&apos;p xato qilayotganini va har bir
-            o&apos;quvchining progressini shu yerdan kuzatasiz.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-end gap-2">
-          {groups.length > 1 && (
-            <GroupSelect groups={groups} selectedId={selectedGroup.id} />
-          )}
-          <NewStudentModal groups={groups} />
-        </div>
+      <div>
+        <h1 className="text-xl font-semibold text-text">Guruhlarim</h1>
+        <p className="mt-1 text-sm text-text-muted">
+          Guruhni bosing — o&apos;quvchilar, vazifalar va mavzular tahlili
+          ochiladi.
+        </p>
       </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1.6fr_1fr_1fr]">
-        <div className="rounded-lg border border-border bg-bg p-6">
-          <p className="text-sm text-text-muted">Guruh o&apos;rtacha bali</p>
-          <p className="mt-1.5 font-mono text-[52px] font-semibold leading-none text-brand">
-            {averageScore !== null ? `${averageScore}%` : "—"}
-          </p>
-          <p className="mt-2 text-sm text-text-muted">
-            Yakunlangan imtihonlar bo&apos;yicha
-          </p>
-        </div>
-        {/* "Faol" so'zi ataylab ishlatilmadi: bu yerdagi son hisob
-            bloklanmaganini bildiradi, o'quvchi faol o'qiyotganini emas. */}
-        <StatTile label="Bloklanmagan hisoblar" value={activeStudentCount} />
-        <StatTile
-          label="So'nggi hafta imtihonlar"
-          value={recentExamCount}
-          sub="Yakunlanganlari"
-        />
-      </div>
-
-      <GroupAssignmentsCard
-        assignments={assignments}
-        canManage={true}
-        action={
-          <NewAssignmentModal
-            groupId={selectedGroup.id}
-            groupName={selectedGroup.name}
-            topics={topics.filter((t) => t.questionCount > 0)}
-            dueBounds={assignmentDueDateBounds()}
-          />
-        }
-      />
-
-      <GroupAnalyticsCards analytics={analytics} />
 
       <Card>
         <CardHeader>
-          <CardTitle>O&apos;quvchilar</CardTitle>
-          <span className="text-sm text-text-muted">
-            {totalAttempts} ta yakunlangan urinish · Qatorni bosing —
-            o&apos;quvchi sahifasi ochiladi
-          </span>
+          <CardTitle>Guruhlar</CardTitle>
+          <span className="text-sm text-text-muted">{groups.length} ta guruh</span>
         </CardHeader>
-        <p className="mb-3 text-sm text-text-muted">
-          Jadvaldagi sonlar faqat SHU guruhdagi urinishlarni ko&apos;rsatadi:
-          o&apos;quvchi boshqa guruhdan ko&apos;chirilgan bo&apos;lsa, uning eski
-          natijalari eski ustozida qoladi. O&apos;quvchining guruhini
-          o&apos;zgartirish kerak bo&apos;lsa, direktorga murojaat qiling.
-        </p>
-        <RosterTable roster={roster} paymentStatus={showPayments ? paymentStatus : null} />
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableHeaderCell>Guruh</TableHeaderCell>
+              <TableHeaderCell align="right">O&apos;quvchilar</TableHeaderCell>
+              <TableHeaderCell align="right">O&apos;rtacha ball</TableHeaderCell>
+              <TableHeaderCell align="right">Hafta imtihonlari</TableHeaderCell>
+              <TableHeaderCell>So&apos;nggi faollik</TableHeaderCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {groups.map((group) => {
+              const readiness = readinessFromScore(group.averageScore);
+              return (
+                <TableRow key={group.id} clickable>
+                  <TableCell>
+                    <Link href={`/tutor/guruh/${group.id}`} className="block font-medium">
+                      {group.name}
+                    </Link>
+                  </TableCell>
+                  <TableCell align="right">{group.studentCount}</TableCell>
+                  <TableCell align="right">
+                    {group.averageScore === null ? (
+                      <span className="text-text-muted">—</span>
+                    ) : (
+                      <Badge variant={readiness.variant}>
+                        <span className="font-mono">{group.averageScore}%</span>
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell align="right">{group.recentExamCount}</TableCell>
+                  <TableCell>
+                    {group.lastActivityAt ? (
+                      <span className="font-mono tabular-nums">
+                        {formatDate(group.lastActivityAt)}
+                      </span>
+                    ) : (
+                      <span className="text-text-muted">Faollik yo&apos;q</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       </Card>
     </div>
   );
