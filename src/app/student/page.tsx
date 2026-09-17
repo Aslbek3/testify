@@ -13,6 +13,8 @@ import {
 } from "@/services/studentDashboard";
 import { finalizeExpiredAttempts } from "@/services/attempts";
 import { listAssignmentsForStudent } from "@/services/assignments";
+import { getStudentMistakes } from "@/services/mistakes";
+import { getNextStep } from "@/lib/nextStep";
 import { readinessFromScore } from "@/lib/readiness";
 import { ProgressRing } from "./ProgressRing";
 import { AttemptHistoryTable } from "./AttemptHistoryTable";
@@ -50,12 +52,20 @@ export default async function StudentPage({
   // statistikada ko'rmasligi mumkin.
   await finalizeExpiredAttempts(user.id);
 
-  const [overview, mastery, history, assignments] = await Promise.all([
+  const [overview, mastery, history, assignments, mistakes] = await Promise.all([
     getStudentOverview(user.id),
     getMasteryByTopic(user.id),
     getAttemptHistory(user.id),
     listAssignmentsForStudent(user.id),
+    getStudentMistakes(user.id),
   ]);
+
+  // Ro'yxat o'sish bo'yicha saralangan, ya'ni birinchisi — eng zaif mavzu.
+  const nextStep = getNextStep({
+    hasFinishedAttempt: overview.finishedAttemptCount > 0,
+    stillWrongCount: mistakes.stillWrongCount,
+    weakestTopic: mastery[0] ?? null,
+  });
 
   return (
     <div className="space-y-6">
@@ -75,6 +85,18 @@ export default async function StudentPage({
       {xato && (
         <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{xato}</p>
       )}
+
+      {/* Ko'rsatkichlardan OLDIN turadi: o'quvchi ekranni ochganda birinchi
+          savoli "endi nima qilay?" — foiz emas. */}
+      <Card className="flex flex-wrap items-center justify-between gap-4 border-brand/30 bg-brand-soft/30">
+        <div className="min-w-0">
+          <p className="text-base font-semibold text-text">{nextStep.title}</p>
+          <p className="mt-1 text-sm text-text-muted">{nextStep.description}</p>
+        </div>
+        <Link href={nextStep.href} className="shrink-0">
+          <Button type="button">{nextStep.action}</Button>
+        </Link>
+      </Card>
 
       <StudentAssignmentsCard assignments={assignments} />
 
@@ -105,10 +127,17 @@ export default async function StudentPage({
           </CardHeader>
 
           {mastery.length === 0 ? (
-            <p className="text-sm text-text-muted">
-              Imtihon topshirilmagan — mavzu tahlili imtihon natijalari asosida
-              hisoblanadi.
-            </p>
+            <div className="flex flex-col items-center gap-3 py-6 text-center">
+              <p className="text-sm text-text-muted">
+                Mavzu tahlili imtihon natijalari asosida hisoblanadi — hali
+                birorta imtihon topshirilmagan.
+              </p>
+              <Link href="/student/imtihon">
+                <Button type="button" variant="secondary">
+                  Imtihon topshirish
+                </Button>
+              </Link>
+            </div>
           ) : (
             <div className="space-y-3">
               {mastery.map((topic) => {
@@ -140,7 +169,17 @@ export default async function StudentPage({
           </CardHeader>
 
           {history.length === 0 ? (
-            <p className="text-sm text-text-muted">Hali urinish qilinmagan.</p>
+            <div className="flex flex-col items-center gap-3 py-6 text-center">
+              <p className="text-sm text-text-muted">
+                Hali urinish qilinmagan. Birinchi mashqdan boshlang — u
+                taymersiz va javob darhol tekshiriladi.
+              </p>
+              <Link href="/student/mashq">
+                <Button type="button" variant="secondary">
+                  Mashqni boshlash
+                </Button>
+              </Link>
+            </div>
           ) : (
             <AttemptHistoryTable history={history} />
           )}

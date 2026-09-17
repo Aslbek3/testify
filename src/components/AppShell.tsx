@@ -43,6 +43,19 @@ const ROLE_LABEL: Record<Role, string> = {
 
 const SIDEBAR_ID = "app-sidebar";
 
+/**
+ * Telefonda pastda turadigan bandlar — FAQAT o'quvchi uchun.
+ *
+ * Sababi: o'quvchilarning deyarli hammasi telefondan kiradi va kunlik
+ * ishi shu to'rtta bo'limda. Chap menyu — kompyuter naqshi, telefonda u
+ * yashirin va har safar ochish kerak. Ustoz/direktor/owner stol ustida
+ * ishlaydi, ularda avvalgidek qoladi.
+ *
+ * Qolgan bandlar (Maraton, To'lov, Profil, Bildirishnomalar) "Menyu"
+ * tugmasi ortida — u o'sha chap menyuni ochadi.
+ */
+const BOTTOM_NAV_HREFS = ["/student", "/student/mashq", "/student/imtihon", "/student/xatolarim"];
+
 /** Ichma-ich yo'llar (masalan /owner/questions/[id]) uchun eng mos bandni topadi. */
 function getActiveHref(pathname: string, items: NavItem[]): string | undefined {
   return items
@@ -139,6 +152,26 @@ export function AppShell({
   }, [mobileOpen]);
 
   const sidebarInert = !isDesktop && !mobileOpen;
+
+  // Test ishlayotganda ekranda faqat savol qoladi: menyu ham, sarlavha ham,
+  // pastki panel ham yo'q. Natija sahifasi (`/natija`) bundan tashqarida —
+  // u o'qish uchun, ishlash uchun emas.
+  const isTestScreen =
+    pathname.startsWith("/student/test") && !pathname.includes("/natija");
+  if (isTestScreen) {
+    return (
+      <div className="min-h-screen bg-bg-subtle">
+        <main className="mx-auto max-w-4xl p-4 md:p-8">{children}</main>
+      </div>
+    );
+  }
+
+  const bottomItems =
+    role === "STUDENT"
+      ? BOTTOM_NAV_HREFS.map((href) => items.find((item) => item.href === href)).filter(
+          (item): item is NavItem => item !== undefined
+        )
+      : [];
 
   return (
     <div className="flex min-h-screen bg-bg-subtle">
@@ -313,9 +346,44 @@ export function AppShell({
           </Link>
         </header>
 
-        <main className="flex-1 p-6 md:p-8">
+        {/* Pastki panel kontentni bekitmasligi uchun joy qoldiriladi. */}
+        <main className={cn("flex-1 p-6 md:p-8", bottomItems.length > 0 && "pb-24 md:pb-8")}>
           <div className="mx-auto max-w-6xl">{children}</div>
         </main>
+
+        {bottomItems.length > 0 && (
+          <nav
+            aria-label="Asosiy bo'limlar"
+            className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-bg md:hidden"
+          >
+            {bottomItems.map((item) => {
+              const isActive = item.href === activeHref;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "flex flex-1 items-center justify-center px-1 py-3 text-center text-xs font-medium",
+                    isActive ? "text-brand" : "text-text-muted"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Menyuni ochish"
+              aria-expanded={mobileOpen}
+              aria-controls={SIDEBAR_ID}
+              className="flex flex-1 items-center justify-center px-1 py-3 text-xs font-medium text-text-muted"
+            >
+              Menyu
+            </button>
+          </nav>
+        )}
       </div>
     </div>
   );
