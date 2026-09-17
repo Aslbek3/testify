@@ -1,17 +1,28 @@
 import { NextResponse } from "next/server";
 import { getVerifiedSessionUser } from "@/lib/auth";
-import { isDirector } from "@/lib/permissions";
+import { canManageStaff } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
 import { INVALID_EMAIL_MESSAGE, isValidEmail, normalizeEmail } from "@/lib/email";
 import { validatePassword } from "@/lib/password";
-import { createTutor } from "@/services/users";
+import { createStaffMember } from "@/services/users";
 import { RegistrationError } from "@/services/auth";
 
+/** Faqat shu ikki rol yaratiladi — direktor va owner bu yo'l bilan emas. */
+const ALLOWED_ROLES = ["RECEPTION", "TUTOR"] as const;
+type AllowedRole = (typeof ALLOWED_ROLES)[number];
+
+function toRole(value: unknown): AllowedRole | null {
+  return ALLOWED_ROLES.includes(value as AllowedRole) ? (value as AllowedRole) : null;
+}
+
+/**
+ * Xodim (ustoz yoki qabulxona) qo'shish — FAQAT direktor, o'z
+ * tashkilotiga. `organizationId` hech qachon so'rov tanasidan
+ * olinmaydi, doim sessiyadan.
+ */
 export async function POST(request: Request) {
   const user = await getVerifiedSessionUser();
-  // Direktor faqat o'z tashkilotiga ustoz qo'sha oladi — organizationId hech
-  // qachon so'rov tanasidan olinmaydi, doim sessiyadan.
-  if (!user || !isDirector(user) || !user.organizationId) {
+  if (!user?.organizationId || !canManageStaff(user, { organizationId: user.organizationId })) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
 
@@ -19,7 +30,11 @@ export async function POST(request: Request) {
   const name = typeof body?.name === "string" ? body.name.trim() : "";
   const email = typeof body?.email === "string" ? normalizeEmail(body.email) : "";
   const password = typeof body?.password === "string" ? body.password : "";
+  const role = toRole(body?.role);
 
+  if (!role) {
+    return NextResponse.json({ error: "Xodim roli noto'g'ri" }, { status: 400 });
+  }
   if (!name || !email || !password) {
     return NextResponse.json(
       { error: "Ism, email va parol kiritilishi shart" },
@@ -35,18 +50,19 @@ export async function POST(request: Request) {
   }
 
   try {
-    const tutor = await createTutor({
+    const staff = await createStaffMember({
       name,
       email,
       password,
+      role,
       organizationId: user.organizationId,
     });
-    return NextResponse.json({ id: tutor.id, email: tutor.email }, { status: 201 });
+    return NextResponse.json({ id: staff.id, email: staff.email }, { status: 201 });
   } catch (error) {
     if (error instanceof RegistrationError) {
       return NextResponse.json({ error: error.message }, { status: 409 });
     }
-    logError(error, { path: "/api/tutors", userId: user.id });
+    logError(error, { path: "/api/staff", userId: user.id });
     throw error;
   }
 }

@@ -367,7 +367,12 @@ export async function submitStudentPayment(input: {
     select: {
       name: true,
       organizationId: true,
-      organization: { select: settingsSelect },
+      // `receptionHandlesPayments` bildirishnoma kimga ketishini
+      // hal qiladi (pastga qara) — shu sabab to'lov sozlamalari bilan
+      // birga, bitta so'rovda olinadi.
+      organization: {
+        select: { ...settingsSelect, receptionHandlesPayments: true },
+      },
     },
   });
   const org = student?.organization;
@@ -418,20 +423,34 @@ export async function submitStudentPayment(input: {
           receiptMime: saved.mime,
         },
       });
-      // Tashkilotning barcha faol direktorlariga — chekni istalgani ko'rib
-      // chiqa oladi (`canManageStudentPayments`).
-      const directors = await tx.user.findMany({
-        where: { organizationId: student.organizationId!, role: "DIRECTOR", isActive: true },
-        select: { id: true },
+      // Chekni ko'rib chiqa oladigan HAMMAGA: tashkilotning barcha faol
+      // direktorlari, va "Qabulxona pul bilan ishlaydi" kaliti yoqilgan
+      // bo'lsa qabulxona xodimlari ham (`canReviewStudentPayments`).
+      //
+      // Kalit shu yerda bir marta o'qiladi: chek kelganda qabulxona pul
+      // bilan ishlamasa, unga xabar bormaydi — ochib ham hech narsa
+      // qila olmaydigan bildirishnoma faqat xalaqit beradi.
+      const recipients = await tx.user.findMany({
+        where: {
+          organizationId: student.organizationId!,
+          isActive: true,
+          role: org.receptionHandlesPayments
+            ? { in: ["DIRECTOR", "RECEPTION"] }
+            : "DIRECTOR",
+        },
+        select: { id: true, role: true },
       });
       await createNotifications(
         tx,
-        directors.map((d) => ({
-          userId: d.id,
+        recipients.map((r) => ({
+          userId: r.id,
           type: "PAYMENT_SUBMITTED" as const,
           title: `Yangi chek: ${student.name}`,
           body: `${input.months} oy · ${formatAmountUzs(amount)}`,
-          link: "/director/tolovlar",
+          // Havola qabul qiluvchining o'z paneliga — qabulxona
+          // `/director/tolovlar` ga kira olmaydi (proxy uni o'z
+          // paneliga qaytarib yuborardi).
+          link: r.role === "RECEPTION" ? "/qabulxona/tolovlar" : "/director/tolovlar",
         }))
       );
     });
@@ -441,7 +460,10 @@ export async function submitStudentPayment(input: {
   }
 }
 
-/** Direktor naqd to'lovni belgilaydi — darhol tasdiqlangan, chekisiz. */
+/**
+ * Naqd to'lov qayd etiladi — darhol tasdiqlangan, chekisiz.
+ * Kim qayd eta olishini `canReviewStudentPayments` hal qiladi.
+ */
 export async function recordCashPayment(input: {
   organizationId: string;
   studentId: string;
@@ -586,7 +608,7 @@ export async function rejectStudentPayment(input: {
 // Ro'yxatlar
 // ---------------------------------------------------------------------------
 
-/** Direktor uchun — ko'rib chiqilganlar tarixi. */
+/** Direktor va qabulxona uchun — ko'rib chiqilganlar tarixi. */
 export async function listReviewedStudentPayments(
   organizationId: string,
   limit = 30
@@ -679,7 +701,7 @@ export type PendingStudentPaymentReview = StudentPaymentRow & {
   nextPaidUntil: Date;
 };
 
-/** Direktor uchun — tasdiq kutayotganlar (eng eskisi birinchi). */
+/** Direktor va qabulxona uchun — tasdiq kutayotganlar (eng eskisi birinchi). */
 export async function listPendingStudentPayments(
   organizationId: string
 ): Promise<PendingStudentPaymentReview[]> {

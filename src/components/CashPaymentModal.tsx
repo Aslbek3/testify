@@ -9,11 +9,12 @@ import { Modal } from "@/components/Modal";
 import { SelectField } from "@/components/Field";
 
 /**
- * Naqd to'lovni belgilash — o'quvchi avtomaktab kassasiga to'laganda.
+ * Naqd toʻlovni belgilash — oʻquvchi avtomaktab kassasiga toʻlaganda.
  *
  * Chek yo'q, shuning uchun darhol tasdiqlangan hisoblanadi va tarixda
- * "Naqd" deb, belgilagan direktor nomi bilan yoziladi. Summani direktor
- * yozmaydi — avtomaktab narxidan olinadi, hisobot bilan to'g'ri kelsin.
+ * "Naqd" deb, belgilagan xodim (direktor yoki qabulxona) nomi bilan
+ * yoziladi. Summani xodim yozmaydi — avtomaktab narxidan olinadi,
+ * hisobot bilan to'g'ri kelsin.
  */
 export function CashPaymentModal({
   studentId,
@@ -32,7 +33,7 @@ export function CashPaymentModal({
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const ok = await run(() =>
-      fetch("/api/director/student-payments/cash", {
+      fetch("/api/student-payments/cash", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentId, months }),

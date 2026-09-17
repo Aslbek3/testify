@@ -6,8 +6,8 @@ import { readReceipt } from "@/lib/receiptStorage";
 import { getStudentPaymentRef } from "@/services/studentPayments";
 
 /**
- * Chek faylini beradi — faqat o'quvchining o'ziga va shu avtomaktab
- * direktoriga (`canViewStudentPayment`).
+ * Chek faylini beradi — faqat o'quvchining o'ziga, shu avtomaktab
+ * direktoriga va qabulxonasiga (`canViewStudentPayment`).
  */
 export async function GET(
   _request: Request,
@@ -15,13 +15,14 @@ export async function GET(
 ) {
   const user = await getVerifiedSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
   }
 
   const { id } = await params;
   const payment = await getStudentPaymentRef(id);
+  // Topilmadi va ruxsat yo'q — bir xil 404.
   if (!payment || !canViewStudentPayment(user, payment)) {
-    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+    return NextResponse.json({ error: "To'lov topilmadi" }, { status: 404 });
   }
   if (!payment.receiptKey || !payment.receiptMime) {
     return NextResponse.json({ error: "Bu to'lovda chek yo'q" }, { status: 404 });

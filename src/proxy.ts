@@ -7,6 +7,7 @@ import type { Role } from "@prisma/client";
 const ROLE_PREFIX: Record<string, Role> = {
   owner: "OWNER",
   director: "DIRECTOR",
+  qabulxona: "RECEPTION",
   tutor: "TUTOR",
   student: "STUDENT",
 };
@@ -45,6 +46,7 @@ export const config = {
   matcher: [
     "/owner/:path*",
     "/director/:path*",
+    "/qabulxona/:path*",
     "/tutor/:path*",
     "/student/:path*",
     "/profil/:path*",

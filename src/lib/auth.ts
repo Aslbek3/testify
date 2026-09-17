@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { getSubscriptionState } from "@/lib/subscription";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import type { SessionUser } from "@/types/auth";
+import { NO_ORGANIZATION_SWITCHES, type SessionToken, type SessionUser } from "@/types/auth";
 import type { Role } from "@prisma/client";
 import { ROLE_HOME } from "@/lib/roles";
 import { getUserSessionState } from "@/services/auth";
@@ -19,11 +19,17 @@ const JWT_SECRET: string = requireJwtSecret();
 export const SESSION_COOKIE = "testify_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 1 hafta
 
-export function createSessionToken(user: SessionUser): string {
+export function createSessionToken(user: SessionToken): string {
   return jwt.sign(user, JWT_SECRET, { expiresIn: SESSION_MAX_AGE_SECONDS });
 }
 
-export function verifySessionToken(token: string): SessionUser | null {
+/**
+ * Faqat IMZO tekshiruvi — bazaga bormaydi va shu sabab `SessionUser`
+ * emas, `SessionToken` qaytaradi (rol kalitlari tokenda saqlanmaydi).
+ * Edge muhitidagi `proxy.ts` uchun. Haqiqiy ruxsat tekshiruvi har doim
+ * `getVerifiedSessionUser()` orqali.
+ */
+export function verifySessionToken(token: string): SessionToken | null {
   try {
     const payload = jwt.verify(token, JWT_SECRET);
     if (
@@ -33,7 +39,7 @@ export function verifySessionToken(token: string): SessionUser | null {
       "role" in payload &&
       "organizationId" in payload
     ) {
-      return payload as unknown as SessionUser;
+      return payload as unknown as SessionToken;
     }
     return null;
   } catch {
@@ -41,14 +47,14 @@ export function verifySessionToken(token: string): SessionUser | null {
   }
 }
 
-export async function getSessionUser(): Promise<SessionUser | null> {
+async function getSessionToken(): Promise<SessionToken | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (!token) return null;
   return verifySessionToken(token);
 }
 
-export async function setSessionCookie(user: SessionUser) {
+export async function setSessionCookie(user: SessionToken) {
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, createSessionToken(user), {
     httpOnly: true,
@@ -75,11 +81,11 @@ export async function clearSessionCookie() {
  * roli yoki tashkiloti o'zgargan foydalanuvchi eski token bilan eski
  * huquqlarini saqlab qolar edi.
  *
- * Har bir API route shu orqali o'tishi shart (`getSessionUser` o'zi faqat
- * imzoni tekshiradi va bloklangan hisobni to'xtata olmaydi).
+ * Har bir API route shu orqali o'tishi shart (imzoning o'zi bloklangan
+ * hisobni to'xtata olmaydi).
  */
 export async function getVerifiedSessionUser(): Promise<SessionUser | null> {
-  const user = await getSessionUser();
+  const user = await getSessionToken();
   if (!user) return null;
 
   const state = await getUserSessionState(user.id);
@@ -104,6 +110,11 @@ export async function getVerifiedSessionUser(): Promise<SessionUser | null> {
     role: state.role,
     organizationId: state.organizationId,
     sessionVersion: state.sessionVersion,
+    // Rol kalitlari tokendan EMAS, shu yerda o'qilgan tashkilotdan
+    // olinadi — direktor kalitni o'zgartirsa darhol kuchga kirsin
+    // (`docs/rollar.md`). Qo'shimcha so'rov emas: tashkilot allaqachon
+    // yuqoridagi `getUserSessionState` so'rovida JOIN bilan kelgan.
+    switches: state.organization?.switches ?? NO_ORGANIZATION_SWITCHES,
   };
 }
 

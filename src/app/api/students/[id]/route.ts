@@ -4,10 +4,14 @@ import { canManageStudent } from "@/lib/permissions";
 import { getStudentGroupContext } from "@/services/tutorDashboard";
 import { setUserActive } from "@/services/users";
 
-// GET bu yerda yo'q va bu ataylab: o'quvchi tafsilotini jadval ichida
-// AJAX bilan yuklash o'rniga endi alohida sahifa bor
-// (`/tutor/oquvchi/[id]`), u ma'lumotni to'g'ridan-to'g'ri serverda
-// oladi. Ishlatilmaydigan endpoint qoldirilmadi.
+/**
+ * O'quvchi hisobini bloklash/tiklash — direktor, qabulxona va (kalit
+ * yoqilgan bo'lsa) o'z guruhi ustozi uchun.
+ *
+ * GET bu yerda ATAYLAB yo'q: o'quvchi tafsiloti jadval ichida AJAX
+ * bilan emas, alohida sahifada (`/tutor/oquvchi/[id]`) serverdan
+ * olinadi.
+ */
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -24,11 +28,9 @@ export async function PATCH(
   }
 
   const context = await getStudentGroupContext(studentId);
-  if (!context) {
+  // Topilmadi va ruxsat yo'q — bir xil 404.
+  if (!context || !canManageStudent(user, context.group)) {
     return NextResponse.json({ error: "O'quvchi topilmadi" }, { status: 404 });
-  }
-  if (!canManageStudent(user, context.group)) {
-    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
 
   await setUserActive(studentId, body.isActive);

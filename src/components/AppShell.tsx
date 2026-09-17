@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Role } from "@prisma/client";
 import { cn } from "@/lib/cn";
+import { ROLE_LABEL } from "@/lib/roles";
 import { LogoutButton } from "@/components/LogoutButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -20,6 +21,14 @@ const NAV_ITEMS: Record<Role, NavItem[]> = {
     { label: "O'quvchilar", href: "/director/oquvchilar" },
     { label: "To'lovlar", href: "/director/tolovlar" },
   ],
+  // Qabulxona menyusi direktornikining ma'muriy qismi — o'sha tartibda,
+  // o'sha nomlar bilan: ikkalasi bir xil ishni qiladi va bir-biriga
+  // "qaysi bo'limda?" deb tushuntira olishi kerak.
+  RECEPTION: [
+    { label: "Umumiy", href: "/qabulxona" },
+    { label: "O'quvchilar", href: "/qabulxona/oquvchilar" },
+    { label: "To'lovlar", href: "/qabulxona/tolovlar" },
+  ],
   TUTOR: [{ label: "Umumiy", href: "/tutor" }],
   STUDENT: [
     { label: "Umumiy", href: "/student" },
@@ -32,13 +41,6 @@ const NAV_ITEMS: Record<Role, NavItem[]> = {
     { label: "Xatolarim", href: "/student/xatolarim" },
     { label: "To'lov", href: "/student/tolov" },
   ],
-};
-
-const ROLE_LABEL: Record<Role, string> = {
-  OWNER: "App Owner",
-  DIRECTOR: "Direktor",
-  TUTOR: "Ustoz",
-  STUDENT: "O'quvchi",
 };
 
 const SIDEBAR_ID = "app-sidebar";

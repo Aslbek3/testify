@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import type { Role } from "@prisma/client";
 import { requireAnySession } from "@/lib/auth";
+import { ROLE_LABEL } from "@/lib/roles";
 import { getProfile, getStudentProfileStats } from "@/services/profile";
 import { readinessFromScore } from "@/lib/readiness";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
@@ -9,13 +9,6 @@ import { Badge } from "@/components/Badge";
 import { formatDate } from "@/lib/format";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 import { ProfileNameForm } from "./ProfileNameForm";
-
-const ROLE_LABEL: Record<Role, string> = {
-  OWNER: "App Owner",
-  DIRECTOR: "Direktor",
-  TUTOR: "Ustoz",
-  STUDENT: "O'quvchi",
-};
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -109,8 +102,8 @@ export default async function ProfilPage() {
         <p className="mt-4 text-xs leading-relaxed text-text-muted">
           Emailni o&apos;zgartirish kerak bo&apos;lsa,{" "}
           {profile.role === "STUDENT"
-            ? "ustozingizga"
-            : profile.role === "TUTOR"
+            ? "qabulxonaga yoki ustozingizga"
+            : profile.role === "TUTOR" || profile.role === "RECEPTION"
               ? "direktoringizga"
               : "administratorga"}{" "}
           murojaat qiling.

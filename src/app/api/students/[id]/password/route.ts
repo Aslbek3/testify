@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getVerifiedSessionUser } from "@/lib/auth";
-import { canManageStudent } from "@/lib/permissions";
+import { canResetStudentPassword } from "@/lib/permissions";
 import { validatePassword } from "@/lib/password";
 import { logError } from "@/lib/logger";
 import {
@@ -20,8 +20,8 @@ export async function PATCH(
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
   }
 
-  // Cheklov kalit sifatida IP'ni emas, aynan parolni tiklayotgan ustozni
-  // oladi: buzib olingan bitta ustoz hisobi bilan 200 o'quvchining parolini
+  // Cheklov kalit sifatida IP'ni emas, aynan parolni tiklayotgan xodimni
+  // oladi: buzib olingan bitta hisob bilan 200 o'quvchining parolini
   // soniyalarda almashtirib yuborish mumkin edi — hammasi sessionVersion
   // oshgani uchun tizimdan chiqib ketardi va qayta kira olmasdi. Byudjet va
   // uning asosi `lib/rateLimit.ts`dagi PASSWORD_RESET_RATE_LIMIT izohida.
@@ -43,12 +43,10 @@ export async function PATCH(
 
   // Avval RUXSAT, keyin validatsiya: begona o'quvchining mavjud-mavjud
   // emasligi parol shakli haqidagi xabar orqali ham oshkor bo'lmasin.
+  // Topilmadi va ruxsat yo'q — bir xil 404.
   const context = await getStudentGroupContext(studentId);
-  if (!context) {
+  if (!context || !canResetStudentPassword(user, context.group)) {
     return NextResponse.json({ error: "O'quvchi topilmadi" }, { status: 404 });
-  }
-  if (!canManageStudent(user, context.group)) {
-    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
 
   const body = await request.json().catch(() => null);
@@ -65,7 +63,7 @@ export async function PATCH(
     // Parol tiklash — hisobni egallab olishga olib keladigan amal, shuning
     // uchun muvaffaqiyatsizligi ham izsiz qolmasligi kerak.
     logError(error, {
-      path: "/api/tutor/students/[id]/password",
+      path: "/api/students/[id]/password",
       userId: user.id,
       targetUserId: studentId,
     });

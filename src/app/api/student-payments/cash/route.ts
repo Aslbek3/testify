@@ -1,16 +1,21 @@
 import { NextResponse } from "next/server";
 import { getVerifiedSessionUser } from "@/lib/auth";
-import { canManageStudentPayments, isDirector } from "@/lib/permissions";
+import { canReviewStudentPayments } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
 import { isStudentPaymentMonths } from "@/lib/payments";
 import { getStudentGroupContext } from "@/services/tutorDashboard";
 import { recordCashPayment, StudentPaymentError } from "@/services/studentPayments";
 
-/** Direktor naqd to'lovni belgilaydi: `{ studentId, months }`. */
+/**
+ * Naqd to'lovni qayd etish: `{ studentId, months }`.
+ *
+ * Direktor, va "Qabulxona pul bilan ishlaydi" kaliti yoqilgan bo'lsa
+ * qabulxona (`canReviewStudentPayments`).
+ */
 export async function POST(request: Request) {
   const user = await getVerifiedSessionUser();
-  if (!user || !isDirector(user) || !user.organizationId) {
-    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+  if (!user) {
+    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
   }
 
   const body = await request.json().catch(() => null);
@@ -20,11 +25,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "O'quvchi va muddat (1 yoki 6 oy) kerak" }, { status: 400 });
   }
 
-  // O'quvchi haqiqatan shu direktor tashkilotidanmi — bazadan tekshiriladi.
-  // Topilmadi va begona — bir xil javob (ID taxmin qilib bilib bo'lmasin).
+  // O'quvchi haqiqatan shu tashkilotdanmi — bazadan tekshiriladi.
+  // Topilmadi va ruxsat yo'q — bir xil 404 (ID taxmin qilib bilib bo'lmasin).
   const context = await getStudentGroupContext(studentId);
   const studentOrgId = context?.student.organizationId;
-  if (!studentOrgId || !canManageStudentPayments(user, studentOrgId)) {
+  if (!studentOrgId || !canReviewStudentPayments(user, studentOrgId)) {
     return NextResponse.json({ error: "O'quvchi topilmadi" }, { status: 404 });
   }
 
@@ -40,7 +45,7 @@ export async function POST(request: Request) {
     if (error instanceof StudentPaymentError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
-    logError(error, { path: "/api/director/student-payments/cash", userId: user.id });
+    logError(error, { path: "/api/student-payments/cash", userId: user.id });
     throw error;
   }
 }

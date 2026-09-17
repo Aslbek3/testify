@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getVerifiedSessionUser } from "@/lib/auth";
-import { canManageStudentPayments } from "@/lib/permissions";
+import { canManageStudentPaymentSettings } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
 import {
   updateStudentPaymentSettings,
@@ -17,7 +17,7 @@ function toPrice(value: unknown): number | null {
 export async function PUT(request: Request) {
   const user = await getVerifiedSessionUser();
   // Tashkilot sessiyadan olinadi — direktor faqat o'z avtomaktabini sozlaydi.
-  if (!user?.organizationId || !canManageStudentPayments(user, user.organizationId)) {
+  if (!user?.organizationId || !canManageStudentPaymentSettings(user, user.organizationId)) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
 

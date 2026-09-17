@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import type { OrganizationStatus, Role } from "@prisma/client";
 import { normalizeEmail } from "@/lib/email";
-import type { SessionUser } from "@/types/auth";
+import type { OrganizationSwitches, SessionToken } from "@/types/auth";
 
 const SALT_ROUNDS = 10;
 
@@ -35,7 +35,7 @@ export class OrganizationExpiredError extends Error {}
 export async function verifyCredentials(
   email: string,
   password: string
-): Promise<SessionUser | null> {
+): Promise<SessionToken | null> {
   // Qidiruv ham hisob yaratishdagi kabi normallashtirilgan email bo'yicha
   // ketadi — aks holda `Ali@x.com` deb yaratilgan hisob egasi `ali@x.com`
   // deb kirganda hech qachon topilmas edi.
@@ -87,8 +87,21 @@ export type UserSessionState = {
   organization: {
     status: OrganizationStatus;
     subscriptionEndsAt: Date | null;
+    /** Rol kalitlari — `getVerifiedSessionUser` ularni `SessionUser` ga qo'yadi. */
+    switches: OrganizationSwitches;
   } | null;
 } | null;
+
+/**
+ * Rol kalitlari ustunlari. Alohida konstanta, chunki ular bir nechta
+ * `select` da kerak bo'ladi va ro'yxat bitta joyda turishi kerak.
+ */
+export const ORGANIZATION_SWITCH_SELECT = {
+  receptionHandlesPayments: true,
+  receptionSeesProgress: true,
+  tutorManagesStudents: true,
+  tutorResetsPasswords: true,
+} as const;
 
 /**
  * requireRole() har sahifa yuklanishida shu orqali bazadagi haqiqiy
@@ -105,16 +118,40 @@ export type UserSessionState = {
  * narxi deyarli nol.
  */
 export async function getUserSessionState(userId: string): Promise<UserSessionState> {
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       role: true,
       organizationId: true,
       sessionVersion: true,
       isActive: true,
-      organization: { select: { status: true, subscriptionEndsAt: true } },
+      organization: {
+        select: {
+          status: true,
+          subscriptionEndsAt: true,
+          ...ORGANIZATION_SWITCH_SELECT,
+        },
+      },
     },
   });
+  if (!user) return null;
+
+  const { organization, ...rest } = user;
+  return {
+    ...rest,
+    organization: organization
+      ? {
+          status: organization.status,
+          subscriptionEndsAt: organization.subscriptionEndsAt,
+          switches: {
+            receptionHandlesPayments: organization.receptionHandlesPayments,
+            receptionSeesProgress: organization.receptionSeesProgress,
+            tutorManagesStudents: organization.tutorManagesStudents,
+            tutorResetsPasswords: organization.tutorResetsPasswords,
+          },
+        }
+      : null,
+  };
 }
 
 /**
@@ -154,7 +191,7 @@ export async function registerStudent(input: {
   password: string;
   phone?: string;
   groupId: string;
-}): Promise<SessionUser> {
+}): Promise<SessionToken> {
   const email = normalizeEmail(input.email);
 
   const existing = await prisma.user.findUnique({

@@ -17,23 +17,41 @@ import type { OrganizationStudentRow } from "@/services/directorDashboard";
 import type { StudentAccessLabel } from "@/lib/labels";
 import { StudentAccessBadge } from "@/components/StudentAccessBadge";
 import type { StudentPaymentMonths } from "@/lib/payments";
-import { CashPaymentModal } from "./CashPaymentModal";
+import { CashPaymentModal } from "@/components/CashPaymentModal";
 
+/**
+ * Tashkilotdagi o'quvchilar ro'yxati — direktor va qabulxona uchun
+ * AYNI jadval.
+ *
+ * Nima ko'rinishini rol emas, `props` hal qiladi: server sahifasi
+ * ruxsat funksiyalariga qarab qaysi ustun/tugma kerakligini aytadi.
+ * Shunday qilingani uchun bu yerda birorta ham "agar qabulxona bo'lsa"
+ * degan shart yo'q — ruxsat mantiqi faqat `lib/permissions.ts` da.
+ */
 export function StudentsTable({
   students,
   groups,
   payments,
+  showProgress,
 }: {
   students: OrganizationStudentRow[];
   groups: { id: string; name: string }[];
   /**
-   * O'quvchi to'lovi yoqilgan bo'lsa — har o'quvchining holati va narxlar
-   * ("Naqd" tugmasi uchun). `null` — to'lov o'chiq, ustun ko'rsatilmaydi.
+   * O'quvchi to'lovi yoqilgan va foydalanuvchi to'lovni ko'rib chiqa
+   * olsa — har o'quvchining holati va narxlar ("Naqd" tugmasi uchun).
+   * `null` — to'lov o'chiq yoki ruxsat yo'q: ustun ham, tugma ham
+   * ko'rsatilmaydi.
    */
   payments: {
     byStudent: Record<string, StudentAccessLabel>;
     prices: Record<StudentPaymentMonths, number>;
   } | null;
+  /**
+   * Imtihonlar soni, o'rtacha ball va tayyorgarlik holati ustunlari.
+   * "Qabulxona natijalarni ko'radi" kaliti o'chirilgan bo'lsa `false`:
+   * qabulxona ma'muriy ishini qiladi, lekin o'quv natijalarini ko'rmaydi.
+   */
+  showProgress: boolean;
 }) {
   // `pending` so'rov ham, sahifa yangilanishi ham tugaganini bildiradi —
   // ilgari tugma darhol yoqilib, jadval esa bir necha soniya eski
@@ -47,7 +65,7 @@ export function StudentsTable({
   async function handleToggleActive(studentId: string, nextActive: boolean) {
     setTogglingId(studentId);
     await run(() =>
-      fetch(`/api/tutor/students/${studentId}`, {
+      fetch(`/api/students/${studentId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: nextActive }),
@@ -59,7 +77,7 @@ export function StudentsTable({
   async function handleChangeGroup(studentId: string, groupId: string) {
     setMovingId(studentId);
     await run(() =>
-      fetch(`/api/director/students/${studentId}/group`, {
+      fetch(`/api/students/${studentId}/group`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ groupId }),
@@ -81,9 +99,13 @@ export function StudentsTable({
             <TableHeaderCell>O&apos;quvchi</TableHeaderCell>
             <TableHeaderCell>Guruh</TableHeaderCell>
             <TableHeaderCell>Ustoz</TableHeaderCell>
-            <TableHeaderCell align="right">Imtihonlar</TableHeaderCell>
-            <TableHeaderCell align="right">O&apos;rtacha ball</TableHeaderCell>
-            <TableHeaderCell>Holat</TableHeaderCell>
+            {showProgress && (
+              <>
+                <TableHeaderCell align="right">Imtihonlar</TableHeaderCell>
+                <TableHeaderCell align="right">O&apos;rtacha ball</TableHeaderCell>
+                <TableHeaderCell>Holat</TableHeaderCell>
+              </>
+            )}
             <TableHeaderCell>Hisob</TableHeaderCell>
             {payments && <TableHeaderCell>To&apos;lov</TableHeaderCell>}
             <TableHeaderCell>Amallar</TableHeaderCell>
@@ -111,13 +133,19 @@ export function StudentsTable({
                   </select>
                 </TableCell>
                 <TableCell>{student.tutorName}</TableCell>
-                <TableCell align="right">{student.examAttemptCount}</TableCell>
-                <TableCell align="right">
-                  {student.averageScore !== null ? `${student.averageScore}%` : "Imtihon topshirilmagan"}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={student.status.variant}>{student.status.label}</Badge>
-                </TableCell>
+                {showProgress && (
+                  <>
+                    <TableCell align="right">{student.examAttemptCount}</TableCell>
+                    <TableCell align="right">
+                      {student.averageScore !== null
+                        ? `${student.averageScore}%`
+                        : "Imtihon topshirilmagan"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={student.status.variant}>{student.status.label}</Badge>
+                    </TableCell>
+                  </>
+                )}
                 <TableCell>
                   <Badge variant={student.isActive ? "success" : "danger"}>
                     {student.isActive ? "Faol" : "Bloklangan"}
@@ -175,7 +203,7 @@ export function StudentsTable({
         <ResetPasswordModal
           open={true}
           onClose={() => setResetPasswordFor(null)}
-          endpoint={`/api/tutor/students/${resetPasswordFor.studentId}/password`}
+          endpoint={`/api/students/${resetPasswordFor.studentId}/password`}
           userName={resetPasswordFor.name}
         />
       )}

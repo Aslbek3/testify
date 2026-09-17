@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getVerifiedSessionUser } from "@/lib/auth";
-import { canManageStudentPayments } from "@/lib/permissions";
+import { canReviewStudentPayments } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
 import {
   confirmStudentPayment,
@@ -9,22 +9,27 @@ import {
   StudentPaymentError,
 } from "@/services/studentPayments";
 
-/** Direktor to'lovni tasdiqlaydi yoki rad etadi: `{ action, reason? }`. */
+/**
+ * Chekni tasdiqlash yoki rad etish: `{ action, reason? }`.
+ *
+ * Direktor, va "Qabulxona pul bilan ishlaydi" kaliti yoqilgan bo'lsa
+ * qabulxona (`canReviewStudentPayments`).
+ */
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getVerifiedSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
   }
 
   const { id } = await params;
   const payment = await getStudentPaymentRef(id);
-  // Topilmadi va ruxsat yo'q — bir xil javob: boshqa avtomaktab
+  // Topilmadi va ruxsat yo'q — bir xil 404: boshqa avtomaktab
   // to'lovining bor-yo'qligini ID taxmin qilib bilib bo'lmasin.
-  if (!payment || !canManageStudentPayments(user, payment.organizationId)) {
-    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+  if (!payment || !canReviewStudentPayments(user, payment.organizationId)) {
+    return NextResponse.json({ error: "To'lov topilmadi" }, { status: 404 });
   }
 
   const body = await request.json().catch(() => null);

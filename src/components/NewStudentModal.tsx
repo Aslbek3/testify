@@ -7,10 +7,25 @@ import { Button } from "@/components/Button";
 import { Field, SelectField } from "@/components/Field";
 import { PasswordField } from "@/components/PasswordField";
 
+/**
+ * O'quvchi qo'shish — direktor, qabulxona va ustoz uchun BITTA modal.
+ *
+ * Ilgari uch panelda uchta bir xil nusxa bo'lishi kerak edi (ikkitasi
+ * allaqachon bor edi va ular endpoint bilan farq qilardi). Endi
+ * endpoint ham bitta (`/api/students`), kim qaysi guruhga qo'sha
+ * olishini esa server hal qiladi — bu yerda faqat forma.
+ */
 export function NewStudentModal({
   groups,
+  variant = "primary",
 }: {
   groups: { id: string; name: string }[];
+  /**
+   * Tugma ko'rinishi. Sahifaning ASOSIY amali bo'lsa "primary"
+   * (o'quvchilar ro'yxati), yonidagi qo'shimcha amal bo'lsa
+   * "secondary" (ustoz paneli — u yerda asosiy ish vazifa berish).
+   */
+  variant?: "primary" | "secondary";
 }) {
   const { refresh, refreshing } = useRefresh();
   const [open, setOpen] = useState(false);
@@ -36,7 +51,7 @@ export function NewStudentModal({
     setSuccess(null);
     setLoading(true);
 
-    const res = await fetch("/api/director/students", {
+    const res = await fetch("/api/students", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password, groupId }),
@@ -56,7 +71,11 @@ export function NewStudentModal({
     await refresh();
   }
 
+  // Guruhsiz o'quvchi bo'lmaydi. Asosiy amal bo'lsa tugma o'chiq holda
+  // sababi bilan ko'rsatiladi (aks holda foydalanuvchi uni qidiradi),
+  // qo'shimcha amal bo'lsa umuman chizilmaydi.
   if (groups.length === 0) {
+    if (variant === "secondary") return null;
     return (
       <div className="flex items-center gap-2">
         <Button type="button" variant="secondary" disabled>
@@ -69,7 +88,11 @@ export function NewStudentModal({
 
   return (
     <>
-      <Button type="button" onClick={() => setOpen(true)}>
+      <Button
+        type="button"
+        variant={variant === "primary" ? "primary" : "secondary"}
+        onClick={() => setOpen(true)}
+      >
         + Yangi o&apos;quvchi
       </Button>
 
@@ -86,27 +109,31 @@ export function NewStudentModal({
             </p>
           )}
 
-          <SelectField
-            id="director-student-group"
-            label="Guruh"
-            value={groupId}
-            onChange={(e) => setGroupId(e.target.value)}
-          >
-            {groups.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </SelectField>
+          {/* Bitta guruh bo'lsa tanlash ma'nosiz — lekin qiymat baribir
+              yuboriladi (`groupId` boshlang'ich holatda birinchi guruh). */}
+          {groups.length > 1 && (
+            <SelectField
+              id="new-student-group"
+              label="Guruh"
+              value={groupId}
+              onChange={(e) => setGroupId(e.target.value)}
+            >
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </SelectField>
+          )}
           <Field
-            id="director-student-name"
+            id="new-student-name"
             label="To'liq ismi"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <Field
-            id="director-student-email"
+            id="new-student-email"
             label="Email"
             type="email"
             required
@@ -114,7 +141,7 @@ export function NewStudentModal({
             onChange={(e) => setEmail(e.target.value)}
           />
           <PasswordField
-            id="director-student-password"
+            id="new-student-password"
             label="Vaqtinchalik parol"
             required
             minLength={8}

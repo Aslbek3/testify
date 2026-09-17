@@ -11,6 +11,14 @@ datasource db {
 enum Role {
   OWNER
   DIRECTOR
+  /**
+   * Qabulxona xodimi — direktorning yordamchisi, o'rinbosari EMAS.
+   * Mijoz bilan ishlaydi: o'quvchi qo'shadi, guruhga ko'chiradi,
+   * bloklaydi, parolini tiklaydi va (kalit yoqilgan bo'lsa) chek
+   * tasdiqlaydi. Pul sozlamalari, xodimlar va guruhlar — hech qachon.
+   * To'liq matritsa: `docs/rollar.md`.
+   */
+  RECEPTION
   TUTOR
   STUDENT
 }
@@ -94,6 +102,32 @@ model Organization {
    * Yangi o'quvchining bepul kunlari.
    */
   trialDays                Int       @default(7)
+
+  // ---- Rol kalitlari (direktor sozlamalarida) ----
+  //
+  // To'rttadan ortiq kalit qo'shilmaydi — har bir kalit test matritsasini
+  // ikki barobar kattalashtiradi (`docs/rollar.md`). Standart qiymatlar
+  // shu hujjatdan olingan va ataylab shunday: qabulxona bor bo'lsa
+  // darhol ishga tushadi, ustozga esa ma'muriy huquq faqat direktor
+  // ongli ravishda yoqqanda beriladi.
+  /**
+   * Qabulxona chekni tasdiqlay/rad eta oladi va naqd to'lovni qayd etadi.
+   */
+  receptionHandlesPayments Boolean   @default(true)
+  /**
+   * Qabulxona o'quvchining progressi va urinishlarini ko'ra oladi (faqat ko'rish).
+   */
+  receptionSeesProgress    Boolean   @default(true)
+  /**
+   * Ustoz o'z guruhiga o'quvchi qo'sha oladi va uni bloklay/tiklay oladi.
+   * Qabulxonasi yo'q kichik avtomaktab uchun. Guruhga KO'CHIRISH bunga
+   * kirmaydi — u ustozga hech qachon berilmaydi (`canAssignStudentToGroup`).
+   */
+  tutorManagesStudents     Boolean   @default(false)
+  /**
+   * Ustoz o'z o'quvchisining parolini tiklay oladi.
+   */
+  tutorResetsPasswords     Boolean   @default(false)
 
   users           User[]
   groups          Group[]

@@ -7,8 +7,18 @@ import { SelectField } from "@/components/Field";
 /**
  * Qidiruv (ism) va guruh filtri — holat URL searchParams'da (`q`, `group`)
  * saqlanadi, xuddi Owner'ning tashkilotlar jadvalidagi kabi.
+ *
+ * `basePath` — qaysi sahifaga qaytariladi (`/director/oquvchilar` yoki
+ * `/qabulxona/oquvchilar`). Yagona farq shu: ikkala ro'yxat bir xil
+ * ishlaydi va bir xil parametrlarni tushunadi.
  */
-export function StudentFilters({ groups }: { groups: { id: string; name: string }[] }) {
+export function StudentFilters({
+  groups,
+  basePath,
+}: {
+  groups: { id: string; name: string }[];
+  basePath: string;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -41,7 +51,7 @@ export function StudentFilters({ groups }: { groups: { id: string; name: string 
     if (nextGroup) params.set("group", nextGroup);
 
     const qs = params.toString();
-    router.push(qs ? `/director/oquvchilar?${qs}` : "/director/oquvchilar");
+    router.push(qs ? `${basePath}?${qs}` : basePath);
   }
 
   useEffect(() => {

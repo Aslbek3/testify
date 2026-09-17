@@ -19,11 +19,14 @@ function isDuplicateEmailError(error: unknown): boolean {
   );
 }
 
+/** Tashkilotga biriktiriladigan xodim rollari (o'quvchi emas, owner emas). */
+export type StaffRole = "DIRECTOR" | "RECEPTION" | "TUTOR";
+
 async function createStaffUser(input: {
   name: string;
   email: string;
   password: string;
-  role: "DIRECTOR" | "TUTOR";
+  role: StaffRole;
   organizationId: string;
 }) {
   const email = normalizeEmail(input.email);
@@ -70,14 +73,21 @@ export function createDirector(input: {
   return createStaffUser({ ...input, role: "DIRECTOR" });
 }
 
-/** Direktor tomonidan o'z tashkilotiga Ustoz qo'shish uchun. */
-export function createTutor(input: {
+/**
+ * Direktor tomonidan o'z tashkilotiga xodim (Ustoz yoki Qabulxona)
+ * qo'shish uchun. Ikki rol uchun bitta funksiya: yaratish qoidalari
+ * (email band emasmi, tashkilot bormi, parolni hash qilish) aynan bir
+ * xil — ikkinchi nusxa yozilsa, biri o'zgarganda ikkinchisi ortda
+ * qolardi.
+ */
+export function createStaffMember(input: {
   name: string;
   email: string;
   password: string;
+  role: "RECEPTION" | "TUTOR";
   organizationId: string;
 }) {
-  return createStaffUser({ ...input, role: "TUTOR" });
+  return createStaffUser(input);
 }
 
 /** Bitta marta ishlaydigan create-owner skripti uchun — tashkilotga bog'lanmaydi. */
@@ -123,15 +133,24 @@ export async function getUserName(id: string): Promise<string | null> {
   return user?.name ?? null;
 }
 
-/** Ustozni bloklash/tiklash uchun ruxsat tekshiruvida (canManageTutor) kerak. */
-export async function getTutorOrgContext(
-  tutorId: string
-): Promise<{ organizationId: string | null } | null> {
-  const tutor = await prisma.user.findUnique({
-    where: { id: tutorId, role: "TUTOR" },
-    select: { organizationId: true },
+/**
+ * Xodimni (ustoz yoki qabulxona) bloklash/tiklash va parolini tiklash
+ * ruxsatini tekshirishda (`canManageStaff`) kerak.
+ *
+ * Filtr ATAYLAB shu ikki rol bilan chegaralangan — aks holda direktor
+ * shu endpoint orqali boshqa direktorning yoki o'quvchining hisobiga
+ * tegib qo'ya olardi. Topilmasa `null`: chaqiruvchi "topilmadi" va
+ * "ruxsat yo'q"ni bir xil javob bilan qaytaradi.
+ */
+export async function getStaffOrgContext(
+  staffId: string
+): Promise<{ organizationId: string | null; role: "RECEPTION" | "TUTOR" } | null> {
+  const staff = await prisma.user.findFirst({
+    where: { id: staffId, role: { in: ["RECEPTION", "TUTOR"] } },
+    select: { organizationId: true, role: true },
   });
-  return tutor;
+  if (!staff || (staff.role !== "RECEPTION" && staff.role !== "TUTOR")) return null;
+  return { organizationId: staff.organizationId, role: staff.role };
 }
 
 /** O'quvchini guruhga ko'chirish ruxsatini tekshirishda (canAssignStudentToGroup) kerak. */

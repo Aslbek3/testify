@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getVerifiedSessionUser } from "@/lib/auth";
-import { canAssignStudentToGroup, isDirector } from "@/lib/permissions";
+import { canAssignStudentToGroup } from "@/lib/permissions";
 import { getStudentGroupContext } from "@/services/tutorDashboard";
 import {
   getGroupPermissionContext,
@@ -8,17 +8,19 @@ import {
   UserActionError,
 } from "@/services/users";
 
+/**
+ * O'quvchini boshqa guruhga ko'chirish — direktor va qabulxona.
+ *
+ * Ustoz bu yerga hech qanday kalit bilan ham kirmaydi, sababi
+ * `canAssignStudentToGroup` izohida (tuzatilgan xavfsizlik teshigi).
+ */
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getVerifiedSessionUser();
-  // Rol darvozasi shu yerda ham bor (canAssignStudentToGroup allaqachon
-  // direktordan boshqasini rad etadi) — bu ataylab ikkinchi qatlam:
-  // ruxsat funksiyasi kelajakda yumshatilsa ham, bu route direktordan
-  // boshqasiga ochilib qolmaydi.
-  if (!user || !isDirector(user)) {
-    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+  if (!user) {
+    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
   }
 
   const { id: studentId } = await params;

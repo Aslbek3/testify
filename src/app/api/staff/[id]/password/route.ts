@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getVerifiedSessionUser } from "@/lib/auth";
-import { canManageTutor } from "@/lib/permissions";
+import { canManageStaff } from "@/lib/permissions";
 import { validatePassword } from "@/lib/password";
 import { logError } from "@/lib/logger";
 import {
@@ -8,8 +8,9 @@ import {
   checkRateLimit,
   passwordResetRateLimitKey,
 } from "@/lib/rateLimit";
-import { getTutorOrgContext, resetUserPassword } from "@/services/users";
+import { getStaffOrgContext, resetUserPassword } from "@/services/users";
 
+/** Xodimning (ustoz yoki qabulxona) parolini tiklash — faqat direktor. */
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -20,7 +21,7 @@ export async function PATCH(
   }
 
   // Cheklov kalit sifatida IP'ni emas, aynan parolni tiklayotgan xodimni
-  // oladi: buzib olingan bitta direktor hisobi bilan barcha ustozlarning
+  // oladi: buzib olingan bitta direktor hisobi bilan barcha xodimlarning
   // parolini soniyalarda almashtirib yuborish mumkin edi (hammasi
   // sessionVersion oshgani uchun tizimdan chiqib ketardi). Byudjet va uning
   // asosi `lib/rateLimit.ts`dagi PASSWORD_RESET_RATE_LIMIT izohida.
@@ -38,16 +39,14 @@ export async function PATCH(
     );
   }
 
-  const { id: tutorId } = await params;
+  const { id: staffId } = await params;
 
-  // Avval RUXSAT, keyin validatsiya: begona ustozning mavjud-mavjud emasligi
-  // parol shakli haqidagi xabar orqali ham oshkor bo'lmasin.
-  const tutor = await getTutorOrgContext(tutorId);
-  if (!tutor) {
-    return NextResponse.json({ error: "Ustoz topilmadi" }, { status: 404 });
-  }
-  if (!canManageTutor(user, tutor)) {
-    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+  // Avval RUXSAT, keyin validatsiya: begona xodimning mavjud-mavjud
+  // emasligi parol shakli haqidagi xabar orqali ham oshkor bo'lmasin.
+  // Topilmadi va ruxsat yo'q — bir xil 404.
+  const staff = await getStaffOrgContext(staffId);
+  if (!staff || !canManageStaff(user, staff)) {
+    return NextResponse.json({ error: "Xodim topilmadi" }, { status: 404 });
   }
 
   const body = await request.json().catch(() => null);
@@ -59,14 +58,14 @@ export async function PATCH(
   }
 
   try {
-    await resetUserPassword(tutorId, password);
+    await resetUserPassword(staffId, password);
   } catch (error) {
     // Parol tiklash — hisobni egallab olishga olib keladigan amal, shuning
     // uchun muvaffaqiyatsizligi ham izsiz qolmasligi kerak.
     logError(error, {
-      path: "/api/tutors/[id]/password",
+      path: "/api/staff/[id]/password",
       userId: user.id,
-      targetUserId: tutorId,
+      targetUserId: staffId,
     });
     throw error;
   }
