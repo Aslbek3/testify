@@ -7,7 +7,22 @@ import { Button } from "@/components/Button";
 import { Field } from "@/components/Field";
 import { PasswordField } from "@/components/PasswordField";
 
-export function NewTutorModal() {
+const LABELS = {
+  TUTOR: { button: "+ Ustoz qo'shish", title: "Yangi ustoz qo'shish", created: "Ustoz yaratildi" },
+  RECEPTION: {
+    button: "+ Qabulxona xodimi",
+    title: "Yangi qabulxona xodimi",
+    created: "Qabulxona xodimi yaratildi",
+  },
+} as const;
+
+/**
+ * Xodim qo'shish — ustoz ham, qabulxona ham. Ikkalasi uchun forma bir xil
+ * (ism, email, parol), farqi faqat yuboriladigan rolda va yozuvlarda,
+ * shuning uchun ikkita alohida modal emas, bitta komponent.
+ */
+export function NewStaffModal({ role }: { role: keyof typeof LABELS }) {
+  const labels = LABELS[role];
   const { refresh, refreshing } = useRefresh();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -31,10 +46,10 @@ export function NewTutorModal() {
     setSuccess(null);
     setLoading(true);
 
-    const res = await fetch("/api/tutors", {
+    const res = await fetch("/api/staff", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, email, password, role }),
     });
     const data = await res.json();
     setLoading(false);
@@ -44,7 +59,7 @@ export function NewTutorModal() {
       return;
     }
 
-    setSuccess(`Ustoz yaratildi: ${data.email}`);
+    setSuccess(`${labels.created}: ${data.email}`);
     setName("");
     setEmail("");
     setPassword("");
@@ -54,10 +69,10 @@ export function NewTutorModal() {
   return (
     <>
       <Button type="button" variant="secondary" onClick={() => setOpen(true)}>
-        + Ustoz qo&apos;shish
+        {labels.button}
       </Button>
 
-      <Modal open={open} onClose={close} title="Yangi ustoz qo'shish">
+      <Modal open={open} onClose={close} title={labels.title}>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
-import { canViewOrganization } from "@/lib/permissions";
 import {
   listStudentsForOrganization,
   countStudentsForOrganization,
@@ -10,47 +9,50 @@ import { Card, CardHeader, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { StudentFilters } from "@/components/StudentFilters";
 import { StudentsTable } from "@/components/StudentsTable";
-import { describeStudentAccess } from "@/lib/labels";
-import {
-  getStudentAccessMap,
-  getStudentPaymentSettings,
-} from "@/services/studentPayments";
 import { NewStudentModal } from "@/components/NewStudentModal";
+import { describeStudentAccess } from "@/lib/labels";
+import { getStudentAccessMap, getStudentPaymentSettings } from "@/services/studentPayments";
 
-export default async function DirectorStudentsPage({
+/**
+ * Qabulxonaning o'quvchilar ro'yxati — direktornikining AYNI o'zi
+ * (bir xil komponentlar, bir xil API), farqi faqat sarlavhada va
+ * "Naqd" tugmasida: u "Qabulxona pul bilan ishlaydi" kalitiga bog'liq.
+ *
+ * Tugmalarni yashirish — qulaylik uchun. Haqiqiy cheklov serverda:
+ * `/api/students*` va `/api/student-payments/cash` har so'rovda
+ * `permissions.ts` orqali tekshiriladi.
+ */
+export default async function ReceptionStudentsPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; group?: string }>;
 }) {
-  const user = await requireRole("DIRECTOR");
+  const user = await requireRole("RECEPTION");
   const { q, group } = await searchParams;
 
-  if (!user.organizationId || !canViewOrganization(user, user.organizationId)) {
+  if (!user.organizationId) {
     return (
       <p className="text-sm text-text-muted">
-        Tashkilotga biriktirilmagansiz. Iltimos, administrator bilan
-        bog&apos;laning.
+        Siz hech qaysi avtomaktabga biriktirilmagansiz. Direktoringizga murojaat qiling.
       </p>
     );
   }
-
   const organizationId = user.organizationId;
 
-  // "Umuman o'quvchi bormi?" (bo'sh holat) va "filtrga hech narsa tushmadi"
-  // ikki xil holat. Birinchisi uchun ilgari butun ro'yxat ikkinchi marta
-  // yuklanardi va undan faqat `.length` olinardi — endi oddiy `count`.
   const [totalStudentCount, students, groups, paymentSettings] = await Promise.all([
     countStudentsForOrganization(organizationId),
     listStudentsForOrganization(organizationId, { q, groupId: group }),
     listGroupsForOrganization(organizationId),
     getStudentPaymentSettings(organizationId),
   ]);
-  // To'lov holati ro'yxatdagi o'quvchilar uchun — bitta so'rovda.
   const accessMap = await getStudentAccessMap(students.map((s) => s.studentId));
   const paymentColumn = students.map((s) => ({
     studentId: s.studentId,
     ...describeStudentAccess(accessMap.get(s.studentId) ?? { kind: "free" }),
   }));
+
+  // Naqd to'lovni faqat kalit yoqilgan qabulxona belgilay oladi.
+  const showPayments = paymentSettings.enabled && user.switches.receptionHandlesPayments;
 
   return (
     <div className="space-y-6">
@@ -58,9 +60,8 @@ export default async function DirectorStudentsPage({
         <div>
           <h1 className="text-xl font-semibold text-text">O&apos;quvchilar</h1>
           <p className="mt-1 text-sm text-text-muted">
-            Tashkilotingizdagi barcha o&apos;quvchilar — guruhini
-            o&apos;zgartirish, parolini tiklash yoki hisobini bloklash shu
-            yerdan.
+            Yangi o&apos;quvchi qo&apos;shish, guruhini o&apos;zgartirish, parolini
+            tiklash va hisobini bloklash shu yerdan.
           </p>
         </div>
         <NewStudentModal groups={groups} />
@@ -69,21 +70,20 @@ export default async function DirectorStudentsPage({
       <Card>
         <CardHeader>
           <CardTitle>Ro&apos;yxat</CardTitle>
-          <span className="text-sm text-text-muted">
-            {students.length} ta o&apos;quvchi
-          </span>
+          <span className="text-sm text-text-muted">{students.length} ta o&apos;quvchi</span>
         </CardHeader>
 
-        <StudentFilters groups={groups} basePath="/director/oquvchilar" />
+        <StudentFilters groups={groups} basePath="/qabulxona/oquvchilar" />
 
         {totalStudentCount === 0 ? (
           <p className="mt-4 text-sm text-text-muted">
-            Hozircha tashkilotingizda o&apos;quvchilar yo&apos;q.
+            Hozircha avtomaktabda o&apos;quvchilar yo&apos;q. Birinchisini
+            &quot;O&apos;quvchi qo&apos;shish&quot; bilan kiriting.
           </p>
         ) : students.length === 0 ? (
           <div className="mt-4 space-y-3 py-6 text-center">
             <p className="text-sm text-text-muted">Hech narsa topilmadi</p>
-            <Link href="/director/oquvchilar">
+            <Link href="/qabulxona/oquvchilar">
               <Button type="button" variant="secondary">
                 Filtrni tozalash
               </Button>
@@ -94,10 +94,11 @@ export default async function DirectorStudentsPage({
             <StudentsTable
               students={students}
               groups={groups}
-              showProgress={true}
-              // To'lov o'chiq bo'lsa ustun ham, "Naqd" tugmasi ham ko'rsatilmaydi.
+              // "Qabulxona natijalarni ko'radi" kaliti — o'chirilgan bo'lsa
+              // ball va progress ustunlari chizilmaydi.
+              showProgress={user.switches.receptionSeesProgress}
               payments={
-                paymentSettings.enabled
+                showPayments
                   ? {
                       byStudent: Object.fromEntries(
                         paymentColumn.map(({ studentId, ...rest }) => [studentId, rest])

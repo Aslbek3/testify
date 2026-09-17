@@ -45,7 +45,7 @@ export function RosterTable({
   async function handleToggleActive(studentId: string, nextActive: boolean) {
     setTogglingId(studentId);
     try {
-      const res = await fetch(`/api/tutor/students/${studentId}`, {
+      const res = await fetch(`/api/students/${studentId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: nextActive }),
@@ -159,7 +159,7 @@ export function RosterTable({
         <ResetPasswordModal
           open={true}
           onClose={() => setResetPasswordFor(null)}
-          endpoint={`/api/tutor/students/${resetPasswordFor.studentId}/password`}
+          endpoint={`/api/students/${resetPasswordFor.studentId}/password`}
           userName={resetPasswordFor.name}
         />
       )}

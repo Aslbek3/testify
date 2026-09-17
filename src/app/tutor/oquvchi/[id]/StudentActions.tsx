@@ -29,7 +29,7 @@ export function StudentActions({
     setToggling(true);
     setError(null);
     try {
-      const res = await fetch(`/api/tutor/students/${studentId}`, {
+      const res = await fetch(`/api/students/${studentId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !isActive }),
@@ -69,7 +69,7 @@ export function StudentActions({
         <ResetPasswordModal
           open
           onClose={() => setResetOpen(false)}
-          endpoint={`/api/tutor/students/${studentId}/password`}
+          endpoint={`/api/students/${studentId}/password`}
           userName={studentName}
         />
       )}

@@ -43,17 +43,18 @@ Holat: ⬜ boshlanmagan · 🔵 jarayonda · ✅ tayyor
 - ⚠️ Ustozni faqat o'quvchilarining o'rtacha bali bilan baholamaslik —
   faollik ko'rsatkichi ham yonida tursin
 
-## 4. Qabulxona roli (`docs/rollar.md`)
+## 4. Qabulxona roli (`docs/rollar.md`) — 1-bosqich ✅
 
-- ⬜ Rol, kirish, menyu, sahifa himoyasi
-- ⬜ `permissions.ts` qayta ko'rilishi; `canManageStudentPayments` ikkiga bo'linadi
-- ⬜ O'quvchi yaratishning ikki nusxasi bitta `/api/students` ga birlashtiriladi
-- ⬜ Qabulxona paneli: Umumiy (muddati tugayotganlar, kutayotgan cheklar,
+- ✅ Rol, kirish, menyu, sahifa himoyasi
+- ✅ `permissions.ts` qayta ko'rilishi; `canManageStudentPayments` ikkiga bo'linadi
+- ✅ O'quvchi yaratishning ikki nusxasi bitta `/api/students` ga birlashtiriladi
+- ✅ Qabulxona paneli: Umumiy (muddati tugayotganlar, kutayotgan cheklar,
   bugungi to'lovlar) · O'quvchilar · To'lovlar
-- ⬜ Direktorda "Qabulxona xodimi qo'shish"
-- ⬜ 4 ta kalit direktor sozlamalarida
+- ✅ Direktorda "Qabulxona xodimi qo'shish"
+- ✅ 4 ta kalit direktor sozlamalarida
 - ⬜ Amallar jurnali (kim, qachon, nima qildi) + direktorda ko'rish sahifasi
-- ⬜ Ruxsatlar test to'plami (5 rol × har bir amal)
+- 🔵 Ruxsatlar tekshiruvi: 29 ta holat HTTP skripti bilan o'tkazildi;
+  doimiy (avtomatik ishlaydigan) test to'plami hali yo'q
 - ⬜ Ommaviy import (Excel/CSV dan o'quvchilar)
 - ⬜ Ustozdan ma'muriy amallarni olish — **importdan keyin**
 

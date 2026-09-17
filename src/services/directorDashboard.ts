@@ -598,3 +598,35 @@ export async function countStudentsForOrganization(
 ): Promise<number> {
   return prisma.user.count({ where: studentScope(organizationId) });
 }
+
+export type ReceptionStaffRow = {
+  userId: string;
+  name: string;
+  email: string;
+  isActive: boolean;
+  createdAt: Date;
+};
+
+/**
+ * Tashkilotdagi qabulxona xodimlari — direktor panelidagi ro'yxat uchun.
+ *
+ * Ustozlar reytingidan alohida: qabulxonani o'quv ko'rsatkichlari bilan
+ * baholab bo'lmaydi (uning o'quvchisi ham, guruhi ham yo'q), shuning
+ * uchun bu yerda faqat hisob ma'lumoti.
+ */
+export async function listReceptionStaff(
+  organizationId: string
+): Promise<ReceptionStaffRow[]> {
+  const rows = await prisma.user.findMany({
+    where: { organizationId, role: "RECEPTION" },
+    select: { id: true, name: true, email: true, isActive: true, createdAt: true },
+    orderBy: { name: "asc" },
+  });
+  return rows.map((row) => ({
+    userId: row.id,
+    name: row.name,
+    email: row.email,
+    isActive: row.isActive,
+    createdAt: row.createdAt,
+  }));
+}

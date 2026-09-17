@@ -3,6 +3,7 @@ import { canViewOrganization } from "@/lib/permissions";
 import {
   getOrganizationOverview,
   getTutorRanking,
+  listReceptionStaff,
   getGroupsOverview,
   listTutorsForOrganization,
   GROUP_NAME_MAX_LENGTH,
@@ -11,9 +12,12 @@ import {
   getSubscriptionSummary,
   listPaymentsForOrganization,
 } from "@/services/payments";
+import { getOrganizationSwitches } from "@/services/organizationSettings";
 import { SubscriptionCard, PaymentHistoryCard } from "./SubscriptionCard";
 import { ORGANIZATION_BILLING_UI_ENABLED } from "@/lib/payments";
-import { NewTutorModal } from "./NewTutorModal";
+import { NewStaffModal } from "./NewStaffModal";
+import { ReceptionStaffTable } from "./ReceptionStaffTable";
+import { RoleSettingsForm } from "./RoleSettingsForm";
 import { NewGroupModal } from "./NewGroupModal";
 import { TutorRankingTable } from "./TutorRankingTable";
 import { GroupsTable } from "./GroupsTable";
@@ -34,10 +38,12 @@ export default async function DirectorPage() {
 
   const organizationId = user.organizationId;
 
-  const [overview, tutorRanking, groups, tutors, subscription, payments] =
+  const [overview, tutorRanking, receptionStaff, switches, groups, tutors, subscription, payments] =
     await Promise.all([
       getOrganizationOverview(organizationId),
       getTutorRanking(organizationId),
+      listReceptionStaff(organizationId),
+      getOrganizationSwitches(organizationId),
       getGroupsOverview(organizationId),
       listTutorsForOrganization(organizationId),
       // O'chiq bo'lsa so'rov umuman yuborilmaydi — natija baribir chizilmaydi.
@@ -56,7 +62,8 @@ export default async function DirectorPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <NewTutorModal />
+          <NewStaffModal role="TUTOR" />
+          <NewStaffModal role="RECEPTION" />
           <NewGroupModal tutors={tutors} nameMaxLength={GROUP_NAME_MAX_LENGTH} />
         </div>
       </div>
@@ -106,6 +113,37 @@ export default async function DirectorPage() {
           <TutorRankingTable rows={tutorRanking} />
         )}
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Qabulxona xodimlari</CardTitle>
+          <span className="text-sm text-text-muted">{receptionStaff.length} ta xodim</span>
+        </CardHeader>
+
+        {receptionStaff.length === 0 ? (
+          <p className="text-sm text-text-muted">
+            Qabulxona hisobi ochilmagan. Ochilsa, u o&apos;quvchi qo&apos;shadi,
+            guruhga joylaydi va (kalit yoqilgan bo&apos;lsa) to&apos;lovlarni
+            qabul qiladi — texnik ishlar sizdan va ustozdan olinadi.
+          </p>
+        ) : (
+          <ReceptionStaffTable rows={receptionStaff} />
+        )}
+      </Card>
+
+      {switches && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Ruxsatlar</CardTitle>
+            <span className="text-sm text-text-muted">Kim nima qila oladi</span>
+          </CardHeader>
+          <p className="mb-4 text-sm text-text-muted">
+            Bu kalitlar faqat shu avtomaktabga tegishli. Karta raqami, narxlar,
+            xodim yaratish va guruh tuzilishi har doim sizda qoladi.
+          </p>
+          <RoleSettingsForm switches={switches} />
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

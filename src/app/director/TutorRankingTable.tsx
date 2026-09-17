@@ -26,7 +26,7 @@ export function TutorRankingTable({ rows }: { rows: TutorRankingRow[] }) {
     // tugma jadval haqiqatan yangilangunicha band holatda qoladi.
     setTogglingId(tutorId);
     await run(() =>
-      fetch(`/api/tutors/${tutorId}`, {
+      fetch(`/api/staff/${tutorId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: nextActive }),
@@ -121,7 +121,7 @@ export function TutorRankingTable({ rows }: { rows: TutorRankingRow[] }) {
       <ResetPasswordModal
         open={true}
         onClose={() => setResetPasswordFor(null)}
-        endpoint={`/api/tutors/${resetPasswordFor.tutorId}/password`}
+        endpoint={`/api/staff/${resetPasswordFor.tutorId}/password`}
         userName={resetPasswordFor.tutorName}
       />
     )}

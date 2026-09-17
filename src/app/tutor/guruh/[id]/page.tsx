@@ -22,7 +22,7 @@ import { GroupAnalyticsCards } from "@/components/GroupAnalyticsCards";
 import { GroupAssignmentsCard } from "@/components/GroupAssignmentsCard";
 import { AttentionCard } from "@/components/AttentionCard";
 import { RosterTable } from "../../RosterTable";
-import { NewStudentModal } from "../../NewStudentModal";
+import { NewStudentModal } from "@/components/NewStudentModal";
 import { NewAssignmentModal } from "../../NewAssignmentModal";
 
 /**
