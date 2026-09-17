@@ -6,11 +6,16 @@ ruxsatlar — `docs/rollar.md`, ish ro'yxati — `docs/ishlar.md`.
 
 ## ⚠️ Xavfsizlik
 
-- **Production test hisoblari** (`owner@testify.dev` va boshqalar) hali ham
-  GitHub tarixida ochiq turgan parol bilan kiradi — 2026-09-11 da tekshirildi,
-  ishlayapti. Repo public. Almashtirish:
-  `RESET_TEST_PASSWORD="<yangi>" npx tsx scripts/reset-test-accounts.ts`.
-  Parolning o'zi hech qayerga yozilmaydi.
+- **Production test hisoblari** (`owner@testify.dev` va boshqalar) GitHub
+  tarixida ochiq turgan parol bilan kiradi — 2026-09-11 da tekshirildi,
+  ishlayapti. Repo public.
+  **Qaror (2026-09-18): parollar hozircha o'z holicha qoladi** —
+  almashtirilmaydi. Xavf saqlanib turibdi: repo'ni topgan har kim owner
+  hisobiga kira oladi va rate-limit bunga to'sqinlik qilmaydi (parol
+  to'g'ri). Fikr o'zgarsa:
+  `RESET_TEST_PASSWORD="<yangi>" npx tsx scripts/reset-test-accounts.ts`
+  (idempotent, eski sessiyalarni darhol tugatadi). Parolning o'zi hech
+  qayerga yozilmaydi.
 - Chek fayllari `storage/receipts/` da (git'ga tushmaydi).
 
 ## Ishlab chiqish muhiti (Windows)
@@ -81,6 +86,9 @@ Next.js eslatmalari:
 
 ## Ochiq savollar
 
-- Tayyor ikkita ish (vazifa, bildirishnoma) production'ga qachon chiqadi?
+- **Deploy qachon?** 13 ta commit va 5 ta migratsiya production'da yo'q
+  (`docs/loyiha-holati.md`). Parollar o'zgartirilmaydi — deploy faqat
+  yangi funksiyalarni chiqaradi.
+- **Savollar bazasi qaysi manbadan to'ldiriladi?** Import vositasi tayyor.
 - Tarif (Plan) ishlatiladimi — modullar tarifga bog'lanadimi yoki keyinroq?
-- Xatolarim: mavzu bo'yicha filtr qo'shilsinmi (tavsiya: ha)?
+- Qabulxona uchun amallar jurnali qachon qilinadi (pul unda)?
