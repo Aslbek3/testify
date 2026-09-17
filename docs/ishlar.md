@@ -38,7 +38,7 @@ Holat: ⬜ boshlanmagan · 🔵 jarayonda · ✅ tayyor
 - ⬜ Guruh sahifasi ustoz uchun ham (direktorda bor): 4 ko'rsatkich,
   "diqqat talab qiladi" bloki, mavzular tahlili, vazifalar, o'quvchilar
 - ⬜ `/tutor` — guruhlar ro'yxatiga aylanadi (hozir ochiladigan ro'yxat)
-- ⬜ Ustoz profili direktor uchun (`/director/ustoz/[id]`): guruhlari,
+- ✅ Ustoz profili direktor uchun (`/director/ustoz/[id]`): guruhlari,
   umumiy statistika, bergan vazifalari va bajarilishi, direktor amallari
 - ⚠️ Ustozni faqat o'quvchilarining o'rtacha bali bilan baholamaslik —
   faollik ko'rsatkichi ham yonida tursin

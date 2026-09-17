@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useServerMutation } from "@/lib/useServerMutation";
 import {
   Table,
@@ -72,7 +73,14 @@ export function TutorRankingTable({ rows }: { rows: TutorRankingRow[] }) {
           return (
             <TableRow key={row.tutorId}>
               <TableCell className="font-mono">{index + 1}</TableCell>
-              <TableCell className="font-medium">{row.tutorName}</TableCell>
+              <TableCell className="font-medium">
+                {/* Ism — ustozning sahifasiga havola: guruhlari, vazifalari
+                    va faolligi o'sha yerda. Butun qator bosiladigan
+                    qilinmadi — qatorda bloklash tugmalari bor. */}
+                <Link href={`/director/ustoz/${row.tutorId}`} className="hover:underline">
+                  {row.tutorName}
+                </Link>
+              </TableCell>
               <TableCell>{row.groupName}</TableCell>
               <TableCell align="right">{row.studentCount}</TableCell>
               <TableCell align="right">

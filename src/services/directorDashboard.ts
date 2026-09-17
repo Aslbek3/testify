@@ -630,3 +630,39 @@ export async function listReceptionStaff(
     createdAt: row.createdAt,
   }));
 }
+
+export type TutorProfile = {
+  tutorId: string;
+  name: string;
+  email: string;
+  isActive: boolean;
+  createdAt: Date;
+  organizationId: string | null;
+};
+
+/**
+ * Ustozning hisob ma'lumoti — direktordagi ustoz sahifasi uchun.
+ *
+ * Ko'rsatkichlar (guruhlar, o'rtacha ball, vazifalar) bu yerda emas:
+ * ular mavjud funksiyalardan olinadi (`getGroupSummariesForTutor`,
+ * `getTutorRanking`, `listAssignmentsForGroup`), shunda ustoz sahifasidagi
+ * raqamlar reyting jadvalidagi bilan hech qachon ajralib qolmaydi.
+ *
+ * Topilmasa `null` — chaqiruvchi "topilmadi" va "boshqa tashkilot" ni bir
+ * xil javob bilan qaytaradi.
+ */
+export async function getTutorProfile(tutorId: string): Promise<TutorProfile | null> {
+  const tutor = await prisma.user.findFirst({
+    where: { id: tutorId, role: "TUTOR" },
+    select: { id: true, name: true, email: true, isActive: true, createdAt: true, organizationId: true },
+  });
+  if (!tutor) return null;
+  return {
+    tutorId: tutor.id,
+    name: tutor.name,
+    email: tutor.email,
+    isActive: tutor.isActive,
+    createdAt: tutor.createdAt,
+    organizationId: tutor.organizationId,
+  };
+}
