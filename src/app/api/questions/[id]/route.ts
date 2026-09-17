@@ -25,6 +25,7 @@ export async function PATCH(
     : [];
   const correctOptionIndex =
     typeof body?.correctOptionIndex === "number" ? body.correctOptionIndex : -1;
+  const imageUrl = typeof body?.imageUrl === "string" ? body.imageUrl : null;
   const imageAlt = typeof body?.imageAlt === "string" ? body.imageAlt : null;
   const explanation =
     typeof body?.explanation === "string" ? body.explanation : null;
@@ -43,7 +44,8 @@ export async function PATCH(
       text,
       options,
       correctOptionIndex,
-      imageAlt,
+      imageUrl,
+    imageAlt,
       explanation,
       legalReference,
     });

@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { toStringArray } from "@/lib/json";
 import { MIN_OPTIONS, MAX_OPTIONS, optionLetter } from "@/lib/questionOptions";
+import { isAllowedQuestionImageUrl } from "@/lib/questionImages";
 
 /**
  * Savollar bazasi bilan bog'liq domen xatolari uchun maxsus xato turi.
@@ -26,6 +27,7 @@ export type QuestionListItem = {
   text: string;
   options: string[];
   correctOptionIndex: number;
+  imageUrl: string | null;
   imageAlt: string | null;
   explanation: string | null;
   legalReference: string | null;
@@ -81,6 +83,7 @@ export async function listQuestionsForTopic(
     text: question.text,
     options: toStringArray(question.options),
     correctOptionIndex: question.correctOptionIndex,
+    imageUrl: question.imageUrl,
     imageAlt: question.imageAlt,
     explanation: question.explanation,
     legalReference: question.legalReference,
@@ -133,11 +136,25 @@ function validateQuestionInput(input: {
   }
 }
 
+/**
+ * Rasm manzili — faqat o'zimiznikilar (`lib/questionImages.ts`).
+ * Bo'sh qiymat `null` ga aylanadi: "rasmni olib tashlash" shu orqali.
+ */
+function normalizeQuestionImageUrl(value: string | null | undefined): string | null {
+  const url = (value ?? "").trim();
+  if (!url) return null;
+  if (!isAllowedQuestionImageUrl(url)) {
+    throw new QuestionBankError("Rasm manzili noto'g'ri — rasmni shu yerdan yuklang");
+  }
+  return url;
+}
+
 export async function createQuestion(input: {
   topicId: string;
   text: string;
   options: string[];
   correctOptionIndex: number;
+  imageUrl?: string | null;
   imageAlt?: string | null;
   explanation?: string | null;
   legalReference?: string | null;
@@ -150,6 +167,7 @@ export async function createQuestion(input: {
       text: input.text.trim(),
       options: input.options.map((option) => option.trim()),
       correctOptionIndex: input.correctOptionIndex,
+      imageUrl: normalizeQuestionImageUrl(input.imageUrl),
       imageAlt: normalizeOptionalText(input.imageAlt),
       explanation: normalizeOptionalText(input.explanation),
       legalReference: normalizeOptionalText(input.legalReference),
@@ -191,6 +209,7 @@ export async function updateQuestion(
     text: string;
     options: string[];
     correctOptionIndex: number;
+    imageUrl?: string | null;
     imageAlt?: string | null;
     explanation?: string | null;
     legalReference?: string | null;
@@ -232,6 +251,7 @@ export async function updateQuestion(
       text: input.text.trim(),
       options: input.options.map((option) => option.trim()),
       correctOptionIndex: input.correctOptionIndex,
+      imageUrl: normalizeQuestionImageUrl(input.imageUrl),
       imageAlt: normalizeOptionalText(input.imageAlt),
       explanation: normalizeOptionalText(input.explanation),
       legalReference: normalizeOptionalText(input.legalReference),

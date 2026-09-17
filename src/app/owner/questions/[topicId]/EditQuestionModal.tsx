@@ -21,6 +21,7 @@ export function EditQuestionModal({
     text: question.text,
     options: question.options,
     correctOptionIndex: question.correctOptionIndex,
+    imageUrl: question.imageUrl ?? "",
     imageAlt: question.imageAlt ?? "",
     explanation: question.explanation ?? "",
     legalReference: question.legalReference ?? "",
