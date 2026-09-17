@@ -120,10 +120,17 @@ export async function startAttempt(input: {
    */
   source?: AttemptSource;
   /**
-   * Savollar ro'yxati oldindan ma'lum bo'lsa (xatolar ustida ishlash) —
-   * tanlov shu ro'yxat ichidan qilinadi. `topicIds` dan ustun turadi.
+   * Savollar ro'yxati oldindan ma'lum bo'lsa (xatolar ustida ishlash,
+   * bilet) — tanlov shu ro'yxat ichidan qilinadi. `topicIds` dan ustun
+   * turadi.
    */
   questionIds?: string[];
+  /**
+   * Berilgan tartibni saqlash — bilet uchun: rasmiy biletda savollar
+   * har doim bir xil ketma-ketlikda turadi va o'quvchi shunga o'rganadi.
+   * Standart holatda savollar aralashtiriladi.
+   */
+  keepOrder?: boolean;
 }): Promise<{
   attemptId: string;
   mode: AttemptMode;
@@ -167,9 +174,15 @@ export async function startAttempt(input: {
     throw new AttemptError("Imtihon uchun savollar yetarli emas", 400);
   }
 
-  const selectedIds = shuffle(candidates)
-    .slice(0, Math.min(targetCount, candidates.length))
-    .map((c) => c.id);
+  const selectedIds = input.keepOrder
+    ? // Tartib chaqiruvchida belgilangan: bazadan kelgan qatorlarni emas,
+      // berilgan ro'yxatning o'zini asos qilamiz.
+      (input.questionIds ?? [])
+        .filter((id) => candidates.some((c) => c.id === id))
+        .slice(0, targetCount)
+    : shuffle(candidates)
+        .slice(0, Math.min(targetCount, candidates.length))
+        .map((c) => c.id);
 
   const attempt = await prisma.attempt.create({
     data: {

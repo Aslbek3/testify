@@ -59,6 +59,10 @@ enum AttemptSource {
    * "Xatolarim" bo'limidan boshlangan takrorlash testi.
    */
   MISTAKES
+  /**
+   * Bilet — qat'iy savollar to'plami, tartibi bilan.
+   */
+  TICKET
 }
 
 model Organization {
@@ -111,23 +115,24 @@ model Organization {
   // darhol ishga tushadi, ustozga esa ma'muriy huquq faqat direktor
   // ongli ravishda yoqqanda beriladi.
   /**
+   * /**
    * Qabulxona chekni tasdiqlay/rad eta oladi va naqd to'lovni qayd etadi.
    */
-  receptionHandlesPayments Boolean   @default(true)
+  receptionHandlesPayments Boolean @default(true)
   /**
    * Qabulxona o'quvchining progressi va urinishlarini ko'ra oladi (faqat ko'rish).
    */
-  receptionSeesProgress    Boolean   @default(true)
+  receptionSeesProgress    Boolean @default(true)
   /**
    * Ustoz o'z guruhiga o'quvchi qo'sha oladi va uni bloklay/tiklay oladi.
    * Qabulxonasi yo'q kichik avtomaktab uchun. Guruhga KO'CHIRISH bunga
    * kirmaydi — u ustozga hech qachon berilmaydi (`canAssignStudentToGroup`).
    */
-  tutorManagesStudents     Boolean   @default(false)
+  tutorManagesStudents     Boolean @default(false)
   /**
    * Ustoz o'z o'quvchisining parolini tiklay oladi.
    */
-  tutorResetsPasswords     Boolean   @default(false)
+  tutorResetsPasswords     Boolean @default(false)
 
   users           User[]
   groups          Group[]
@@ -437,11 +442,24 @@ model Question {
   // Ustoz o'quvchi bilan "nega bu javob to'g'ri?" deb bahslashganda aynan shu
   // bandga ko'rsata oladi. Ixtiyoriy: barcha savolda ham havola bo'lavermaydi.
   legalReference     String?
+  /**
+   * Bilet raqami — rasmiy imtihondagi kabi qat'iy to'plam. `null` — savol
+   * hech qaysi biletga kirmaydi (mashq va imtihonda baribir chiqadi).
+   * Nega savolda, alohida jadvalda emas: bilet — savollarning TARTIBLI
+   * ro'yxati, boshqa hech qanday xossasi yo'q. Alohida jadval qilinsa,
+   * har savolni ikki joyda (mavzu va bilet) bog'lab yurish kerak bo'lardi.
+   */
+  ticketNumber       Int?
+  /**
+   * Bilet ichidagi tartib raqami — savollar shu ketma-ketlikda beriladi.
+   */
+  ticketOrder        Int?
 
   topic   Topic           @relation(fields: [topicId], references: [id])
   answers AttemptAnswer[]
 
   @@index([topicId])
+  @@index([ticketNumber, ticketOrder])
 }
 
 model Attempt {

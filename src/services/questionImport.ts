@@ -37,6 +37,8 @@ export type ImportedQuestion = {
   legalReference?: string | null;
   imageUrl?: string | null;
   imageAlt?: string | null;
+  ticketNumber?: number | null;
+  ticketOrder?: number | null;
 };
 
 export type ImportResult = {
@@ -97,6 +99,22 @@ function validateRow(raw: unknown, row: number): ImportedQuestion | { row: numbe
     };
   }
 
+  // Bilet — ixtiyoriy, lekin ikkalasi birga bo'lishi kerak: raqamsiz
+  // tartib ham, tartibsiz raqam ham bilet tuza olmaydi.
+  const ticketNumber = item.ticketNumber;
+  const ticketOrder = item.ticketOrder;
+  const hasTicket = ticketNumber !== undefined && ticketNumber !== null;
+  const hasOrder = ticketOrder !== undefined && ticketOrder !== null;
+  if (hasTicket !== hasOrder) {
+    return { row, message: "Bilet uchun ticketNumber va ticketOrder birga bo'lishi kerak" };
+  }
+  if (hasTicket && (!Number.isInteger(ticketNumber) || (ticketNumber as number) < 1)) {
+    return { row, message: "ticketNumber 1 dan boshlanadigan butun son bo'lishi kerak" };
+  }
+  if (hasOrder && (!Number.isInteger(ticketOrder) || (ticketOrder as number) < 1)) {
+    return { row, message: "ticketOrder 1 dan boshlanadigan butun son bo'lishi kerak" };
+  }
+
   const imageUrl = asOptionalString(item.imageUrl);
   if (imageUrl && !isAllowedQuestionImageUrl(imageUrl)) {
     return { row, message: "Rasm manzili faqat shu saytdagi rasm bo'lishi mumkin" };
@@ -111,6 +129,8 @@ function validateRow(raw: unknown, row: number): ImportedQuestion | { row: numbe
     legalReference: asOptionalString(item.legalReference),
     imageUrl,
     imageAlt: asOptionalString(item.imageAlt),
+    ticketNumber: hasTicket ? (ticketNumber as number) : null,
+    ticketOrder: hasOrder ? (ticketOrder as number) : null,
   };
 }
 
@@ -187,6 +207,8 @@ export async function importQuestions(rawItems: unknown): Promise<ImportResult> 
           legalReference: item.legalReference ?? null,
           imageUrl: item.imageUrl ?? null,
           imageAlt: item.imageAlt ?? null,
+          ticketNumber: item.ticketNumber ?? null,
+          ticketOrder: item.ticketOrder ?? null,
         },
       });
       created++;

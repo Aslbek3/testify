@@ -9,6 +9,7 @@ import {
 import { getStudentGroupId } from "@/services/studentDashboard";
 import { startAssignmentAttempt, AssignmentError } from "@/services/assignments";
 import { startMistakesAttempt } from "@/services/mistakes";
+import { startTicketAttempt } from "@/services/tickets";
 import { parseMistakeSources, parseTopicIds } from "@/lib/mistakeFilters";
 import { TestRunner } from "./TestRunner";
 import type { AttemptMode } from "@prisma/client";
@@ -24,6 +25,7 @@ export default async function TestPage({
     savollar?: string;
     vazifa?: string;
     xatolar?: string;
+    bilet?: string;
     /** Mavzu bo'yicha mashq — "keyingi qadam" tavsiyasi shu havolani beradi. */
     mavzuMashq?: string;
     manba?: string;
@@ -31,7 +33,8 @@ export default async function TestPage({
   }>;
 }) {
   const user = await requireActiveStudent();
-  const { attemptId, mode, savollar, vazifa, xatolar, manba, mavzu } = await searchParams;
+  const { attemptId, mode, savollar, vazifa, xatolar, manba, mavzu, bilet } =
+    await searchParams;
   // `mavzu` ikki joyda ishlatiladi: xatolar filtrida (yuqoridagi) va oddiy
   // mashqda mavzu tanlashda (quyida) — ikkalasi bir-biriga xalaqit bermaydi,
   // chunki ular boshqa-boshqa shart ichida ishlaydi.
@@ -55,6 +58,20 @@ export default async function TestPage({
     }
 
     return <TestRunner attempt={resumed} examDurationSeconds={EXAM_DURATION_SECONDS} />;
+  }
+
+  // Bilet — savollar va ularning tartibi biletning o'zidan.
+  if (bilet) {
+    let started;
+    try {
+      started = await startTicketAttempt({ user, ticketNumber: Number(bilet) });
+    } catch (error) {
+      if (error instanceof AttemptError) {
+        redirect(`/student/bilet?xato=${encodeURIComponent(error.message)}`);
+      }
+      throw error;
+    }
+    redirect(`/student/test?attemptId=${started.attemptId}`);
   }
 
   // Xatolar ustida ishlash — savollar ro'yxatini "Xatolarim" filtri

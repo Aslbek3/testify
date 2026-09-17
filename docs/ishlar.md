@@ -65,7 +65,7 @@ Holat: ⬜ boshlanmagan · 🔵 jarayonda · ✅ tayyor
 - ⬜ Savollar bazasini to'ldirish — production'da 20 ta, raqobatchida 1 220 ta.
   Tashqi manbadan olish faqat **yozma ruxsat** bilan, savolda `source` belgisi
   bilan (ruxsat bekor qilinsa, bitta buyruq bilan olib tashlash uchun)
-- ⬜ Bilet rejimi (10 savollik to'plamlar)
+- ✅ Bilet rejimi — savolda ticketNumber/ticketOrder, o'quvchida "Biletlar" bo'limi
 
 ## 6. Qolganlar
 

@@ -35,6 +35,7 @@ const NAV_ITEMS: Record<Role, NavItem[]> = {
     // Test rejimlari alohida bo'lim sifatida — ilgari hammasi bitta
     // "Test yechish" sahifasi ichida edi va o'quvchi qaysi rejimlar borligini
     // bosmaguncha bilmasdi.
+    { label: "Biletlar", href: "/student/bilet" },
     { label: "Mashq", href: "/student/mashq" },
     { label: "Maraton", href: "/student/maraton" },
     { label: "Imtihon", href: "/student/imtihon" },
