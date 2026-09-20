@@ -202,9 +202,10 @@ export default async function DirectorStudentsPage({
               students={rows}
               groups={groups}
               showProgress={true}
+              studentBasePath="/oquvchi"
               organizationAverage={overview.averageScore}
-              groupHref={(groupId) => `/director/guruh/${groupId}`}
-              tutorHref={(tutorId) => `/director/ustoz/${tutorId}`}
+              groupBasePath="/guruh"
+              tutorBasePath="/ustoz"
               // To'lov o'chiq bo'lsa ustun ham, "Naqd" tugmasi ham ko'rsatilmaydi.
               payments={
                 paymentSettings.enabled

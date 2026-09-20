@@ -12,7 +12,20 @@ const ROLE_PREFIX: Record<string, Role> = {
   student: "STUDENT",
 };
 
-const SHARED_SEGMENTS = ["profil", "bildirishnomalar"];
+/**
+ * Rol tekshirilmaydigan, lekin sessiya TALAB QILINADIGAN bo'limlar.
+ *
+ * - `profil`, `bildirishnomalar` — barcha rollar uchun umumiy sahifalar
+ *   (`app/(umumiy)`);
+ * - `guruh`, `ustoz`, `oquvchi` — obyekt sahifalari (`app/(obyekt)`):
+ *   ular ham barcha rollarga ochiq, lekin KIM nimani ko'rishi obyektning
+ *   o'ziga bog'liq (o'z guruhimi, o'z tashkilotimi). Shuning uchun rolni
+ *   bu yerda tekshirib bo'lmaydi — uni sahifaning o'zi
+ *   `lib/permissions.ts` orqali hal qiladi va mos kelmasa 404 beradi.
+ *   Bu yerda faqat "sessiya bormi" tekshiriladi, aks holda sessiyasiz
+ *   foydalanuvchi kirish sahifasiga emas, 404 ga tushardi.
+ */
+const SHARED_SEGMENTS = ["profil", "bildirishnomalar", "guruh", "ustoz", "oquvchi"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -51,5 +64,8 @@ export const config = {
     "/student/:path*",
     "/profil/:path*",
     "/bildirishnomalar/:path*",
+    "/guruh/:path*",
+    "/ustoz/:path*",
+    "/oquvchi/:path*",
   ],
 };

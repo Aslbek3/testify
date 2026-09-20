@@ -303,7 +303,7 @@ export default async function DirectorPage() {
                 {weakestTutors.map((tutor) => (
                   <li key={tutor.tutorId} className="flex items-center gap-3">
                     <Link
-                      href={`/director/ustoz/${tutor.tutorId}`}
+                      href={`/ustoz/${tutor.tutorId}`}
                       className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-text hover:text-brand"
                     >
                       {tutor.tutorName}

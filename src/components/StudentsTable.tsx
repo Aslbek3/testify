@@ -38,9 +38,9 @@ export function StudentsTable({
   payments,
   showProgress,
   organizationAverage,
-  studentHref,
-  groupHref,
-  tutorHref,
+  studentBasePath,
+  groupBasePath,
+  tutorBasePath,
 }: {
   students: OrganizationStudentRow[];
   groups: { id: string; name: string }[];
@@ -65,12 +65,17 @@ export function StudentsTable({
    * `undefined` bolsa chiziq chizilmaydi, shkalaning ozi qoladi.
    */
   organizationAverage?: number | null;
-  /** Berilsa — oquvchi ismi uning sahifasiga havola boladi. */
-  studentHref?: (studentId: string) => string;
-  /** Berilsa — guruh yonida uning sahifasiga otish havolasi chiqadi. */
-  groupHref?: (groupId: string) => string;
-  /** Berilsa — ustoz ismi havola boladi. */
-  tutorHref?: (tutorId: string) => string;
+  /**
+   * Havola PREFIKSLARI, funksiya emas: bu komponent klientda ishlaydi va
+   * React server komponentidan klientga funksiya uzatishga ruxsat
+   * bermaydi (u seriyalanmaydi). Prefiks satr — bemalol uzatiladi.
+   *
+   * Masalan `studentBasePath="/oquvchi"` -> `/oquvchi/<id>`.
+   * Berilmasa havola umuman chizilmaydi.
+   */
+  studentBasePath?: string;
+  groupBasePath?: string;
+  tutorBasePath?: string;
 }) {
   // `pending` so'rov ham, sahifa yangilanishi ham tugaganini bildiradi —
   // ilgari tugma darhol yoqilib, jadval esa bir necha soniya eski
@@ -138,9 +143,9 @@ export function StudentsTable({
             return (
               <TableRow key={student.studentId}>
                 <TableCell>
-                  {studentHref ? (
+                  {studentBasePath ? (
                     <Link
-                      href={studentHref(student.studentId)}
+                      href={`${studentBasePath}/${student.studentId}`}
                       className="font-semibold text-text underline-offset-2 hover:text-brand hover:underline"
                     >
                       {student.name}
@@ -166,9 +171,9 @@ export function StudentsTable({
                     </select>
                     {/* Tanlagich guruhni ALMASHTIRADI; bu havola esa guruh
                         jurnalini OCHADI. Ikki xil amal — ikki xil element. */}
-                    {groupHref && (
+                    {groupBasePath && (
                       <Link
-                        href={groupHref(student.groupId)}
+                        href={`${groupBasePath}/${student.groupId}`}
                         aria-label={`${student.groupName} guruhini ochish`}
                         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-text-faint transition-colors hover:bg-surface-2 hover:text-brand"
                       >
@@ -178,9 +183,9 @@ export function StudentsTable({
                   </div>
                 </TableCell>
                 <TableCell>
-                  {tutorHref ? (
+                  {tutorBasePath ? (
                     <Link
-                      href={tutorHref(student.tutorId)}
+                      href={`${tutorBasePath}/${student.tutorId}`}
                       className="font-medium text-text-muted underline-offset-2 hover:text-brand hover:underline"
                     >
                       {student.tutorName}

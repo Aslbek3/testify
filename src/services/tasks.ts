@@ -118,7 +118,7 @@ export async function getDirectorTasks(
           : `${tutor.tutorName} ${daysSinceUz(tutor.lastAssignmentAt)} kundan beri vazifa bermagan`,
       detail: `${tutor.groupCount} ta guruhi bor`,
       action: "Ustoz sahifasi",
-      href: `/director/ustoz/${tutor.tutorId}`,
+      href: `/ustoz/${tutor.tutorId}`,
     });
   } else if (silentTutors.length > 1) {
     tasks.push({

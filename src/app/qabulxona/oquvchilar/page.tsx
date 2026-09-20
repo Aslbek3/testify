@@ -92,6 +92,8 @@ export default async function ReceptionStudentsPage({
         ) : (
           <div className="mt-4">
             <StudentsTable
+              studentBasePath="/oquvchi"
+              groupBasePath="/guruh"
               students={students}
               groups={groups}
               // "Qabulxona natijalarni ko'radi" kaliti — o'chirilgan bo'lsa

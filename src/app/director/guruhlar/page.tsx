@@ -227,7 +227,7 @@ export default async function GroupsJournalPage({
                     <TableRow key={row.groupId} className="relative hover:bg-brand-soft/40">
                       <TableCell>
                         <Link
-                          href={`/director/guruh/${row.groupId}`}
+                          href={`/guruh/${row.groupId}`}
                           className="font-semibold text-text after:absolute after:inset-0 hover:text-brand"
                         >
                           {row.groupName}
@@ -240,7 +240,7 @@ export default async function GroupsJournalPage({
                         {/* Ustoz havolasi qator havolasi USTIDA turishi kerak,
                             aks holda u bosilmay qolardi. */}
                         <Link
-                          href={`/director/ustoz/${row.tutorId}`}
+                          href={`/ustoz/${row.tutorId}`}
                           className="relative z-10 font-medium text-text-muted underline-offset-2 hover:text-brand hover:underline"
                         >
                           {row.tutorName}

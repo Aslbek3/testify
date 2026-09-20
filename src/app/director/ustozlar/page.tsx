@@ -228,7 +228,7 @@ export default async function TutorsJournalPage({
                     <TableRow key={row.tutorId} className="relative hover:bg-brand-soft/40">
                       <TableCell>
                         <Link
-                          href={`/director/ustoz/${row.tutorId}`}
+                          href={`/ustoz/${row.tutorId}`}
                           className="font-semibold text-text after:absolute after:inset-0 hover:text-brand"
                         >
                           {row.tutorName}
@@ -250,7 +250,7 @@ export default async function TutorsJournalPage({
                             {row.groups.map((group, index) => (
                               <span key={group.id} className="whitespace-nowrap">
                                 <Link
-                                  href={`/director/guruh/${group.id}`}
+                                  href={`/guruh/${group.id}`}
                                   className="font-medium text-text-muted underline-offset-2 hover:text-brand hover:underline"
                                 >
                                   {group.name}

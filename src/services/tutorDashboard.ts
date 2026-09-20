@@ -31,7 +31,19 @@ export type RosterEntry = {
 
 export type StudentGroupContext = {
   student: { userId: string; organizationId: string | null };
+  /**
+   * Ruxsat tekshiruvi uchun MINIMAL ma'lumot (`GroupRef`) — ataylab
+   * shunday: `lib/permissions.ts` funksiyalari faqat shu ikki maydonga
+   * tayanadi va ularga ortiqcha narsa berilsa, tekshiruv nimaga
+   * asoslanayotgani ko'rinmay qolardi.
+   */
   group: { tutorId: string; organizationId: string };
+  /**
+   * Ko'rsatish uchun — guruh sahifasiga havola va yo'l ko'rsatkich.
+   * `group` ichiga qo'shilmadi: u ruxsat tekshiruvining kiritmasi.
+   */
+  groupId: string;
+  groupName: string;
 };
 
 export type StudentDetail = {
@@ -346,7 +358,9 @@ export async function getStudentGroupContext(
     select: {
       userId: true,
       user: { select: { organizationId: true } },
-      group: { select: { tutorId: true, organizationId: true } },
+      group: {
+        select: { id: true, name: true, tutorId: true, organizationId: true },
+      },
     },
   });
   if (!profile) return null;
@@ -354,6 +368,8 @@ export async function getStudentGroupContext(
   return {
     student: { userId: profile.userId, organizationId: profile.user.organizationId },
     group: { tutorId: profile.group.tutorId, organizationId: profile.group.organizationId },
+    groupId: profile.group.id,
+    groupName: profile.group.name,
   };
 }
 

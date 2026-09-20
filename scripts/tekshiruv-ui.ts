@@ -96,6 +96,77 @@ async function checkDenied(cookie: string, path: string, label: string) {
   record(denied, label, denied ? undefined : `javob ${res.status}`);
 }
 
+/** Sahifa 404 berishini tekshiradi — begona obyektga kirishga urinish. */
+async function checkNotFound(cookie: string, path: string, label: string) {
+  const res = await fetch(`${BASE}${path}`, { headers: { cookie } });
+  record(res.status === 404, label, res.status === 404 ? undefined : `javob ${res.status}`);
+}
+
+/** Eski manzil yangisiga yo'naltirishini tekshiradi. */
+async function checkRedirectsTo(
+  cookie: string,
+  from: string,
+  to: string,
+  label: string
+) {
+  const res = await fetch(`${BASE}${from}`, { headers: { cookie }, redirect: "manual" });
+  const location = res.headers.get("location");
+  if (location) {
+    const ok = location.endsWith(to);
+    record(ok, label, ok ? undefined : `-> ${location}`);
+    return;
+  }
+  // `loading.tsx` bor sahifada redirect 200 javobi ichida keladi (muhim.md).
+  const html = await res.text();
+  const ok = html.includes(to);
+  record(ok, label, ok ? undefined : `javob ${res.status}, manzil topilmadi`);
+}
+
+/**
+ * Tekshiruv uchun haqiqiy ID'lar.
+ *
+ * ⚠️ Guruh AYNAN test ustozining guruhi bo'lishi shart. Ilgari bu yerda
+ * `prisma.group.findFirst()` turardi — u bazadagi BIRINCHI guruhni olardi
+ * va u boshqa tashkilotniki bo'lib chiqdi. Natijada sahifalar 404 berdi
+ * va bu "xato" deb yozildi, aslida ruxsat tekshiruvi to'g'ri ishlagan edi.
+ * Test o'zining ma'lumotini aniq tanlashi kerak, aks holda u kodni emas,
+ * bazaning tasodifiy holatini tekshiradi.
+ */
+async function loadSampleIds() {
+  const tutor = await prisma.user.findFirst({
+    where: { email: "tutor@testify.dev" },
+    select: { id: true, organizationId: true },
+  });
+  if (!tutor?.organizationId) {
+    record(false, "Namuna ID'lar", "tutor@testify.dev topilmadi");
+    return null;
+  }
+
+  // O'quvchisi bor guruh afzal — o'quvchi sahifasi ham tekshirilsin.
+  const groups = await prisma.group.findMany({
+    where: { tutorId: tutor.id, organizationId: tutor.organizationId },
+    select: { id: true, students: { select: { userId: true }, take: 1 } },
+  });
+  const group = groups.find((g) => g.students.length > 0) ?? groups[0];
+  if (!group) {
+    record(false, "Namuna ID'lar", "test ustozining guruhi topilmadi");
+    return null;
+  }
+
+  // Boshqa tashkilotning guruhi — ruxsat chegarasini tekshirish uchun.
+  const foreignGroup = await prisma.group.findFirst({
+    where: { organizationId: { not: tutor.organizationId } },
+    select: { id: true },
+  });
+
+  return {
+    groupId: group.id,
+    tutorId: tutor.id,
+    studentId: group.students[0]?.userId ?? null,
+    foreignGroupId: foreignGroup?.id ?? null,
+  };
+}
+
 /** Qabulxona hisobini yaratadi (yoki bor bo'lsa parolini tiklaydi). */
 async function ensureReceptionAccount(): Promise<string | null> {
   const director = await prisma.user.findFirst({
@@ -186,6 +257,38 @@ async function main() {
     await checkPage(director, "/director/oquvchilar?filtr=etibor");
   }
 
+  // ——— 4b. Birlashgan obyekt sahifalari
+  const ids = await loadSampleIds();
+  if (director && ids) {
+    await checkPage(director, `/guruh/${ids.groupId}`, ["O&#x27;quvchilar"]);
+    await checkPage(director, `/ustoz/${ids.tutorId}`, ["Guruhlari"]);
+    if (ids.studentId) {
+      await checkPage(director, `/oquvchi/${ids.studentId}`);
+    }
+    // Eski manzillar yangisiga yo'naltiradi
+    await checkRedirectsTo(
+      director,
+      `/director/guruh/${ids.groupId}`,
+      `/guruh/${ids.groupId}`,
+      "Eski /director/guruh/[id] -> /guruh/[id]"
+    );
+    await checkRedirectsTo(
+      director,
+      `/director/ustoz/${ids.tutorId}`,
+      `/ustoz/${ids.tutorId}`,
+      "Eski /director/ustoz/[id] -> /ustoz/[id]"
+    );
+    // Mavjud bo'lmagan guruh — 404
+    await checkNotFound(director, "/guruh/yoq-bunday-id", "Mavjud bo'lmagan guruh 404 beradi");
+    if (ids.foreignGroupId) {
+      await checkNotFound(
+        director,
+        `/guruh/${ids.foreignGroupId}`,
+        "Boshqa tashkilotning guruhi 404 beradi"
+      );
+    }
+  }
+
   // ——— 5. Qabulxona (vaqtinchalik hisob)
   const receptionId = await ensureReceptionAccount();
   if (receptionId) {
@@ -197,6 +300,12 @@ async function main() {
       // Qabulxona direktorning jurnallariga kira olmasligi kerak.
       await checkDenied(reception, "/director/guruhlar", "Qabulxona /director/guruhlar ga kira olmaydi");
       await checkDenied(reception, "/director/ustozlar", "Qabulxona /director/ustozlar ga kira olmaydi");
+      // Qabulxona guruh va o'quvchi sahifalarini KO'RADI — ilgari
+      // bu sahifalar umuman yo'q edi.
+      if (ids) {
+        await checkPage(reception, `/guruh/${ids.groupId}`);
+        if (ids.studentId) await checkPage(reception, `/oquvchi/${ids.studentId}`);
+      }
     }
   }
 
@@ -206,6 +315,16 @@ async function main() {
     await checkPage(tutor, "/tutor");
     await checkDenied(tutor, "/director/guruhlar", "Ustoz /director/guruhlar ga kira olmaydi");
     await checkDenied(tutor, "/qabulxona", "Ustoz /qabulxona ga kira olmaydi");
+    if (ids) {
+      await checkPage(tutor, `/guruh/${ids.groupId}`);
+      if (ids.studentId) await checkPage(tutor, `/oquvchi/${ids.studentId}`);
+      await checkRedirectsTo(
+        tutor,
+        `/tutor/guruh/${ids.groupId}`,
+        `/guruh/${ids.groupId}`,
+        "Eski /tutor/guruh/[id] -> /guruh/[id]"
+      );
+    }
   }
 
   const owner = await login("owner@testify.dev");

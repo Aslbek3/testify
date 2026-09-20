@@ -31,7 +31,7 @@ export default async function TutorPage() {
   const user = await requireRole("TUTOR");
   const groups = await getGroupSummariesForTutor(user.id);
 
-  if (groups.length === 1) redirect(`/tutor/guruh/${groups[0].id}`);
+  if (groups.length === 1) redirect(`/guruh/${groups[0].id}`);
 
   if (groups.length === 0) {
     return (
@@ -89,7 +89,7 @@ export default async function TutorPage() {
               return (
                 <TableRow key={group.id} clickable>
                   <TableCell>
-                    <Link href={`/tutor/guruh/${group.id}`} className="block font-medium">
+                    <Link href={`/guruh/${group.id}`} className="block font-medium">
                       {group.name}
                     </Link>
                   </TableCell>
