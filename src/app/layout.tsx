@@ -1,12 +1,24 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { DM_Sans, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+/** Matn shrifti — uzun izoh va jadval mazmuni uchun. */
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
 });
 
+/**
+ * Sarlavhalar va katta raqamlar uchun. Ilgari butun ilova bitta shriftning
+ * bitta o'lchamida (14px) yozilgan edi — sarlavha bilan matn faqat
+ * qalinligi bilan farq qilardi va ekran gazeta ustuniga o'xshab qolardi.
+ */
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+});
+
+/** Jadvaldagi raqamlar uchun — ustunlar tik turishi kerak. */
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
@@ -26,7 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="uz"
-      className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${dmSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} h-full antialiased`}
       // THEME_INIT_SCRIPT hidratsiyadan oldin data-theme'ni qo'shadi —
       // bu ataylab qilingan server/klient farqi, React ogohlantirmasligi kerak.
       suppressHydrationWarning

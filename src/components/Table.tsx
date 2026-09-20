@@ -42,8 +42,15 @@ export function Table({ className, ...props }: HTMLAttributes<HTMLTableElement>)
   );
 }
 
-export function TableHead(props: HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead {...props} />;
+export function TableHead({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
+  return (
+    <thead
+      // Sarlavha qatori engil fon bilan ajratiladi. Ilgari u oddiy qator edi
+      // va uzun jadvalda birinchi ma'lumot qatoridan farq qilmasdi.
+      className={cn("border-b border-border bg-surface-2/60", className)}
+      {...props}
+    />
+  );
 }
 
 export function TableBody(props: HTMLAttributes<HTMLTableSectionElement>) {
@@ -58,8 +65,10 @@ export function TableRow({
   return (
     <tr
       className={cn(
-        "border-b border-border last:border-0",
-        clickable && "cursor-pointer hover:bg-bg-subtle",
+        // Ichki ajratgich asosiy chegaradan och: 30 qatorli ro'yxatda to'q
+        // chiziqlar katakli qog'oz taassurotini berardi.
+        "border-b border-border-subtle transition-colors last:border-0",
+        clickable && "cursor-pointer hover:bg-brand-soft/50",
         className
       )}
       {...props}
@@ -74,8 +83,10 @@ export function TableHeaderCell({
 }: ThHTMLAttributes<HTMLTableCellElement> & { align?: "left" | "right" }) {
   return (
     <th
+      // ATAYLAB katta harflarda emas — CLAUDE.md dizayn qoidasi ALL CAPS
+      // yorliqlarni taqiqlaydi. Ajratish fon va rang bilan qilinadi.
       className={cn(
-        "px-3 py-2 font-medium text-text-muted",
+        "px-4 py-2.5 text-[13px] font-semibold text-text-muted",
         align === "right" ? "text-right" : "text-left",
         className
       )}
@@ -92,7 +103,7 @@ export function TableCell({
   return (
     <td
       className={cn(
-        "px-3 py-3 text-text",
+        "px-4 py-3 text-text",
         align === "right" ? "text-right font-mono tabular-nums" : "text-left",
         className
       )}
