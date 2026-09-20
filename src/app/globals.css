@@ -337,3 +337,56 @@ h3 {
   background-size: 200% 100%;
   animation: shimmer 1.6s ease-in-out infinite;
 }
+
+/* ——— Chop etish ———
+   Jurnal qog'ozda ham ishlatiladi: avtomaktabda yig'ilishga chop etilgan
+   ro'yxat bilan kiriladi. Shuning uchun bosishda ekran bezaklari olib
+   tashlanadi va faqat ma'lumot qoladi.
+
+   Sidebar, pastki panel va barcha tugmalar `no-print` bilan emas, teg
+   bo'yicha yashiriladi — shunda yangi sahifa qo'shilganda uni alohida
+   belgilash esdan chiqmaydi. */
+@media print {
+  :root {
+    --bg: #ffffff;
+    --bg-subtle: #ffffff;
+    --surface-2: #f2f2f2;
+    --border: #bbbbbb;
+    --border-subtle: #dddddd;
+    --text: #000000;
+    --text-muted: #444444;
+    --text-faint: #666666;
+    --shadow-1: none;
+    --shadow-2: none;
+    --shadow-3: none;
+    --brand-shadow: none;
+  }
+
+  aside,
+  header button,
+  nav[aria-label="Asosiy bo'limlar"],
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  /* Jadval qatori sahifa chegarasida ikkiga bo'linmasin. */
+  tr,
+  li {
+    break-inside: avoid;
+  }
+
+  /* Havola ekranda ko'k, qog'ozda esa oddiy matn — rangli siyoh bekorga
+     sarflanmaydi va chop etilgan ro'yxat toza ko'rinadi. */
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+}

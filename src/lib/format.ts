@@ -95,3 +95,41 @@ export function formatAmountUzs(amount: number): string {
 export function formatCardNumber(digits: string): string {
   return digits.replace(/(\d{4})(?=\d)/g, "$1 ");
 }
+
+/**
+ * "Bugun" · "Kecha" · "12 kun oldin" · "Yo'q".
+ *
+ * Jurnallardagi "Oxirgi faollik" ustuni uchun. Aniq sana emas, chunki bu
+ * ustunda savol boshqa: "bu guruh tirikmi?". `12/09/2026` degan javob uchun
+ * o'quvchi bugungi sanani eslab, ayirib ko'rishi kerak bo'lardi.
+ *
+ * Kun chegarasi `formatDate` bilan AYNI qoida bo'yicha — O'zbekiston vaqti
+ * (UTC+5), jarayon vaqt mintaqasiga bog'liq emas. Aks holda serverda (UTC)
+ * "kecha", brauzerda "bugun" chiqib hidratsiya buzilardi.
+ */
+export function formatRelativeDays(date: Date | null, now: Date = new Date()): string {
+  if (date === null) return "Yo'q";
+
+  const dayNumber = (value: Date): number => {
+    const shifted = new Date(
+      value.getTime() + UZBEKISTAN_UTC_OFFSET_MINUTES * 60 * 1000
+    );
+    return Math.floor(shifted.getTime() / (24 * 60 * 60 * 1000));
+  };
+
+  const diff = dayNumber(now) - dayNumber(date);
+  if (diff <= 0) return "Bugun";
+  if (diff === 1) return "Kecha";
+  return `${diff} kun oldin`;
+}
+
+/** `formatRelativeDays` bilan bir xil hisob — rang/ogohlantirish qarori uchun. */
+export function daysSinceUz(date: Date, now: Date = new Date()): number {
+  const dayNumber = (value: Date): number => {
+    const shifted = new Date(
+      value.getTime() + UZBEKISTAN_UTC_OFFSET_MINUTES * 60 * 1000
+    );
+    return Math.floor(shifted.getTime() / (24 * 60 * 60 * 1000));
+  };
+  return Math.max(0, dayNumber(now) - dayNumber(date));
+}

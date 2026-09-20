@@ -10,8 +10,12 @@ import {
   TableHeaderCell,
   TableCell,
 } from "@/components/Table";
+import Link from "next/link";
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
+import { Icon } from "@/components/Icon";
+import { CompareBar } from "@/components/CompareBar";
+import { formatRelativeDays } from "@/lib/format";
 import { ResetPasswordModal } from "@/components/ResetPasswordModal";
 import type { OrganizationStudentRow } from "@/services/directorDashboard";
 import type { StudentAccessLabel } from "@/lib/labels";
@@ -33,6 +37,10 @@ export function StudentsTable({
   groups,
   payments,
   showProgress,
+  organizationAverage,
+  studentHref,
+  groupHref,
+  tutorHref,
 }: {
   students: OrganizationStudentRow[];
   groups: { id: string; name: string }[];
@@ -52,6 +60,17 @@ export function StudentsTable({
    * qabulxona ma'muriy ishini qiladi, lekin o'quv natijalarini ko'rmaydi.
    */
   showProgress: boolean;
+  /**
+   * Taqqoslash chizigi turadigan qiymat — tashkilotning ortacha bali.
+   * `undefined` bolsa chiziq chizilmaydi, shkalaning ozi qoladi.
+   */
+  organizationAverage?: number | null;
+  /** Berilsa — oquvchi ismi uning sahifasiga havola boladi. */
+  studentHref?: (studentId: string) => string;
+  /** Berilsa — guruh yonida uning sahifasiga otish havolasi chiqadi. */
+  groupHref?: (groupId: string) => string;
+  /** Berilsa — ustoz ismi havola boladi. */
+  tutorHref?: (tutorId: string) => string;
 }) {
   // `pending` so'rov ham, sahifa yangilanishi ham tugaganini bildiradi —
   // ilgari tugma darhol yoqilib, jadval esa bir necha soniya eski
@@ -102,7 +121,8 @@ export function StudentsTable({
             {showProgress && (
               <>
                 <TableHeaderCell align="right">Imtihonlar</TableHeaderCell>
-                <TableHeaderCell align="right">O&apos;rtacha ball</TableHeaderCell>
+                <TableHeaderCell className="w-[176px]">O&apos;rtacha ball</TableHeaderCell>
+                <TableHeaderCell>Oxirgi faollik</TableHeaderCell>
                 <TableHeaderCell>Holat</TableHeaderCell>
               </>
             )}
@@ -117,29 +137,71 @@ export function StudentsTable({
             const isMoving = movingId === student.studentId && pending;
             return (
               <TableRow key={student.studentId}>
-                <TableCell className="font-medium">{student.name}</TableCell>
                 <TableCell>
-                  <select
-                    value={student.groupId}
-                    disabled={isMoving}
-                    onChange={(e) => handleChangeGroup(student.studentId, e.target.value)}
-                    className="rounded-md border border-border bg-bg px-2 py-1.5 text-sm text-text"
-                  >
-                    {groups.map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.name}
-                      </option>
-                    ))}
-                  </select>
+                  {studentHref ? (
+                    <Link
+                      href={studentHref(student.studentId)}
+                      className="font-semibold text-text underline-offset-2 hover:text-brand hover:underline"
+                    >
+                      {student.name}
+                    </Link>
+                  ) : (
+                    <span className="font-semibold text-text">{student.name}</span>
+                  )}
                 </TableCell>
-                <TableCell>{student.tutorName}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    <select
+                      value={student.groupId}
+                      disabled={isMoving}
+                      onChange={(e) => handleChangeGroup(student.studentId, e.target.value)}
+                      aria-label={`${student.name} uchun guruhni almashtirish`}
+                      className="min-w-0 rounded-md border border-border bg-bg px-2.5 py-1.5 text-[13px] text-text transition-colors focus-visible:border-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/15"
+                    >
+                      {groups.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.name}
+                        </option>
+                      ))}
+                    </select>
+                    {/* Tanlagich guruhni ALMASHTIRADI; bu havola esa guruh
+                        jurnalini OCHADI. Ikki xil amal — ikki xil element. */}
+                    {groupHref && (
+                      <Link
+                        href={groupHref(student.groupId)}
+                        aria-label={`${student.groupName} guruhini ochish`}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-text-faint transition-colors hover:bg-surface-2 hover:text-brand"
+                      >
+                        <Icon name="chevronRight" className="h-4 w-4" />
+                      </Link>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {tutorHref ? (
+                    <Link
+                      href={tutorHref(student.tutorId)}
+                      className="font-medium text-text-muted underline-offset-2 hover:text-brand hover:underline"
+                    >
+                      {student.tutorName}
+                    </Link>
+                  ) : (
+                    student.tutorName
+                  )}
+                </TableCell>
                 {showProgress && (
                   <>
                     <TableCell align="right">{student.examAttemptCount}</TableCell>
-                    <TableCell align="right">
-                      {student.averageScore !== null
-                        ? `${student.averageScore}%`
-                        : "Imtihon topshirilmagan"}
+                    <TableCell>
+                      <CompareBar
+                        value={student.averageScore}
+                        average={organizationAverage ?? null}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-mono text-[13px] tabular-nums text-text-muted">
+                        {formatRelativeDays(student.lastActivityAt)}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <Badge variant={student.status.variant}>{student.status.label}</Badge>
@@ -161,6 +223,7 @@ export function StudentsTable({
                     {payments && (
                       <Button
                         type="button"
+                        size="sm"
                         variant="secondary"
                         onClick={() => setCashFor(student)}
                       >
@@ -169,7 +232,8 @@ export function StudentsTable({
                     )}
                     <Button
                       type="button"
-                      variant="secondary"
+                      size="sm"
+                      variant={student.isActive ? "secondary" : "primary"}
                       disabled={isToggling}
                       onClick={() => handleToggleActive(student.studentId, !student.isActive)}
                     >
@@ -177,6 +241,7 @@ export function StudentsTable({
                     </Button>
                     <Button
                       type="button"
+                      size="sm"
                       variant="secondary"
                       onClick={() => setResetPasswordFor(student)}
                     >

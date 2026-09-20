@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SelectField } from "@/components/Field";
+import { SelectField, INPUT_CLASS } from "@/components/Field";
+import { Icon } from "@/components/Icon";
 
 /**
  * Qidiruv (ism) va guruh filtri — holat URL searchParams'da (`q`, `group`)
@@ -46,7 +47,12 @@ export function StudentFilters({
     const nextQ = next.q !== undefined ? next.q : q;
     const nextGroup = next.group !== undefined ? next.group : currentGroup;
 
-    const params = new URLSearchParams();
+    // Boshqa parametrlar (masalan holat filtri `filtr`) SAQLANADI.
+    // Ilgari bu yerda bo'sh `URLSearchParams` yaratilardi va qidiruvga
+    // harf kiritilishi bilan tanlangan holat filtri yo'qolib ketardi.
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("q");
+    params.delete("group");
     if (nextQ) params.set("q", nextQ);
     if (nextGroup) params.set("group", nextGroup);
 
@@ -63,18 +69,24 @@ export function StudentFilters({
 
   return (
     <div className="flex flex-wrap items-end gap-3">
-      <div className="w-full max-w-xs space-y-1">
-        <label htmlFor="student-search" className="text-sm font-medium text-text">
+      <div className="w-full max-w-xs space-y-1.5">
+        <label htmlFor="student-search" className="text-[13px] font-semibold text-text">
           Qidiruv
         </label>
-        <input
-          id="student-search"
-          type="text"
-          placeholder="Ism bo'yicha qidirish"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm text-text"
-        />
+        <div className="relative">
+          <Icon
+            name="search"
+            className="pointer-events-none absolute left-3.5 top-1/2 h-[17px] w-[17px] -translate-y-1/2 text-text-faint"
+          />
+          <input
+            id="student-search"
+            type="search"
+            placeholder="Ism bo'yicha qidirish"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className={`${INPUT_CLASS} pl-10`}
+          />
+        </div>
       </div>
       <div className="w-48">
         <SelectField

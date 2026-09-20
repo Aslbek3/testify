@@ -17,8 +17,13 @@ const NAV_ITEMS: Record<Role, NavItem[]> = {
     { label: "Umumiy", href: "/owner", icon: "grid" },
     { label: "Savollar", href: "/owner/questions", icon: "book" },
   ],
+  // Uchta jurnal ketma-ket turadi: guruh → ustoz → o'quvchi. Bu
+  // avtomaktabning o'z tuzilishi bo'yicha tartib, ya'ni direktor "kim qayerda"
+  // degan savolga menyuning o'zidan javob topadi.
   DIRECTOR: [
     { label: "Umumiy", href: "/director", icon: "grid" },
+    { label: "Guruhlar", href: "/director/guruhlar", icon: "building" },
+    { label: "Ustozlar", href: "/director/ustozlar", icon: "graduationCap" },
     { label: "O'quvchilar", href: "/director/oquvchilar", icon: "users" },
     { label: "To'lovlar", href: "/director/tolovlar", icon: "wallet" },
   ],
