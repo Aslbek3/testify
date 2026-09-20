@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { requireAnySession } from "@/lib/auth";
-import { Card, CardHeader, CardTitle } from "@/components/Card";
+import { Card, CardHeader, CardTitle, CardNote } from "@/components/Card";
+import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/EmptyState";
 import { Badge } from "@/components/Badge";
 import { cn } from "@/lib/cn";
 import { describeAssignmentDue } from "@/lib/assignments";
@@ -29,24 +31,25 @@ export default async function NotificationsPage() {
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {unreadCount > 0 && <MarkNotificationsRead />}
 
-      <div>
-        <h1 className="text-xl font-semibold text-text">Bildirishnomalar</h1>
-        <p className="mt-1 text-sm text-text-muted">
-          {unreadCount > 0
+      <PageHeader
+        title="Bildirishnomalar"
+        description={
+          unreadCount > 0
             ? `${unreadCount} ta yangi bildirishnoma`
-            : "Yangi bildirishnoma yo'q"}
-        </p>
-      </div>
+            : "Yangi bildirishnoma yo'q"
+        }
+      />
 
       {dueSoon.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Muddati yaqin vazifalar</CardTitle>
+            <CardTitle icon="clipboardCheck">Muddati yaqin vazifalar</CardTitle>
+            <CardNote>{dueSoon.length} ta</CardNote>
           </CardHeader>
-          <ul className="divide-y divide-border">
+          <ul className="divide-y divide-border-subtle">
             {dueSoon.map((a) => {
               const due = describeAssignmentDue(a.dueAt, now);
               return (
@@ -72,7 +75,11 @@ export default async function NotificationsPage() {
 
       <Card>
         {notifications.length === 0 ? (
-          <p className="text-sm text-text-muted">Hozircha bildirishnoma yo&apos;q.</p>
+          <EmptyState
+            icon="bell"
+            title="Hozircha bildirishnoma yo'q"
+            description="Vazifa berilganda, to&apos;lovingiz tasdiqlanganda yoki muddat yaqinlashganda shu yerda xabar chiqadi."
+          />
         ) : (
           <ul className="divide-y divide-border">
             {notifications.map((n) => (

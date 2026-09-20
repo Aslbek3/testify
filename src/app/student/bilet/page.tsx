@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { requireActiveStudent } from "@/lib/auth";
-import { Card, CardHeader, CardTitle } from "@/components/Card";
-import { Button } from "@/components/Button";
+import { Card, CardHeader, CardTitle, CardNote } from "@/components/Card";
+import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/EmptyState";
+import { Icon } from "@/components/Icon";
 import { listTickets } from "@/services/tickets";
 
 /**
@@ -25,47 +27,45 @@ export default async function StudentTicketsPage({
   const tickets = await listTickets();
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-text">Biletlar</h1>
-        <p className="mt-1 text-sm text-text-muted">
-          Har bir bilet — qat&apos;iy savollar to&apos;plami, har safar bir xil
-          tartibda. Javob darhol tekshiriladi.
-        </p>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        title="Biletlar"
+        description="Har bir bilet — qat'iy savollar to'plami, har safar bir xil tartibda. Javob darhol tekshiriladi."
+      />
 
       {xato && (
-        <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{xato}</p>
+        <p className="flex items-start gap-2 rounded-md border border-danger/25 bg-danger-soft px-4 py-3 text-[13px] text-danger">
+          <Icon name="alertTriangle" className="mt-0.5 h-4 w-4" />
+          {xato}
+        </p>
       )}
 
       {tickets.length === 0 ? (
-        <Card className="flex flex-col items-center gap-4 py-12 text-center">
-          <p className="text-base font-semibold text-text">Biletlar hali kiritilmagan</p>
-          <p className="max-w-sm text-sm leading-relaxed text-text-muted">
-            Bilet savollari bazaga kiritilgach shu yerda paydo bo&apos;ladi.
-            Hozircha mashq va imtihon rejimlaridan foydalaning.
-          </p>
-          <Link href="/student/mashq">
-            <Button type="button">Mashqni boshlash</Button>
-          </Link>
+        <Card>
+          <EmptyState
+            icon="ticket"
+            title="Biletlar hali kiritilmagan"
+            description="Bilet savollari bazaga kiritilgach shu yerda paydo bo'ladi. Hozircha mashq va imtihon rejimlaridan foydalaning."
+            action={{ href: "/student/mashq", label: "Mashqni boshlash" }}
+          />
         </Card>
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>Mavjud biletlar</CardTitle>
-            <span className="text-sm text-text-muted">{tickets.length} ta bilet</span>
+            <CardTitle icon="ticket">Mavjud biletlar</CardTitle>
+            <CardNote>{tickets.length} ta bilet</CardNote>
           </CardHeader>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
             {tickets.map((ticket) => (
               <Link
                 key={ticket.number}
                 href={`/student/test?bilet=${ticket.number}`}
-                className="flex flex-col items-center gap-1 rounded-md border border-border px-3 py-4 text-center transition-colors hover:border-brand hover:bg-brand-soft/30"
+                className="flex flex-col items-center gap-1 rounded-md border border-border bg-bg px-3 py-4 text-center shadow-card transition-all hover:border-brand/50 hover:shadow-raised"
               >
-                <span className="text-base font-semibold text-text">
+                <span className="font-display text-[17px] font-bold text-text">
                   {ticket.number}-bilet
                 </span>
-                <span className="text-sm text-text-muted">
+                <span className="text-[12px] text-text-muted">
                   {ticket.questionCount} ta savol
                 </span>
               </Link>

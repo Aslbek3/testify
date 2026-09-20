@@ -71,7 +71,9 @@ export default async function StudentPaymentPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-2xl font-semibold text-text">To&apos;lov</h1>
+      <h1 className="font-display text-[26px] font-bold tracking-[-0.04em] text-text sm:text-[30px]">
+        To&apos;lov
+      </h1>
 
       <Card>
         <CardHeader>

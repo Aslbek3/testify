@@ -5,6 +5,7 @@ import { getProfile, getStudentProfileStats } from "@/services/profile";
 import { readinessFromScore } from "@/lib/readiness";
 import { Card, CardHeader, CardTitle } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
+import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/Badge";
 import { formatDate } from "@/lib/format";
 import { ChangePasswordForm } from "./ChangePasswordForm";
@@ -36,27 +37,41 @@ export default async function ProfilPage() {
   const readiness = stats ? readinessFromScore(stats.averageScore) : null;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-text">Profil</h1>
-        <p className="mt-1 text-sm text-text-muted">
-          Hisobingiz ma&apos;lumotlari va parolni o&apos;zgartirish.
-        </p>
-      </div>
+    <div className="mx-auto max-w-2xl space-y-5">
+      <PageHeader
+        title="Profil"
+        description="Hisobingiz ma'lumotlari va parolni o'zgartirish."
+      />
 
       {stats && (
         <>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
             <StatTile
+              icon="trophy"
+              tone="brand"
               label="O'rtacha ball"
               value={stats.averageScore !== null ? `${stats.averageScore}%` : "—"}
               sub="Imtihonlar bo'yicha"
             />
-            <StatTile label="Imtihonlar" value={stats.examCount} sub="Yakunlangan" />
-            <StatTile label="Mashqlar" value={stats.practiceCount} sub="Yakunlangan" />
+            <StatTile
+              icon="clipboardCheck"
+              tone="info"
+              label="Imtihonlar"
+              value={stats.examCount}
+              sub="Yakunlangan"
+            />
+            <StatTile
+              icon="target"
+              tone="purple"
+              label="Mashqlar"
+              value={stats.practiceCount}
+              sub="Yakunlangan"
+            />
             {/* Ketma-ket kunlar — bu ball emas, ODAT ko'rsatkichi, shuning
                 uchun mashq ham, imtihon ham hisobga olinadi. */}
             <StatTile
+              icon="flame"
+              tone="warning"
               label="Kun ketma-ket"
               value={streakLabel(stats.streakDays)}
               sub={stats.streakDays > 0 ? "Davom eting" : "Bugun boshlang"}
@@ -66,7 +81,7 @@ export default async function ProfilPage() {
           {readiness && (
             <Card>
               <CardHeader>
-                <CardTitle>Tayyorgarlik holati</CardTitle>
+                <CardTitle icon="chart">Tayyorgarlik holati</CardTitle>
                 <span className="text-sm text-text-muted">
                   Yakunlangan imtihonlar bo&apos;yicha
                 </span>

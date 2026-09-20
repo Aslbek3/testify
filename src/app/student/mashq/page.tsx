@@ -12,9 +12,16 @@ export default async function MashqPage({
 
   return (
     <ModeStartCard
+      icon="target"
+      tone="bg-info-soft text-info"
       title="Mashq"
       description="Bilimni mustahkamlash uchun. Har javobdan keyin to'g'ri javob va izoh darhol ochiladi."
       error={xato}
+      highlights={[
+        { icon: "clipboardCheck", label: "Savollar", value: `${QUESTION_COUNT.PRACTICE} ta` },
+        { icon: "clock", label: "Vaqt", value: "Cheklovsiz" },
+        { icon: "book", label: "Izoh", value: "Darhol" },
+      ]}
       rules={[
         `${QUESTION_COUNT.PRACTICE} ta savol, butun bazadan tasodifiy tanlanadi.`,
         "Vaqt cheklovi yo'q.",

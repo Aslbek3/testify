@@ -8,7 +8,8 @@ import {
   type OrganizationSortField,
 } from "@/services/organizations";
 import { StatTile } from "@/components/StatTile";
-import { Card, CardHeader, CardTitle } from "@/components/Card";
+import { PageHeader } from "@/components/PageHeader";
+import { Card, CardHeader, CardTitle, CardNote } from "@/components/Card";
 import { Button } from "@/components/Button";
 import {
   Table,
@@ -174,25 +175,22 @@ export default async function OwnerPage({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-text">App Owner paneli</h1>
-          <p className="mt-1 text-sm text-text-muted">
-            Barcha avtomaktablarni va platforma bo&apos;yicha o&apos;sishni shu
-            yerdan boshqarasiz.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/owner/questions">
-            <Button type="button" variant="secondary">
-              Savollar bazasi
-            </Button>
-          </Link>
-          <NewDirectorModal organizations={organizationOptions} />
-          <NewOrganizationModal />
-        </div>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        title="App Owner paneli"
+        description="Barcha avtomaktablarni va platforma bo'yicha o'sishni shu yerdan boshqarasiz."
+        actions={
+          <>
+            <Link href="/owner/questions">
+              <Button type="button" variant="secondary" icon="book">
+                Savollar bazasi
+              </Button>
+            </Link>
+            <NewDirectorModal organizations={organizationOptions} />
+            <NewOrganizationModal />
+          </>
+        }
+      />
 
       {/* Kutayotgan to'lov statistikadan ham OLDIN turadi — u yagona
           kechiktirib bo'lmaydigan ish. Kutayotgan to'lov bo'lmasa
@@ -203,20 +201,30 @@ export default async function OwnerPage({
           bloklanmaganini va tashkilot holati ACTIVE ekanini. Endi har bir
           plitka nimani sanashini aniq yozadi. "primary" plitka ikki ustunni
           egallagani uchun to'rtta plitka jami beshta katak. */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
         <StatTile
-          emphasis="primary"
+          icon="users"
+          tone="brand"
           label="Faol tashkilotlardagi o'quvchilar"
           value={overview.activeOrganizationStudentCount}
           sub="Bloklanmagan hisoblar"
         />
         <StatTile
+          icon="chart"
+          tone="info"
           label="Jami o'quvchilar"
           value={overview.studentCount}
           sub="Barcha tashkilotlar"
         />
-        <StatTile label="Jami tashkilotlar" value={overview.organizationCount} />
         <StatTile
+          icon="building"
+          tone="purple"
+          label="Jami tashkilotlar"
+          value={overview.organizationCount}
+        />
+        <StatTile
+          icon="check"
+          tone="warning"
           label="Faol tashkilotlar"
           value={overview.activeOrganizationCount}
           sub="Holati: Faol"
@@ -225,10 +233,8 @@ export default async function OwnerPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>Tashkilotlar</CardTitle>
-          <span className="text-sm text-text-muted">
-            {organizations.length} ta tashkilot
-          </span>
+          <CardTitle icon="building">Tashkilotlar</CardTitle>
+          <CardNote>{organizations.length} ta tashkilot</CardNote>
         </CardHeader>
 
         <OrganizationFilters />

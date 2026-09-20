@@ -58,7 +58,9 @@ export default async function ReceptionStudentsPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-text">O&apos;quvchilar</h1>
+          <h1 className="font-display text-[26px] font-bold tracking-[-0.04em] text-text sm:text-[30px]">
+            O&apos;quvchilar
+          </h1>
           <p className="mt-1 text-sm text-text-muted">
             Yangi o&apos;quvchi qo&apos;shish, guruhini o&apos;zgartirish, parolini
             tiklash va hisobini bloklash shu yerdan.

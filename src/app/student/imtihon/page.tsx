@@ -15,9 +15,16 @@ export default async function ImtihonPage({
 
   return (
     <ModeStartCard
+      icon="clipboardCheck"
+      tone="bg-warning-soft text-warning"
       title="Imtihon"
       description="Haqiqiy imtihon sharoiti. Natija ustoz va direktor panellarida ham ko'rinadi."
       error={xato}
+      highlights={[
+        { icon: "clipboardCheck", label: "Savollar", value: `${QUESTION_COUNT.EXAM} ta` },
+        { icon: "clock", label: "Vaqt", value: `${minutes} daqiqa` },
+        { icon: "check", label: "O'tish balli", value: `${passCount} ta` },
+      ]}
       rules={[
         `${QUESTION_COUNT.EXAM} ta savol, ${minutes} daqiqa.`,
         `O'tish uchun kamida ${passCount} ta to'g'ri javob (${EXAM_MAX_WRONG} tagacha xato).`,

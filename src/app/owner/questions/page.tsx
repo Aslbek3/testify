@@ -29,7 +29,9 @@ export default async function QuestionBankPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-text">Savollar bazasi</h1>
+          <h1 className="font-display text-[26px] font-bold tracking-[-0.04em] text-text sm:text-[30px]">
+            Savollar bazasi
+          </h1>
           <p className="mt-1 text-sm text-text-muted">
             Bu yerda barcha tashkilotlar foydalanadigan umumiy mavzular va
             savollar boshqariladi.

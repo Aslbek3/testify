@@ -25,7 +25,9 @@ export default async function DirectorPaymentsPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <h1 className="text-2xl font-semibold text-text">To&apos;lovlar</h1>
+      <h1 className="font-display text-[26px] font-bold tracking-[-0.04em] text-text sm:text-[30px]">
+        To&apos;lovlar
+      </h1>
 
       {/* Kutayotgan cheklar eng tepada — bu kechiktirib bo'lmaydigan ish:
           o'quvchi pulni o'tkazgan, tasdiqlanmaguncha muddati uzaymaydi.

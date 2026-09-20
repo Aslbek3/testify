@@ -39,9 +39,20 @@ export default async function MaratonPage({
 
   return (
     <ModeStartCard
+      icon="flame"
+      tone="bg-purple-soft text-purple"
       title="Maraton"
       description="Uzoq mashq: savollar sonini o'zingiz tanlaysiz, vaqt cheklovi yo'q."
       error={xato}
+      highlights={[
+        {
+          icon: "clipboardCheck",
+          label: "Savollar",
+          value: `${MARATHON_MIN_QUESTIONS}-${Math.min(available, MARATHON_MAX_QUESTIONS)} ta`,
+        },
+        { icon: "clock", label: "Vaqt", value: "Cheklovsiz" },
+        { icon: "book", label: "Izoh", value: "Darhol" },
+      ]}
       rules={[
         "Savollar soni tanlanadi, savollar butun bazadan tasodifiy olinadi.",
         "Vaqt cheklovi yo'q — istalgan paytda yakunlash mumkin.",
@@ -50,19 +61,19 @@ export default async function MaratonPage({
       ]}
       action={
         tooFewQuestions ? (
-          <p className="text-sm text-text-muted">
+          <p className="text-[13px] text-text-muted">
             Maraton uchun bazada kamida {MARATHON_MIN_QUESTIONS} ta savol
             bo&apos;lishi kerak. Hozir {available} ta.
           </p>
         ) : (
           <div className="space-y-2">
-            <p className="text-sm font-medium text-text">Nechta savol?</p>
+            <p className="text-[13px] font-semibold text-text">Nechta savol?</p>
             <div className="flex flex-wrap gap-2">
               {sizes.map((size) => (
                 <Link
                   key={size}
                   href={`/student/test?mode=PRACTICE&savollar=${size}`}
-                  className="rounded-md border border-border px-4 py-3 text-sm font-medium pointer-fine:py-2 text-text hover:bg-bg-subtle"
+                  className="rounded-md border border-border bg-bg px-4 py-3 text-[13px] font-semibold text-text shadow-card transition-colors hover:border-brand/40 hover:bg-surface-2 pointer-fine:py-2"
                 >
                   {size} ta
                 </Link>
@@ -70,7 +81,7 @@ export default async function MaratonPage({
               {showAll && (
                 <Link
                   href={`/student/test?mode=PRACTICE&savollar=${available}`}
-                  className="rounded-md border border-brand bg-brand-soft px-4 py-3 text-sm font-medium pointer-fine:py-2 text-brand hover:bg-brand-soft/70"
+                  className="rounded-md border border-brand bg-brand-soft px-4 py-3 text-[13px] font-bold text-brand transition-colors hover:brightness-95 pointer-fine:py-2"
                 >
                   Hammasi ({available} ta)
                 </Link>
