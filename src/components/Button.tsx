@@ -7,7 +7,8 @@ export type ButtonVariant =
   | "secondary"
   | "ghost"
   | "danger"
-  | "ghost-dark";
+  | "ghost-dark"
+  | "outline-dark";
 
 export type ButtonSize = "sm" | "md" | "lg";
 
@@ -28,6 +29,10 @@ const VARIANT_STYLES: Record<ButtonVariant, string> = {
   // kerak (dizayn qoidasi "e": qizil — muammo rangi, bezak emas).
   danger: "bg-danger-soft text-danger hover:brightness-95 active:translate-y-px",
   "ghost-dark": "w-full text-white/70 hover:bg-white/10 hover:text-white",
+  // To'q fondagi ekranlar uchun (test ekrani) — u yerda oq `secondary`
+  // tugma juda kuchli chiqadi va savoldan diqqatni tortib oladi.
+  "outline-dark":
+    "border border-white/20 text-white/80 hover:border-white/35 hover:bg-white/10 hover:text-white active:translate-y-px",
 };
 
 // `py-*` mobilda kattaroq: telefonda tugma balandligi ~44px (barmoq uchun

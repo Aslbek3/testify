@@ -195,7 +195,7 @@ export function AppShell({
     pathname.startsWith("/student/test") && !pathname.includes("/natija");
   if (isTestScreen) {
     return (
-      <div className="min-h-screen bg-bg-subtle">
+      <div className="min-h-screen bg-navy">
         <main className="mx-auto max-w-4xl p-4 md:p-8">{children}</main>
       </div>
     );

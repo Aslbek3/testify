@@ -30,6 +30,9 @@ const RECEPTION_EMAIL = "tekshiruv-qabulxona@testify.local";
 
 const prisma = new PrismaClient();
 
+/** Skript ishga tushgan vaqt — tozalashda shundan keyingi yozuvlar o'chiriladi. */
+const startedRunAt = new Date();
+
 type Check = { ok: boolean; label: string; detail?: string };
 const results: Check[] = [];
 
@@ -232,6 +235,35 @@ async function main() {
       await checkPage(student, path);
     }
     await checkDenied(student, "/director", "O'quvchi /director ga kira olmaydi");
+
+    // Test ekrani — urinish yaratadi, shuning uchun oxirida tozalanadi
+    // (pastdagi `cleanup`). Bu sahifa o'quvchining eng ko'p vaqt
+    // o'tkazadigan joyi, ya'ni uni tekshirmaslik mumkin emas.
+    // `/student/test?mode=PRACTICE` urinish YARATADI va `?attemptId=...`
+    // ga yo'naltiradi. Next'ning `redirect()`i 200 javobi ichida keladi
+    // (muhim.md), ya'ni `fetch` uni o'zi kuzatmaydi — manzilni qo'lda
+    // ajratib olib, ikkinchi so'rov yuboriladi.
+    const startRes = await fetch(`${BASE}/student/test?mode=PRACTICE`, {
+      headers: { cookie: student },
+    });
+    const startHtml = await startRes.text();
+    const attemptMatch = startHtml.match(/attemptId=([a-z0-9]+)/i);
+    record(
+      startRes.status === 200 && attemptMatch !== null,
+      "Mashq urinishi boshlandi",
+      attemptMatch ? undefined : `javob ${startRes.status}, attemptId topilmadi`
+    );
+
+    if (attemptMatch) {
+      const runnerHtml = await (
+        await fetch(`${BASE}/student/test?attemptId=${attemptMatch[1]}`, {
+          headers: { cookie: student },
+        })
+      ).text();
+      record(runnerHtml.includes("Savollar holati"), "Test ekrani chizildi");
+      // To'q qobiq — savol oq matnda, fon navy.
+      record(runnerHtml.includes("111c2e"), "Test ekrani to'q qobiqda");
+    }
   }
 
   // ——— 4. Direktor: panel + uchta jurnal
@@ -336,10 +368,38 @@ async function main() {
 
 async function cleanup() {
   // Skript yaratgan hamma narsani o'chiradi. `deleteMany` ataylab:
-  // hisob yaratilmagan bo'lsa ham xato bermaydi.
-  const deleted = await prisma.user.deleteMany({ where: { email: RECEPTION_EMAIL } });
-  if (deleted.count > 0) {
-    console.log(`\nTozalandi: vaqtinchalik qabulxona hisobi o'chirildi.`);
+  // hech narsa yaratilmagan bo'lsa ham xato bermaydi.
+  const deletedUsers = await prisma.user.deleteMany({
+    where: { email: RECEPTION_EMAIL },
+  });
+
+  // Test ekrani tekshiruvi yaratgan urinishlar. Faqat SHU ishga
+  // tushirishda (startedAt >= startedRunAt) yaratilganlari o'chiriladi —
+  // o'quvchining haqiqiy tarixiga tegilmaydi.
+  const student = await prisma.user.findFirst({
+    where: { email: "student1@testify.dev" },
+    select: { id: true },
+  });
+  let deletedAttempts = 0;
+  if (student) {
+    // Javoblar avval: `AttemptAnswer` urinishga bog'langan.
+    const attempts = await prisma.attempt.findMany({
+      where: { studentId: student.id, startedAt: { gte: startedRunAt } },
+      select: { id: true },
+    });
+    if (attempts.length > 0) {
+      const ids = attempts.map((a) => a.id);
+      await prisma.attemptAnswer.deleteMany({ where: { attemptId: { in: ids } } });
+      const res = await prisma.attempt.deleteMany({ where: { id: { in: ids } } });
+      deletedAttempts = res.count;
+    }
+  }
+
+  const parts: string[] = [];
+  if (deletedUsers.count > 0) parts.push("vaqtinchalik qabulxona hisobi");
+  if (deletedAttempts > 0) parts.push(`${deletedAttempts} ta test urinishi`);
+  if (parts.length > 0) {
+    console.log(`\nTozalandi: ${parts.join(" va ")} o'chirildi.`);
   }
 }
 

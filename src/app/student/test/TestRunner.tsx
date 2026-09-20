@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
 import { QuestionImage } from "@/components/QuestionImage";
@@ -320,32 +319,34 @@ export function TestRunner({
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <Card className="overflow-hidden p-0">
-        <div className="flex items-center justify-between border-b border-border px-5 py-4 sm:px-6">
+      <div className="overflow-hidden rounded-xl border border-white/10 bg-[#111c2e] shadow-raised">
+        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <span
               className={cn(
                 "rounded-md px-2.5 py-1 text-xs font-semibold",
-                mode === "EXAM" ? "bg-brand-soft text-brand" : "bg-success/15 text-success"
+                mode === "EXAM"
+                  ? "bg-white/10 text-white/85"
+                  : "bg-brand/20 text-[#5eead4]"
               )}
             >
               {modeLabel}
             </span>
-            <span className="font-mono text-base font-semibold text-text">
+            <span className="font-mono text-base font-semibold text-white">
               {currentIndex + 1} / {total}
             </span>
           </div>
           {secondsLeft !== null ? (
             <span
               className={cn(
-                "font-mono text-base font-semibold",
-                isDanger ? "text-danger" : "text-text"
+                "font-mono text-base font-semibold tabular-nums",
+                isDanger ? "text-[#fca5a5]" : "text-white"
               )}
             >
               {formatTime(secondsLeft)}
             </span>
           ) : (
-            <span className="font-mono text-base font-semibold text-text-muted">
+            <span className="font-mono text-base font-semibold text-white/50">
               Cheklovsiz
             </span>
           )}
@@ -356,20 +357,20 @@ export function TestRunner({
             bosiladi. Ko'p savolda chiziqchalar o'rniga oddiy progress
             ko'rsatiladi. */}
         {total > MAX_PROGRESS_DOTS ? (
-          <div className="border-b border-border px-5 py-3.5 sm:px-6">
-            <div className="h-1.5 rounded-full bg-bg-subtle">
+          <div className="border-b border-white/10 px-5 py-3.5 sm:px-6">
+            <div className="h-1.5 rounded-full bg-white/10">
               <div
                 className="h-1.5 rounded-full bg-brand transition-all"
                 style={{ width: `${Math.round((answeredCount / total) * 100)}%` }}
               />
             </div>
-            <p className="mt-2 text-xs text-text-muted">
+            <p className="mt-2 text-xs text-white/50">
               {total} tadan {answeredCount} tasiga javob berildi
             </p>
           </div>
         ) : (
         <nav
-          className="flex gap-1 border-b border-border px-5 py-3.5 sm:px-6"
+          className="flex gap-1 border-b border-white/10 px-5 py-3.5 sm:px-6"
           aria-label="Savollar holati"
         >
           {questions.map((q, i) => {
@@ -395,16 +396,16 @@ export function TestRunner({
               // Saqlanmagan javob birinchi o'rinda — u boshqa hamma narsadan
               // muhimroq signal (javob yo'qolgan bo'lishi mumkin).
               status === "failed"
-                ? "bg-danger"
+                ? "bg-[#f87171]"
                 : status === "retrying" || status === "saving"
-                  ? "bg-warning"
+                  ? "bg-[#fbbf24]"
                   : knowsCorrectness
                     ? answer?.isCorrect
-                      ? "bg-success"
-                      : "bg-danger"
+                      ? "bg-[#34d399]"
+                      : "bg-[#f87171]"
                     : isAnswered
                       ? "bg-brand"
-                      : "bg-border";
+                      : "bg-white/15";
 
             const answerLabel = knowsCorrectness
               ? answer?.isCorrect
@@ -432,7 +433,7 @@ export function TestRunner({
                 <span
                   className={cn(
                     "block w-full rounded-full transition-all",
-                    isCurrent ? "h-2 border-2 border-text" : "h-1.5",
+                    isCurrent ? "h-2 border-2 border-white" : "h-1.5",
                     fillColor
                   )}
                 />
@@ -459,26 +460,26 @@ export function TestRunner({
           )}
 
           <div className="flex flex-col gap-5">
-            <p className="text-lg font-semibold leading-relaxed text-text">
+            <p className="font-display text-[22px] font-bold leading-snug tracking-[-0.02em] text-white sm:text-[26px]">
               {currentQuestion.text}
             </p>
 
             {currentStatus === "retrying" && (
-              <p className="flex items-center gap-1.5 rounded-md border border-warning bg-warning/10 px-4 py-3 text-sm text-warning">
+              <p className="flex items-center gap-1.5 rounded-md border border-[#fbbf24]/40 bg-[#fbbf24]/10 px-4 py-3 text-sm text-[#fcd34d]">
                 <WarningIcon className="h-4 w-4 shrink-0" />
                 Saqlanmadi, qayta urinilmoqda...
               </p>
             )}
             {currentStatus === "failed" && (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-danger bg-danger/10 px-4 py-3">
-                <p className="text-sm text-danger">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#f87171]/40 bg-[#f87171]/10 px-4 py-3">
+                <p className="text-sm text-[#fca5a5]">
                   Javobingiz saqlanmadi — internet aloqasi uzilgan bo&apos;lishi
                   mumkin.
                 </p>
                 <button
                   type="button"
                   onClick={() => retrySave(currentQuestion.id)}
-                  className="shrink-0 rounded-md bg-danger px-3.5 py-1.5 text-xs font-semibold text-white"
+                  className="shrink-0 rounded-md bg-[#f87171] px-3.5 py-1.5 text-xs font-semibold text-[#3f0d0d]"
                 >
                   Qayta urinish
                 </button>
@@ -508,46 +509,52 @@ export function TestRunner({
                     disabled={practiceLocked}
                     onClick={() => handleSelect(i)}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-lg border p-3.5 text-left transition-colors",
+                      "flex w-full items-center gap-3 rounded-md border p-4 text-left transition-colors",
                       isTheCorrectOne
-                        ? "border-success bg-success/10"
+                        ? "border-[#34d399] bg-[#34d399]/15"
                         : isWrongSelected
-                          ? "border-danger bg-danger/10"
+                          ? "border-[#f87171] bg-[#f87171]/15"
                           : showUnsaved
                             ? cn(
                                 "border-dashed",
-                                currentStatus === "failed" ? "border-danger" : "border-warning"
+                                currentStatus === "failed"
+                                  ? "border-[#f87171]"
+                                  : "border-[#fbbf24]"
                               )
                             : isSelected
-                              ? "border-brand bg-brand-soft"
-                              : "border-border bg-bg hover:bg-bg-subtle",
+                              ? "border-brand bg-brand/20"
+                              : "border-white/12 bg-white/[0.04] hover:border-white/25 hover:bg-white/[0.08]",
                       practiceLocked && !isSelected && !isTheCorrectOne && "opacity-50"
                     )}
                   >
                     <span
                       className={cn(
-                        "w-4 shrink-0 font-mono text-sm font-semibold",
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-sm font-mono text-[13px] font-bold",
                         isTheCorrectOne
-                          ? "text-success"
-                          : showUnsaved
-                            ? currentStatus === "failed"
-                              ? "text-danger"
-                              : "text-warning"
-                            : "text-text-muted"
+                          ? "bg-[#34d399] text-[#062b20]"
+                          : isWrongSelected
+                            ? "bg-[#f87171] text-[#3f0d0d]"
+                            : showUnsaved
+                              ? currentStatus === "failed"
+                                ? "bg-[#f87171]/20 text-[#fca5a5]"
+                                : "bg-[#fbbf24]/20 text-[#fcd34d]"
+                              : isSelected
+                                ? "bg-brand text-white"
+                                : "bg-white/10 text-white/55"
                       )}
                     >
                       {optionLetter(i)}
                     </span>
                     <span
                       className={cn(
-                        "text-sm text-text",
-                        (isSelected || isTheCorrectOne) && "font-medium"
+                        "text-[15px] leading-snug text-white/90",
+                        (isSelected || isTheCorrectOne) && "font-semibold text-white"
                       )}
                     >
                       {option}
                     </span>
                     {isTheCorrectOne && (
-                      <span className="ml-auto text-sm font-semibold text-success">✓</span>
+                      <span className="ml-auto text-sm font-bold text-[#34d399]">✓</span>
                     )}
                   </button>
                 );
@@ -556,15 +563,15 @@ export function TestRunner({
 
             {mode === "PRACTICE" &&
               (currentAnswer?.explanation || currentAnswer?.legalReference) && (
-                <div className="flex flex-col gap-1 rounded-md bg-brand-soft px-4 py-3.5">
-                  <p className="text-xs font-semibold text-brand">Izoh</p>
+                <div className="flex flex-col gap-1 rounded-md border border-brand/25 bg-brand/12 px-4 py-3.5">
+                  <p className="text-xs font-bold text-[#5eead4]">Izoh</p>
                   {currentAnswer.explanation && (
-                    <p className="text-sm leading-relaxed text-text">
+                    <p className="text-sm leading-relaxed text-white/85">
                       {currentAnswer.explanation}
                     </p>
                   )}
                   {currentAnswer.legalReference && (
-                    <p className="text-xs text-text-muted">
+                    <p className="text-xs text-white/50">
                       {currentAnswer.legalReference}
                     </p>
                   )}
@@ -572,11 +579,16 @@ export function TestRunner({
               )}
 
             {currentStatus === "saving" && (
-              <p className="text-xs text-text-muted">Saqlanmoqda...</p>
+              <p className="text-xs text-white/50">Saqlanmoqda...</p>
             )}
 
             <div className="mt-1 flex items-center justify-between">
-              <Button variant="secondary" onClick={goBack} disabled={currentIndex === 0}>
+              <Button
+                variant="outline-dark"
+                onClick={goBack}
+                disabled={currentIndex === 0}
+                icon="chevronLeft"
+              >
                 Orqaga
               </Button>
               <Button onClick={goNext} disabled={finishing}>
@@ -588,7 +600,7 @@ export function TestRunner({
                 yozilmagani uchun deyarli hech kim ishlatmasdi. Raqamlar
                 oralig'i shu savoldagi variantlar soniga qarab yoziladi —
                 4 ta variant bo'lsa "1–4", 2 ta bo'lsa "1–2". */}
-            <p className="hidden text-xs text-text-muted sm:block">
+            <p className="hidden text-xs text-white/40 sm:block">
               <span className="font-mono">←</span> oldingi ·{" "}
               <span className="font-mono">→</span> keyingi ·{" "}
               <span className="font-mono">
@@ -600,7 +612,7 @@ export function TestRunner({
             </p>
           </div>
         </div>
-      </Card>
+      </div>
 
       <Modal
         open={showFinishConfirm}

@@ -13,6 +13,9 @@ import {
 import { getSubscriptionSummary } from "@/services/payments";
 import { countUnreadNotifications } from "@/services/notifications";
 import { getReceptionOverview, EXPIRING_SOON_DAYS } from "@/services/reception";
+import { getGroupsForTutor, getRosterForGroup } from "@/services/tutorDashboard";
+import { listAssignmentsForGroup } from "@/services/assignments";
+import { attentionList } from "@/lib/attention";
 
 /**
  * Har bir rol uchun "bugungi ish" ro'yxatini yig'adi.
@@ -30,6 +33,9 @@ const SUBSCRIPTION_WARNING_DAYS = 10;
 
 /** Ustoz shu kundan ko'p vazifa bermasa — "jim". */
 const TUTOR_SILENT_DAYS = 14;
+
+/** Vazifa muddati shu kundan kam qolsa — ustozning ish ro'yxatiga tushadi. */
+const ASSIGNMENT_SOON_DAYS = 2;
 
 export async function getDirectorTasks(
   organizationId: string,
@@ -197,6 +203,87 @@ export async function getReceptionTasks(
       detail: "Guruhi va to'lovi to'g'ri qo'yilganini tekshiring.",
       action: "Ko'rish",
       href: "/qabulxona/oquvchilar",
+    });
+  }
+
+  if (unread > 0) {
+    tasks.push({
+      id: "notifications",
+      severity: "info",
+      icon: "bell",
+      title: `${unread} ta yangi bildirishnoma`,
+      action: "O'qish",
+      href: "/bildirishnomalar",
+    });
+  }
+
+  return sortTasks(tasks);
+}
+
+/**
+ * Ustozning bugungi ishi.
+ *
+ * Direktorникidan farqi: bu yerda pul yo'q va obuna yo'q — ustozning ishi
+ * o'quv jarayoni. Shuning uchun birinchi o'rinda muddati yaqinlashgan
+ * vazifa turadi: uni bugun eslatib qo'ysa, ertaga hamma bajargan bo'ladi.
+ */
+export async function getTutorTasks(tutorId: string): Promise<RoleTask[]> {
+  const [groups, unread] = await Promise.all([
+    getGroupsForTutor(tutorId),
+    countUnreadNotifications(tutorId),
+  ]);
+
+  const perGroup = await Promise.all(
+    groups.map(async (group) => {
+      const [assignments, roster] = await Promise.all([
+        listAssignmentsForGroup(group.id),
+        getRosterForGroup(group.id),
+      ]);
+      return { group, assignments, attention: attentionList(roster) };
+    })
+  );
+
+  const tasks: RoleTask[] = [];
+
+  // — Muddati yaqin vazifalar. Har biri alohida band: ustoz qaysi guruhga
+  //   kirishini bilishi kerak, "3 ta vazifa" degan umumiy son yordam bermaydi.
+  for (const { group, assignments } of perGroup) {
+    for (const assignment of assignments) {
+      if (assignment.isOverdue) continue;
+      const daysLeft = Math.ceil(
+        (assignment.dueAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)
+      );
+      if (daysLeft > ASSIGNMENT_SOON_DAYS) continue;
+
+      const notDone = assignment.students.length - assignment.completedCount;
+      if (notDone === 0) continue;
+
+      tasks.push({
+        id: `assignment-${assignment.id}`,
+        severity: daysLeft <= 1 ? "urgent" : "attention",
+        icon: "clipboardCheck",
+        title: `«${assignment.title}» muddati ${daysLeft <= 0 ? "bugun" : daysLeft === 1 ? "ertaga" : `${daysLeft} kundan keyin`} tugaydi`,
+        detail: `${group.name} · ${assignment.students.length} tadan ${notDone} tasi hali boshlamagan`,
+        action: "Guruhni ochish",
+        href: `/guruh/${group.id}`,
+      });
+    }
+  }
+
+  // — E'tibor talab qiladigan o'quvchilar, guruh bo'yicha.
+  for (const { group, attention } of perGroup) {
+    if (attention.length === 0) continue;
+    tasks.push({
+      id: `attention-${group.id}`,
+      severity: "attention",
+      icon: "alertTriangle",
+      title: `${group.name}: ${attention.length} o'quvchi e'tibor talab qiladi`,
+      detail: attention
+        .slice(0, 3)
+        .map((item) => item.name)
+        .join(", "),
+      action: "Ro'yxatni ochish",
+      href: `/guruh/${group.id}`,
     });
   }
 
