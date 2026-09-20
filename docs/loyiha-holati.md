@@ -1,6 +1,6 @@
 # Testify — loyiha holati
 
-Oxirgi yangilanish: 2026-09-18 · Tekshirilgan commit: `d66c7fe`
+Oxirgi yangilanish: 2026-09-21 · Tekshirilgan commit: `5ff4a71`
 
 Bu fayl "nima tayyor, nima yo'q" degan savolga javob beradi. Foizlar —
 kodni ko'rib chiqib qo'yilgan baho, "avtomaktabga sotsa bo'ladigan
@@ -10,9 +10,9 @@ mahsulot" o'lchoviga nisbatan. Aniq o'lchov emas, yo'nalish ko'rsatkichi.
 
 | O'lchov | Holat |
 |---|---|
-| Kod (MVP funksiyalari) | ~90% |
+| Kod (MVP funksiyalari) | ~92% |
 | Kontent (savollar bazasi) | ~5% |
-| 14 qismning o'rtachasi | **~80%** |
+| 15 qismning o'rtachasi | **~84%** |
 
 Eng katta to'siq endi kodda emas, **kontentda**: dev bazada 66 ta savol,
 production'da 20 ta, raqobatchida (autotestlar.uz) 1 220 ta. Savollarni
@@ -33,11 +33,11 @@ savollarning o'zi.
 | 8 | Xatolar ustida ishlash | 90% | aqlli takrorlash (spaced repetition) |
 | 9 | Infratuzilma | 85% | monitoring, CI |
 | 10 | Bildirishnomalar | 80% | Telegram; menyudagi son real vaqtda yangilanmaydi |
-| 11 | UI va mobil | 90% | — |
+| 11 | UI va mobil | 95% | owner/questions ekranlari chuqurroq ishlanmagan |
 | 12 | Owner paneli | 85% | mavzu tahriri, direktorni bloklash, arxivlash |
 | 13 | Avtomaktab → platforma obunasi | 50% | UI yashirin (`ORGANIZATION_BILLING_UI_ENABLED = false`) |
 | 14 | **Savollar bazasi (kontent)** | **5%** | production 20 ta, dev 66 ta savol; bilet yo'q |
-| 15 | Avtomatik testlar | 10% | tekshiruv skriptlari bor, lekin qo'lda ishga tushiriladi |
+| 15 | Avtomatik testlar | 30% | `scripts/tekshiruv-ui.ts` — 64 ta tekshiruv, ruxsat chegaralari bilan; qo'lda ishga tushiriladi, CI yo'q |
 
 ## Rollar
 
@@ -46,6 +46,25 @@ qabulxona mijoz bilan ishlaydi · direktor boshqaradi · owner platformani
 boshqaradi.** To'rtta kalit direktor sozlamalarida: qabulxona pul bilan
 ishlaydimi, natijalarni ko'radimi; ustoz o'quvchi qo'shadimi, parol
 tiklaydimi.
+
+## Dizayn (2026-09-21 da to'liq qayta ishlandi)
+
+Batafsil — `docs/dizayn.md`. Qisqacha nima o'zgardi:
+
+- **Tokenlar**: brend ko'kdan turkuazga (`#0ea79a`), navy sidebar,
+  3 pog'onali soya, radius shkalasi. Ilgari butun ilovada bitta ham soya
+  yo'q edi va hamma element 6px radiusli quticha ko'rinardi.
+- **Shriftlar**: Space Grotesk + DM Sans. Ilgari butun ilova 14px da
+  yozilgan edi (`text-sm` 315 marta, `text-base` 11 marta).
+- **Ikonkalar**: 40 ta. Ilgari 114 faylning 4 tasida SVG bor edi.
+- **Uchta jurnal** (guruhlar, ustozlar, o'quvchilar) — taqqoslash
+  chizig'i bilan.
+- **Obyekt sahifalari birlashtirildi**: `/guruh/[id]`, `/ustoz/[id]`,
+  `/oquvchi/[id]` — barcha rollar uchun bitta sahifa. Qabulxona guruh va
+  o'quvchi sahifalarini qo'shimcha kodsiz oldi.
+- **"Bugungi ish" paneli** — direktor, qabulxona va ustoz uchun.
+- **Test ekrani** to'q (navy) o'rganish qobig'iga o'tkazildi.
+- ALL CAPS yorliqlar butunlay olib tashlandi.
 
 ## Arxitektura qoidalari — bajarilgan
 

@@ -1,6 +1,6 @@
 # Qilinadigan ishlar
 
-Oxirgi yangilanish: 2026-09-17. Tartib — ustuvorlik bo'yicha.
+Oxirgi yangilanish: 2026-09-21. Tartib — ustuvorlik bo'yicha.
 Holat: ⬜ boshlanmagan · 🔵 jarayonda · ✅ tayyor
 
 ## 0. Chiqarilmagan (birinchi navbatda)
@@ -24,14 +24,27 @@ Holat: ⬜ boshlanmagan · 🔵 jarayonda · ✅ tayyor
 - ✅ Xato qolmagan holat ekrani
 - Qidiruv: **kerak emas** (qaror qabul qilingan)
 
-## 2. Dizayn (tasdiqlangan yo'nalishlar)
+## 2. Dizayn ✅ (2026-09-21 da to'liq qayta ishlandi)
 
-- ✅ **b** — o'quvchi uchun pastki panel (telefonda): Umumiy · Mashq · Imtihon · Vazifalar · Xatolarim
-- ✅ **c** — test ekranida diqqat rejimi: menyu va sarlavha yashiriladi
-- ✅ **f** — bo'sh holatlar: har birida keyingi qadam tugmasi
+Batafsil — `docs/dizayn.md`.
+
+- ✅ **b** — o'quvchi uchun pastki panel (telefonda), endi ikonkalar bilan
+- ✅ **c** — test ekranida diqqat rejimi; endi to'q (navy) qobiq
+- ✅ **f** — bo'sh holatlar: `EmptyState` komponenti, har birida keyingi qadam
 - ✅ **e** — rang intizomi: qizil faqat haqiqiy muammo uchun
 - ✅ **d** — o'quvchi sahifasida "keyingi qadam" tavsiyasi
-- ⬜ **a** — panellar "kim orqada qolyapti" ga javob bersin
+- ✅ **a** — panellar "kim orqada qolyapti" ga javob beradi: uchta jurnal
+  taqqoslash chizig'i bilan, "Bugungi ish" paneli, obyekt sahifalari
+- ✅ Yangi dizayn tizimi: turkuaz brend, Space Grotesk + DM Sans, 40 ta
+  ikonka, soya va radius shkalasi
+- ✅ `/guruh/[id]`, `/ustoz/[id]`, `/oquvchi/[id]` — obyekt sahifalari
+  barcha rollar uchun birlashtirildi
+- ✅ `@media print` — jurnal qog'ozda ham o'qiladi
+
+Qolgani (kichik):
+- ⬜ `/owner/questions` va savol qo'shish modali chuqurroq ishlanmagan
+- ⬜ Faollik grafigi (kunlik agregatsiya) — qaror kutilmoqda
+- ⬜ "O'tgan oyga nisbatan" trend — tarixiy ma'lumot saqlanmaydi
 
 ## 3. Guruh oynasi va ustoz profili ✅
 
@@ -74,13 +87,17 @@ Holat: ⬜ boshlanmagan · 🔵 jarayonda · ✅ tayyor
 
 ## 6. Qolganlar
 
-- ⬜ Avtomatik testlar (hozir yo'q; birinchisi — ruxsatlar matritsasi)
+- 🔵 Avtomatik testlar: `scripts/tekshiruv-ui.ts` — 64 ta tekshiruv, jumladan
+  ruxsat chegaralari (kim qayerga kira olmaydi). Dev server ishlab turishini
+  talab qiladi va qo'lda ishga tushiriladi; CI hali yo'q
 - ⬜ Monitoring: server yiqilsa xabar
 - ⬜ Owner: mavzuni qayta nomlash/o'chirish, direktorni bloklash, tashkilotni arxivlash
 - ⬜ Tarifni (Plan) ishlatish — hozir faqat yorliq
 - ⬜ `docs/arxiv.md`: o'chirilgan yoki uxlayotgan funksiyalar ro'yxati
-- ⬜ `CLAUDE.md` dagi eskirgan "Rollar bo'yicha holat" bo'limi (commit qilinmagan)
-  o'rniga `docs/loyiha-holati.md` ga havola
+- ⬜ `CLAUDE.md` dagi eskirgan "Rollar bo'yicha holat" bo'limi o'rniga
+  `docs/loyiha-holati.md` ga havola
+- ⚠️ `CLAUDE.md` dagi test paroli (`test1234`) dev bazadagi haqiqiy parolga
+  (`testify123`) mos kelmaydi — biri yangilanishi kerak
 - ⬜ Onlayn to'lov (Click/Payme)
 - ⬜ Telegram bildirishnomalari
 - ⬜ Spaced repetition (aqlli takrorlash)
