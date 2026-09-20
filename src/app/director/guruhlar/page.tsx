@@ -26,6 +26,7 @@ import {
   TableRow,
 } from "@/components/Table";
 import { NewGroupModal } from "../NewGroupModal";
+import { GroupRowActions } from "./GroupRowActions";
 import { readinessFromScore } from "@/lib/readiness";
 import { formatRelativeDays, daysSinceUz } from "@/lib/format";
 import { INACTIVE_DAYS } from "@/lib/attention";
@@ -196,7 +197,7 @@ export default async function GroupsJournalPage({
           />
         ) : (
           <>
-            <Table>
+            <Table className="min-w-[940px]">
               <TableHead>
                 <TableRow>
                   <TableHeaderCell>Guruh</TableHeaderCell>
@@ -207,6 +208,7 @@ export default async function GroupsJournalPage({
                   </TableHeaderCell>
                   <TableHeaderCell>Oxirgi faollik</TableHeaderCell>
                   <TableHeaderCell>Holat</TableHeaderCell>
+                  <TableHeaderCell align="right">Amallar</TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -267,6 +269,13 @@ export default async function GroupsJournalPage({
                         ) : (
                           <Badge variant={readiness.variant}>{readiness.label}</Badge>
                         )}
+                      </TableCell>
+                      <TableCell align="right" className="no-print">
+                        <GroupRowActions
+                          group={row}
+                          tutors={tutors}
+                          nameMaxLength={GROUP_NAME_MAX_LENGTH}
+                        />
                       </TableCell>
                     </TableRow>
                   );

@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/Table";
 import { NewStaffModal } from "../NewStaffModal";
+import { TutorRowActions } from "./TutorRowActions";
 import { formatRelativeDays, daysSinceUz } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
@@ -200,7 +201,7 @@ export default async function TutorsJournalPage({
           />
         ) : (
           <>
-            <Table className="min-w-[840px]">
+            <Table className="min-w-[1000px]">
               <TableHead>
                 <TableRow>
                   <TableHeaderCell>Ustoz</TableHeaderCell>
@@ -211,6 +212,7 @@ export default async function TutorsJournalPage({
                   </TableHeaderCell>
                   <TableHeaderCell>Oxirgi vazifa</TableHeaderCell>
                   <TableHeaderCell>Faollik</TableHeaderCell>
+                  <TableHeaderCell align="right">Amallar</TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -285,6 +287,13 @@ export default async function TutorsJournalPage({
                       </TableCell>
                       <TableCell>
                         <Badge variant={activity.variant}>{activity.label}</Badge>
+                      </TableCell>
+                      <TableCell align="right" className="no-print">
+                        <TutorRowActions
+                          tutorId={row.tutorId}
+                          tutorName={row.tutorName}
+                          isActive={row.isActive}
+                        />
                       </TableCell>
                     </TableRow>
                   );

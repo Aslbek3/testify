@@ -789,3 +789,91 @@ export async function getTutorProfile(tutorId: string): Promise<TutorProfile | n
     organizationId: tutor.organizationId,
   };
 }
+
+/**
+ * "Bugungi ish" paneli uchun — uzoq vaqt kirmagan o'quvchilar soni.
+ *
+ * Alohida yozilgan, chunki `listStudentsForOrganization` butun ro'yxatni
+ * ball statistikasi bilan birga tortadi — panelga esa faqat SON kerak.
+ * Panel har sahifa yuklanishida ochiladi, ya'ni bu yo'l tez bo'lishi shart.
+ */
+export async function countInactiveStudents(
+  organizationId: string,
+  days: number
+): Promise<number> {
+  const threshold = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  const [studentIds, activeRows] = await Promise.all([
+    prisma.user.findMany({
+      where: { ...studentScope(organizationId), isActive: true },
+      select: { id: true },
+    }),
+    // Chegaradan KEYIN faollik ko'rsatganlar. Qolganlari — "jim".
+    prisma.attempt.findMany({
+      where: {
+        startedAt: { gte: threshold },
+        student: { ...studentScope(organizationId), isActive: true },
+      },
+      select: { studentId: true },
+      distinct: ["studentId"],
+    }),
+  ]);
+
+  const activeSet = new Set(activeRows.map((row) => row.studentId));
+  return studentIds.filter((s) => !activeSet.has(s.id)).length;
+}
+
+export type SilentTutor = {
+  tutorId: string;
+  tutorName: string;
+  /** `null` — umuman vazifa bermagan. */
+  lastAssignmentAt: Date | null;
+  groupCount: number;
+};
+
+/**
+ * Guruhi bor, lekin uzoq vaqtdan beri vazifa bermagan ustozlar.
+ *
+ * Guruhsiz ustoz bu ro'yxatga KIRMAYDI: unga vazifa beradigan joy yo'q,
+ * ya'ni bu uning aybi emas va direktorga boshqa xabar kerak.
+ */
+export async function listSilentTutors(
+  organizationId: string,
+  days: number
+): Promise<SilentTutor[]> {
+  const threshold = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  const [tutors, assignmentRows] = await Promise.all([
+    prisma.user.findMany({
+      where: {
+        organizationId,
+        role: "TUTOR",
+        isActive: true,
+        tutorOfGroups: { some: { organizationId } },
+      },
+      select: { id: true, name: true, _count: { select: { tutorOfGroups: true } } },
+      orderBy: { name: "asc" },
+    }),
+    prisma.assignment.groupBy({
+      by: ["createdById"],
+      where: { group: { organizationId } },
+      _max: { createdAt: true },
+    }),
+  ]);
+
+  const lastByTutor = new Map(
+    assignmentRows.map((row) => [row.createdById, row._max.createdAt])
+  );
+
+  return tutors
+    .map((tutor) => ({
+      tutorId: tutor.id,
+      tutorName: tutor.name,
+      lastAssignmentAt: lastByTutor.get(tutor.id) ?? null,
+      groupCount: tutor._count.tutorOfGroups,
+    }))
+    .filter(
+      (tutor) =>
+        tutor.lastAssignmentAt === null || tutor.lastAssignmentAt < threshold
+    );
+}
