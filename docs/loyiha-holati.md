@@ -1,10 +1,17 @@
 # Testify — loyiha holati
 
-Oxirgi yangilanish: 2026-09-21 · Tekshirilgan commit: `5ff4a71`
+Oxirgi yangilanish: 2026-09-21 · Tekshirilgan commit: `588da9e`
 
 Bu fayl "nima tayyor, nima yo'q" degan savolga javob beradi. Foizlar —
-kodni ko'rib chiqib qo'yilgan baho, "avtomaktabga sotsa bo'ladigan
-mahsulot" o'lchoviga nisbatan. Aniq o'lchov emas, yo'nalish ko'rsatkichi.
+"avtomaktabga sotsa bo'ladigan mahsulot" o'lchoviga nisbatan baho. Aniq
+o'lchov emas, yo'nalish ko'rsatkichi.
+
+Baho ikki manbadan keladi va ular **ajratib ko'rsatiladi**:
+- 👤 — loyiha egasining (Aslbek) o'z bahosi, sanasi bilan;
+- qolgani — kodni ko'rib chiqib qo'yilgan taxmin.
+
+Kelishmovchilik bo'lsa **egasining bahosi ustun turadi**: u mahsulotni
+avtomaktabga sotadi, ya'ni "tayyor" degani nimani anglatishini u biladi.
 
 ## Umumiy
 
@@ -12,7 +19,11 @@ mahsulot" o'lchoviga nisbatan. Aniq o'lchov emas, yo'nalish ko'rsatkichi.
 |---|---|
 | Kod (MVP funksiyalari) | ~92% |
 | Kontent (savollar bazasi) | ~5% |
-| 15 qismning o'rtachasi | **~84%** |
+| 15 qismning o'rtachasi | **76%** |
+
+⚠️ Ilgari bu yerda "~84%" yozilgan edi — u haqiqiy o'rtacha emas, qo'lda
+qo'yilgan taxmin edi. Endi raqam jadvaldagi 15 ta foizdan hisoblanadi
+(jami 1140 / 15 = 76.0).
 
 Eng katta to'siq endi kodda emas, **kontentda**: dev bazada 66 ta savol,
 production'da 20 ta, raqobatchida (autotestlar.uz) 1 220 ta. Savollarni
@@ -24,7 +35,7 @@ savollarning o'zi.
 | # | Qism | Tayyor | Yetishmaydi |
 |---|---|---|---|
 | 1 | Kirish va xavfsizlik | 90% | SMS/telefon orqali kirish |
-| 2 | Direktor paneli | 95% | — |
+| 2 | Direktor paneli | **70%** 👤 | pastga qara |
 | 3 | Qabulxona (5-rol) | 90% | amallar jurnali, ommaviy import |
 | 4 | O'quvchi to'lovi | 90% | Click/Payme orqali onlayn to'lov |
 | 5 | Ustoz paneli | 95% | — |
@@ -38,6 +49,34 @@ savollarning o'zi.
 | 13 | Avtomaktab → platforma obunasi | 50% | UI yashirin (`ORGANIZATION_BILLING_UI_ENABLED = false`) |
 | 14 | **Savollar bazasi (kontent)** | **5%** | production 20 ta, dev 66 ta savol; bilet yo'q |
 | 15 | Avtomatik testlar | 30% | `scripts/tekshiruv-ui.ts` — 64 ta tekshiruv, ruxsat chegaralari bilan; qo'lda ishga tushiriladi, CI yo'q |
+
+## Direktor hisobi — 70% 👤
+
+**Aslbekning bahosi, 2026-09-21 da tasdiqlangan.** Ilgari bu yerda 95%
+turardi (kod bo'yicha taxmin), lekin u faqat PANEL ko'rinishini
+o'lchagan. 70% — direktor rolining to'liq ishi bo'yicha baho.
+
+Tayyor:
+- Panel: ko'rsatkichlar, faollik grafigi (7/30/90 kun), "Bugungi ish"
+- Uchta jurnal: guruhlar, ustozlar, o'quvchilar — taqqoslash chizig'i bilan
+- Obyekt sahifalari: guruh, ustoz, o'quvchi (barcha rollar uchun umumiy)
+- Ustoz va qabulxona xodimi yaratish, bloklash, parol tiklash
+- Guruh yaratish, tahrirlash, o'chirish; o'quvchini guruhlar orasida ko'chirish
+- To'lov sozlamalari, chek tasdiqlash, naqd to'lov, to'lovlar tarixi
+- To'rtta ruxsat kaliti
+
+Kodda kuzatilgan bo'shliqlar (bu — kuzatuv, egasining ro'yxati emas):
+- Qabulxona **amallar jurnali** yo'q — pul qabulxonada, lekin "kim,
+  qachon, nima qildi" yozilmaydi (`docs/ishlar.md` 4-bo'lim)
+- O'quvchilarni **Excel/CSV dan ommaviy import** qilish yo'q — 200 ta
+  o'quvchi qo'lda kiritiladi
+- **"O'tgan oyga nisbatan" trend** yo'q: o'quvchi/guruh/ustoz sonining
+  tarixi bazada saqlanmaydi, buning uchun yangi jadval kerak
+- **Tarif (Plan)** faqat yorliq — hech narsani cheklamaydi
+- **Guruhni arxivlash** yo'q: faqat o'chirish bor, u ham urinishi bor
+  guruhda ishlamaydi
+- Avtomaktab → platforma obunasi UI yashirin
+  (`ORGANIZATION_BILLING_UI_ENABLED = false`)
 
 ## Rollar
 

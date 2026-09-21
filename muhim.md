@@ -120,6 +120,16 @@ UI to'liq qayta ishlandi — `docs/dizayn.md`. Asosiy qarorlar:
    ham yangi ma'lumot to'plashni talab qiladi (o'quvchi/guruh sonining tarixi
    saqlanmaydi).
 
+## Egasining baholari
+
+Loyiha egasi (Aslbek) qo'ygan baholar — `docs/loyiha-holati.md` da 👤
+belgisi bilan. Ular kod bo'yicha taxmindan USTUN turadi.
+
+- **2026-09-21 — Direktor hisobi: 70%** (tasdiqlangan). Ilgari hujjatda
+  95% turardi, lekin u faqat panel ko'rinishini o'lchagan edi. 70% —
+  rolning to'liq ishi bo'yicha. Kuzatilgan bo'shliqlar ro'yxati
+  `docs/loyiha-holati.md` da.
+
 ## Ochiq savollar
 
 - ⚠️ **Test paroli mos kelmaydi:** `CLAUDE.md` da `test1234` yozilgan, dev
