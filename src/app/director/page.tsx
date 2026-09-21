@@ -7,6 +7,7 @@ import {
   listReceptionStaff,
   getGroupsOverview,
   listTutorsForOrganization,
+  getDailyActivity,
   GROUP_NAME_MAX_LENGTH,
 } from "@/services/directorDashboard";
 import {
@@ -27,6 +28,10 @@ import { Card, CardHeader, CardTitle, CardNote } from "@/components/Card";
 import { PageHeader } from "@/components/PageHeader";
 import { TaskCard } from "@/components/TaskCard";
 import { CompareBar } from "@/components/CompareBar";
+import {
+  ActivityChart,
+  parseActivityPeriod,
+} from "@/components/ActivityChart";
 import { EmptyState } from "@/components/EmptyState";
 import { Icon, type IconName } from "@/components/Icon";
 import { cn } from "@/lib/cn";
@@ -108,8 +113,15 @@ function HubTile({
   );
 }
 
-export default async function DirectorPage() {
+export default async function DirectorPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ kun?: string }>;
+}) {
   const user = await requireRole("DIRECTOR");
+  // Grafik davri URL'da: holat saqlanadi va havolani yuborish mumkin.
+  const { kun } = await searchParams;
+  const period = parseActivityPeriod(kun);
 
   if (!user.organizationId || !canViewOrganization(user, user.organizationId)) {
     return (
@@ -133,6 +145,7 @@ export default async function DirectorPage() {
     payments,
     tasks,
     userName,
+    activity,
   ] = await Promise.all([
     getOrganizationOverview(organizationId),
     getTutorRanking(organizationId),
@@ -145,6 +158,7 @@ export default async function DirectorPage() {
     ORGANIZATION_BILLING_UI_ENABLED ? listPaymentsForOrganization(organizationId) : null,
     getDirectorTasks(organizationId, user.id),
     getUserName(user.id),
+    getDailyActivity(organizationId, period),
   ]);
 
   // Plitkalar uchun jonli xulosa — jurnal ochmasdan ham holatni bildiradi.
@@ -227,11 +241,64 @@ export default async function DirectorPage() {
         />
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(300px,0.7fr)]">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(290px,0.65fr)]">
+        <div className="space-y-5">
+          <ActivityChart
+            points={activity}
+            period={period}
+            basePath="/director"
+          />
+          <Card>
+            <CardHeader>
+              <CardTitle icon="chart">Eng ko&apos;p e&apos;tibor talab qiladiganlar</CardTitle>
+              <Link
+                href="/director/ustozlar"
+                className="text-[12.5px] font-bold text-brand hover:underline"
+              >
+                Ustozlar jurnali →
+              </Link>
+            </CardHeader>
+
+            {weakestTutors.length === 0 ? (
+              <EmptyState
+                icon="chart"
+                title="Tahlil hali tayyor emas"
+                description="Ustozlar reytingi imtihon natijalari asosida hisoblanadi — hali birorta imtihon topshirilmagan."
+              />
+            ) : (
+              <ul className="space-y-3">
+                {weakestTutors.map((tutor) => (
+                  <li key={tutor.tutorId} className="flex items-center gap-3">
+                    <Link
+                      href={`/ustoz/${tutor.tutorId}`}
+                      className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-text hover:text-brand"
+                    >
+                      {tutor.tutorName}
+                      <span className="ml-2 font-normal text-text-faint">
+                        {tutor.groups.length > 0
+                          ? tutor.groups.map((g) => g.name).join(", ")
+                          : "guruhsiz"}
+                      </span>
+                    </Link>
+                    <div className="w-[170px] shrink-0">
+                      <CompareBar
+                        value={tutor.averageScore}
+                        average={overview.averageScore}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
+
         <div className="space-y-5">
           {/* Jurnallarga kirish — ogohlantirish emas, bo'limga eshik.
-              Shuning uchun chap chiziq ham, qizil rang ham yo'q. */}
-          <div className="grid gap-3.5 sm:grid-cols-3">
+              Shuning uchun chap chiziq ham, qizil rang ham yo'q.
+              O'ng ustunda ustun bo'lib turadi: chapdagi grafik va
+              ro'yxat kengroq joyni talab qiladi. */}
+          <div className="grid gap-3.5 sm:grid-cols-3 lg:grid-cols-1">
             <HubTile
               href="/director/guruhlar"
               icon="building"
@@ -281,52 +348,8 @@ export default async function DirectorPage() {
             />
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle icon="chart">Eng ko&apos;p e&apos;tibor talab qiladiganlar</CardTitle>
-              <Link
-                href="/director/ustozlar"
-                className="text-[12.5px] font-bold text-brand hover:underline"
-              >
-                Ustozlar jurnali →
-              </Link>
-            </CardHeader>
-
-            {weakestTutors.length === 0 ? (
-              <EmptyState
-                icon="chart"
-                title="Tahlil hali tayyor emas"
-                description="Ustozlar reytingi imtihon natijalari asosida hisoblanadi — hali birorta imtihon topshirilmagan."
-              />
-            ) : (
-              <ul className="space-y-3">
-                {weakestTutors.map((tutor) => (
-                  <li key={tutor.tutorId} className="flex items-center gap-3">
-                    <Link
-                      href={`/ustoz/${tutor.tutorId}`}
-                      className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-text hover:text-brand"
-                    >
-                      {tutor.tutorName}
-                      <span className="ml-2 font-normal text-text-faint">
-                        {tutor.groups.length > 0
-                          ? tutor.groups.map((g) => g.name).join(", ")
-                          : "guruhsiz"}
-                      </span>
-                    </Link>
-                    <div className="w-[170px] shrink-0">
-                      <CompareBar
-                        value={tutor.averageScore}
-                        average={overview.averageScore}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
+          <TaskCard tasks={tasks} />
         </div>
-
-        <TaskCard tasks={tasks} />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { readinessFromScore, type ReadinessStatus } from "@/lib/readiness";
+import { UZBEKISTAN_UTC_OFFSET_HOURS } from "@/lib/format";
 
 export class DirectorActionError extends Error {}
 
@@ -876,4 +877,77 @@ export async function listSilentTutors(
       (tutor) =>
         tutor.lastAssignmentAt === null || tutor.lastAssignmentAt < threshold
     );
+}
+
+export type DailyActivityPoint = {
+  /** Kun boshi, O'zbekiston vaqti bo'yicha. */
+  date: Date;
+  /** Shu kuni kamida bitta urinish boshlagan NOYOB o'quvchilar soni. */
+  studentCount: number;
+};
+
+/**
+ * Kunlik faollik — direktor panelidagi grafik uchun.
+ *
+ * Urinishlar soni EMAS, noyob o'quvchilar soni sanaladi. Sabab: bitta
+ * o'quvchi kuniga 20 ta mashq ishlashi mumkin va u grafikni butunlay o'ziga
+ * tortib ketardi. Direktorning savoli esa "bugun nechta o'quvchi ishladi?".
+ *
+ * Kun chegarasi O'zbekiston vaqti (UTC+5) bo'yicha — `lib/format.ts` dagi
+ * `formatDate` bilan AYNI qoida. Aks holda kechqurun 20:00 da ishlagan
+ * o'quvchi grafikda ertangi kunga tushib qolardi.
+ *
+ * Bog'lanish `Attempt.groupId → Group.organizationId` orqali — tashkilot
+ * bo'yicha barcha hisob-kitoblarda shu qoida ishlatiladi.
+ *
+ * Ma'lumot yo'q kunlar SQL natijasida umuman bo'lmaydi, shuning uchun
+ * ro'yxat JavaScript tomonda to'ldiriladi: grafikda uzilish bo'lmasligi
+ * kerak, "o'sha kuni hech kim ishlamagan" ham ma'lumot.
+ */
+export async function getDailyActivity(
+  organizationId: string,
+  days: number
+): Promise<DailyActivityPoint[]> {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const OFFSET_MS = UZBEKISTAN_UTC_OFFSET_HOURS * 60 * 60 * 1000;
+
+  /** Berilgan vaqtning O'zbekiston kuni boshi (UTC'dagi lahza sifatida). */
+  function uzDayStart(at: number): number {
+    return Math.floor((at + OFFSET_MS) / DAY_MS) * DAY_MS - OFFSET_MS;
+  }
+
+  const todayStart = uzDayStart(Date.now());
+  const firstDayStart = todayStart - (days - 1) * DAY_MS;
+
+  // Siljish `make_interval(hours => ...)` bilan emas, oraliqni ko'paytirish
+  // orqali quriladi: Prisma son parametrini PostgreSQL'ga `bigint` qilib
+  // yuboradi, `make_interval` esa `int` kutadi va so'rov 42883 xatosi bilan
+  // tushadi. Shu sababli parametr aniq `::int` ga keltiriladi.
+  //
+  // Izoh SQL ichida EMAS: u yerda teskari tirnoq shablon satrini uzib
+  // yuboradi va fayl umuman parse bo'lmaydi.
+  const rows = await prisma.$queryRaw<{ dayStart: Date; studentCount: number }[]>`
+    SELECT
+      date_trunc(
+        'day',
+        a."startedAt" + (${UZBEKISTAN_UTC_OFFSET_HOURS}::int * interval '1 hour')
+      ) - (${UZBEKISTAN_UTC_OFFSET_HOURS}::int * interval '1 hour') AS "dayStart",
+      COUNT(DISTINCT a."studentId")::int                          AS "studentCount"
+    FROM "Attempt" a
+    JOIN "Group" g ON g."id" = a."groupId"
+    WHERE g."organizationId" = ${organizationId}
+      AND a."startedAt" >= ${new Date(firstDayStart)}
+    GROUP BY 1
+    ORDER BY 1
+  `;
+
+  const byDay = new Map(rows.map((row) => [row.dayStart.getTime(), row.studentCount]));
+
+  return Array.from({ length: days }, (_, index) => {
+    const dayStart = firstDayStart + index * DAY_MS;
+    return {
+      date: new Date(dayStart),
+      studentCount: byDay.get(dayStart) ?? 0,
+    };
+  });
 }

@@ -269,7 +269,18 @@ async function main() {
   // ——— 4. Direktor: panel + uchta jurnal
   const director = await login("director@testify.dev");
   if (director) {
-    await checkPage(director, "/director", ["Bugungi ish", "Guruhlar", "Ustozlar"]);
+    await checkPage(director, "/director", [
+      "Bugungi ish",
+      "Guruhlar",
+      "Ustozlar",
+      // Faollik grafigi va uning davr kaliti. Kalit matni ("30 kun")
+      // tekshirilmaydi: JSX'dagi `{value} kun` SSR'da `30<!-- --> kun`
+      // bo'lib chiqadi. Havolaning o'zi barqaror belgi.
+      "O&#x27;quvchilar faolligi",
+      "/director?kun=30",
+    ]);
+    await checkPage(director, "/director?kun=30");
+    await checkPage(director, "/director?kun=90");
     await checkPage(director, "/director/tolovlar");
 
     await checkPage(director, "/director/guruhlar", ["Guruhlar jurnali", "Amallar"]);
