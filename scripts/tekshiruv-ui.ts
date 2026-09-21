@@ -358,6 +358,22 @@ async function main() {
     await checkPage(tutor, "/tutor");
     await checkDenied(tutor, "/director/guruhlar", "Ustoz /director/guruhlar ga kira olmaydi");
     await checkDenied(tutor, "/qabulxona", "Ustoz /qabulxona ga kira olmaydi");
+
+    // Ustozning yangi bo'limlari
+    await checkPage(tutor, "/tutor/oquvchilar", ["quvchilarim"]);
+    await checkPage(tutor, "/tutor/oquvchilar?filtr=jim");
+    await checkPage(tutor, "/tutor/oquvchilar?filtr=imtihonsiz");
+    await checkPage(tutor, "/tutor/vazifalar", ["Vazifalar"]);
+    await checkPage(tutor, "/tutor/vazifalar?filtr=faol");
+    await checkPage(tutor, "/tutor/vazifalar?filtr=otgan");
+    // Direktor ustozning bo'limlariga kira olmaydi.
+    if (director) {
+      await checkDenied(
+        director,
+        "/tutor/oquvchilar",
+        "Direktor /tutor/oquvchilar ga kira olmaydi"
+      );
+    }
     if (ids) {
       await checkPage(tutor, `/guruh/${ids.groupId}`);
       if (ids.studentId) await checkPage(tutor, `/oquvchi/${ids.studentId}`);

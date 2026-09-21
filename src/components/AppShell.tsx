@@ -35,7 +35,14 @@ const NAV_ITEMS: Record<Role, NavItem[]> = {
     { label: "O'quvchilar", href: "/qabulxona/oquvchilar", icon: "users" },
     { label: "To'lovlar", href: "/qabulxona/tolovlar", icon: "wallet" },
   ],
-  TUTOR: [{ label: "Umumiy", href: "/tutor", icon: "grid" }],
+  // Ustozda "Umumiy" nomi noto'g'ri edi: /tutor sahifasining O'ZI
+  // guruhlar ro'yxati. Alohida "Guruhlar" bandi qo'shilmadi — u o'sha
+  // sahifaga olib borardi, ya'ni nusxa bo'lardi.
+  TUTOR: [
+    { label: "Guruhlarim", href: "/tutor", icon: "building" },
+    { label: "O'quvchilarim", href: "/tutor/oquvchilar", icon: "users" },
+    { label: "Vazifalar", href: "/tutor/vazifalar", icon: "clipboardCheck" },
+  ],
   STUDENT: [
     { label: "Umumiy", href: "/student", icon: "grid" },
     // Test rejimlari alohida bo'lim sifatida — ilgari hammasi bitta
