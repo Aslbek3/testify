@@ -133,3 +133,58 @@ export function daysSinceUz(date: Date, now: Date = new Date()): number {
   };
   return Math.max(0, dayNumber(now) - dayNumber(date));
 }
+
+/**
+ * `ss:dd` — faqat soat va daqiqa, O'zbekiston vaqti bo'yicha.
+ *
+ * Dars jadvali uchun: u yerda sana alohida ustunda turadi va vaqtni
+ * takrorlash ortiqcha. `formatDateTime` dan farqi shu.
+ */
+export function formatTime(date: Date): string {
+  const shifted = new Date(
+    date.getTime() + UZBEKISTAN_UTC_OFFSET_MINUTES * 60 * 1000
+  );
+  const hours = String(shifted.getUTCHours()).padStart(2, "0");
+  const minutes = String(shifted.getUTCMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+/**
+ * Hafta kunlari — ISO tartibida (1 = dushanba … 7 = yakshanba).
+ *
+ * `Intl` ATAYLAB ishlatilmaydi — `formatDate` bilan bir xil sabab: "uz-UZ"
+ * lokali Node va brauzer ICU ma'lumotlarida turlicha bo'lishi mumkin va
+ * hidratsiya buziladi.
+ */
+export const WEEKDAY_NAME = [
+  "Dushanba",
+  "Seshanba",
+  "Chorshanba",
+  "Payshanba",
+  "Juma",
+  "Shanba",
+  "Yakshanba",
+] as const;
+
+export const WEEKDAY_SHORT = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"] as const;
+
+/** Sananing hafta kuni (1-7), O'zbekiston vaqti bo'yicha. */
+export function isoWeekday(date: Date): number {
+  const shifted = new Date(
+    date.getTime() + UZBEKISTAN_UTC_OFFSET_MINUTES * 60 * 1000
+  );
+  const day = shifted.getUTCDay();
+  return day === 0 ? 7 : day;
+}
+
+/** "Dushanba, 22-sen" — dars jadvalidagi sana ustuni uchun. */
+export function formatLessonDate(date: Date): string {
+  const shifted = new Date(
+    date.getTime() + UZBEKISTAN_UTC_OFFSET_MINUTES * 60 * 1000
+  );
+  const months = [
+    "yan", "fev", "mar", "apr", "may", "iyun",
+    "iyul", "avg", "sen", "okt", "noy", "dek",
+  ];
+  return `${WEEKDAY_NAME[isoWeekday(date) - 1]}, ${shifted.getUTCDate()}-${months[shifted.getUTCMonth()]}`;
+}

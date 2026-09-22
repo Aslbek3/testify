@@ -17,8 +17,10 @@ import { finalizeExpiredAttempts } from "@/services/attempts";
 import { listAssignmentsForStudent } from "@/services/assignments";
 import { getStudentMistakes } from "@/services/mistakes";
 import { getUserName } from "@/services/users";
+import { getNextLessonForStudent } from "@/services/lessons";
 import { getNextStep } from "@/lib/nextStep";
 import { readinessFromScore } from "@/lib/readiness";
+import { formatLessonDate, formatTime } from "@/lib/format";
 import { ProgressRing } from "./ProgressRing";
 import { AttemptHistoryTable } from "./AttemptHistoryTable";
 import { StudentAssignmentsCard } from "./StudentAssignmentsCard";
@@ -126,7 +128,7 @@ export default async function StudentPage({
 
   // Ism sessiyada saqlanmaydi (JWT faqat o'zgarmaydigan identifikatorlarni
   // olib yuradi) — shuning uchun qolgan so'rovlar bilan birga o'qiladi.
-  const [overview, mastery, history, assignments, mistakes, userName] =
+  const [overview, mastery, history, assignments, mistakes, userName, nextLesson] =
     await Promise.all([
       getStudentOverview(user.id),
       getMasteryByTopic(user.id),
@@ -134,6 +136,7 @@ export default async function StudentPage({
       listAssignmentsForStudent(user.id),
       getStudentMistakes(user.id),
       getUserName(user.id),
+      getNextLessonForStudent(user.id),
     ]);
 
   // Ro'yxat o'sish bo'yicha saralangan, ya'ni birinchisi — eng zaif mavzu.
@@ -217,7 +220,39 @@ export default async function StudentPage({
           </div>
         </div>
 
-        <Card className="flex flex-col">
+        <div className="space-y-5">
+          {/* Keyingi dars — Tayyorgarlikdan OLDIN: o'quvchining eng tez-tez
+              beradigan savoli "dars qachon?", foiz esa undan keyin keladi.
+              Jadval tuzilmagan bo'lsa blok umuman chizilmaydi — bo'sh
+              "dars yo'q" kartochkasi faqat joy olardi. */}
+          {nextLesson && (
+            <Card className="border-brand/25 bg-brand-soft">
+              <div className="flex items-start gap-3.5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-brand">
+                  <Icon name="calendar" className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[12px] font-bold text-brand">Keyingi dars</p>
+                  <p className="mt-1 font-display text-[15px] font-bold text-text">
+                    {formatLessonDate(nextLesson.startsAt)}
+                  </p>
+                  <p className="mt-0.5 text-[12.5px] text-text-muted">
+                    <span className="font-mono tabular-nums">
+                      {formatTime(nextLesson.startsAt)}
+                    </span>
+                    {" · "}
+                    {nextLesson.durationMin} daqiqa
+                    {nextLesson.topicName && ` · ${nextLesson.topicName}`}
+                  </p>
+                  {nextLesson.note && (
+                    <p className="mt-1 text-[12px] text-text-faint">{nextLesson.note}</p>
+                  )}
+                </div>
+              </div>
+            </Card>
+          )}
+
+          <Card className="flex flex-col">
           <CardHeader>
             <CardTitle>Tayyorgarlik</CardTitle>
             <CardNote>Imtihonlar bo&apos;yicha</CardNote>
@@ -261,7 +296,8 @@ export default async function StudentPage({
               <Icon name="chevronRight" className="h-4 w-4 text-text-faint" />
             </Link>
           )}
-        </Card>
+          </Card>
+        </div>
       </div>
 
       <StudentAssignmentsCard assignments={assignments} />

@@ -1044,6 +1044,49 @@ async function main() {
     }
   }
 
+  // ——— Dars jadvali ———
+  // Namuna sifatida: dushanba, chorshanba va juma 14:00 da, 4 hafta.
+  // Bugungi kun ham kirsa, panelda "Bugungi dars" bandi ko'rinadi.
+  //
+  // Deterministik ID: `seed-lesson-<n>` — qayta seed qilinganda dublikat
+  // bo'lmaydi (savollar va mavzular bilan bir xil qoida).
+  {
+    const UZ_OFFSET_MS = 5 * 60 * 60 * 1000;
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const todayStart =
+      Math.floor((Date.now() + UZ_OFFSET_MS) / DAY_MS) * DAY_MS - UZ_OFFSET_MS;
+
+    const weekdays = new Set([1, 3, 5]); // Du, Chor, Ju
+    let index = 0;
+
+    for (let offset = 0; offset < 28; offset += 1) {
+      const dayStart = todayStart + offset * DAY_MS;
+      const shifted = new Date(dayStart + UZ_OFFSET_MS);
+      const isoWeekday = shifted.getUTCDay() === 0 ? 7 : shifted.getUTCDay();
+      if (!weekdays.has(isoWeekday)) continue;
+
+      index += 1;
+      const startsAt = new Date(dayStart + 14 * 60 * 60 * 1000);
+      // Mavzu navbat bilan aylanadi — jadval bir xil bo'lib qolmasin.
+      const topic = topics[index % topics.length]?.topic;
+
+      await prisma.lesson.upsert({
+        where: { id: `seed-lesson-${index}` },
+        update: { startsAt, topicId: topic?.id ?? null },
+        create: {
+          id: `seed-lesson-${index}`,
+          groupId: group.id,
+          createdById: tutor.id,
+          startsAt,
+          durationMin: 90,
+          topicId: topic?.id ?? null,
+          note: index % 4 === 0 ? "Amaliyot" : null,
+        },
+      });
+    }
+    console.log(`  Dars jadvali: ${index} ta dars (Du/Chor/Ju, 14:00)`);
+  }
+
   console.log("Seed tayyor. Test hisoblari (parol hammasida bir xil):");
   console.log(`  Parol: ${SEED_PASSWORD}`);
   console.log(`  Owner:    ${owner.email}`);

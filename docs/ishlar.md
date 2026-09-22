@@ -71,6 +71,23 @@ Qolgani (kichik):
 - ⬜ Ommaviy import (Excel/CSV dan o'quvchilar)
 - ⬜ Ustozdan ma'muriy amallarni olish — **importdan keyin**
 
+## 4b. Dars jadvali ✅ (2026-09-22)
+
+Guruhning dars jadvali: ustoz yoki direktor haftaning kunlarini, vaqtini va
+necha haftaga ekanini tanlaydi — darslar bir yo'la yaratiladi. Takrorlanish
+QOIDASI saqlanmaydi (sabab `src/services/lessons.ts` izohida: dars
+ko'chiriladi, bekor qilinadi, mavzusi o'zgaradi — qoida saqlansa har bir
+istisno uchun alohida mexanizm kerak bo'lardi).
+
+- ✅ `Lesson` modeli va `lessons` migratsiyasi
+- ✅ `canManageLesson` — direktor (o'z tashkiloti) va guruh ustozi.
+  Qabulxona TEGMAYDI: u mijoz bilan ishlaydi, o'quv jarayoni bilan emas
+- ✅ Guruh sahifasida "Dars jadvali" kartochkasi, bugungi dars ajratilgan
+- ✅ "Bugungi ish" panelida: ustozga `attention`, direktorga `info`
+- ✅ O'quvchi panelida "Keyingi dars"
+- ⬜ Davomat (kim keldi) — keyingi bosqich
+- ⬜ Darsni ko'chirish (hozir faqat bekor qilib, qayta tuziladi)
+
 ## 5. Kontent (vositalar tayyor, savollar kerak)
 
 - ✅ Savolga **rasm yuklash**
@@ -87,7 +104,7 @@ Qolgani (kichik):
 
 ## 6. Qolganlar
 
-- 🔵 Avtomatik testlar: `scripts/tekshiruv-ui.ts` — 64 ta tekshiruv, jumladan
+- 🔵 Avtomatik testlar: `scripts/tekshiruv-ui.ts` — 82 ta tekshiruv, jumladan
   ruxsat chegaralari (kim qayerga kira olmaydi). Dev server ishlab turishini
   talab qiladi va qo'lda ishga tushiriladi; CI hali yo'q
 - ⬜ Monitoring: server yiqilsa xabar

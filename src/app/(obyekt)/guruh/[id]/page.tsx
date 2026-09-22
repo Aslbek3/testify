@@ -8,6 +8,7 @@ import {
   canManageAssignment,
   canManageStudent,
   canResetStudentPassword,
+  canManageLesson,
 } from "@/lib/permissions";
 import {
   getGroupDetail,
@@ -24,6 +25,7 @@ import {
 } from "@/services/tutorDashboard";
 import { listAssignmentsForGroup } from "@/services/assignments";
 import { listTopicsWithQuestionCount } from "@/services/questions";
+import { listLessonsForGroup } from "@/services/lessons";
 import { getStudentAccessMap } from "@/services/studentPayments";
 import { assignmentDueDateBounds } from "@/lib/assignments";
 import { attentionList } from "@/lib/attention";
@@ -39,6 +41,8 @@ import { RosterTable } from "@/components/RosterTable";
 import { NewStudentModal } from "@/components/NewStudentModal";
 import { EditGroupButton } from "@/app/director/EditGroupButton";
 import { NewAssignmentModal } from "@/app/tutor/NewAssignmentModal";
+import { LessonScheduleCard } from "@/components/LessonScheduleCard";
+import { LessonScheduleModal } from "@/components/LessonScheduleModal";
 import { homeCrumbFor } from "@/lib/navigation";
 
 /**
@@ -71,13 +75,18 @@ export default async function GroupPage({
   const canAssign = canManageAssignment(user, group);
   const canBlockStudents = canManageStudent(user, group);
   const canResetPasswords = canResetStudentPassword(user, group);
+  const canEditLessons = canManageLesson(user, group);
 
-  const [roster, analytics, recentExamCount, assignments] = await Promise.all([
-    getRosterForGroup(groupId),
-    getGroupAnalytics(groupId),
-    getRecentExamAttemptCount(groupId),
-    listAssignmentsForGroup(groupId),
-  ]);
+  const [roster, analytics, recentExamCount, assignments, lessons] =
+    await Promise.all([
+      getRosterForGroup(groupId),
+      getGroupAnalytics(groupId),
+      getRecentExamAttemptCount(groupId),
+      listAssignmentsForGroup(groupId),
+      // Faqat yaqin 12 tasi — jadval butun semestrga tuzilgan
+      // bo'lishi mumkin, sahifa esa undan uzun bo'lmasligi kerak.
+      listLessonsForGroup(groupId, { limit: 12 }),
+    ]);
 
   // Qo'shimcha ma'lumot FAQAT kerak bo'lganda so'raladi — ruxsati yo'q
   // foydalanuvchi uchun bekorga so'rov yuborilmaydi.
@@ -88,7 +97,7 @@ export default async function GroupPage({
         ? getGroupsForTutor(user.id)
         : listGroupsForOrganization(group.organizationId)
       : [],
-    canAssign ? listTopicsWithQuestionCount() : [],
+    canAssign || canEditLessons ? listTopicsWithQuestionCount() : [],
   ]);
 
   // To'lov holati — ko'rish uchun: nega o'quvchi test ishlay olmayotganini
@@ -190,6 +199,26 @@ export default async function GroupPage({
       {/* Ko'rsatkichlardan keyin darhol — asosiy savol "kimga e'tibor
           berishim kerak?", o'rtacha ball emas. */}
       <AttentionCard items={attention} studentHref={(id) => `/oquvchi/${id}`} />
+
+      <LessonScheduleCard
+        lessons={lessons}
+        canManage={canEditLessons}
+        action={
+          canEditLessons ? (
+            <LessonScheduleModal
+              groupId={group.id}
+              groupName={group.name}
+              topics={topics}
+              hasUpcoming={lessons.length > 0}
+            />
+          ) : undefined
+        }
+        emptyHint={
+          canEditLessons
+              ? "Jadval tuzsangiz, o'quvchilar keyingi darsni o'z panelida ko'radi va unga tayyorlanib keladi."
+              : "Jadvalni guruh ustozi yoki direktor tuzadi."
+        }
+      />
 
       <GroupAssignmentsCard
         assignments={assignments}

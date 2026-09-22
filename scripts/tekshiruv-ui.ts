@@ -25,6 +25,9 @@ import bcrypt from "bcryptjs";
 const BASE = process.env.TEST_BASE_URL ?? "http://127.0.0.1:3150";
 const PASSWORD = process.env.TEST_PASSWORD ?? "testify123";
 
+/** Skript yaratadigan darslarning izohi — tozalashda shu bo'yicha topiladi. */
+const TEST_LESSON_NOTE = "tekshiruv-darsi";
+
 /** Skript yaratadigan vaqtinchalik qabulxona hisobi. */
 const RECEPTION_EMAIL = "tekshiruv-qabulxona@testify.local";
 
@@ -126,6 +129,58 @@ async function checkRedirectsTo(
 }
 
 /**
+ * Dars jadvali oqimi: tuzish -> ro'yxatda ko'rinishi -> bekor qilish.
+ *
+ * Yaratilgan dars shu yerda o'chiriladi; qolib ketsa `cleanup` uni
+ * izohi bo'yicha baribir topadi va o'chiradi.
+ */
+async function checkLessonFlow(cookie: string, groupId: string, who: string) {
+  // Shanbaga bitta dars: seed jadvali Du/Chor/Ju, ya'ni bu yozuv
+  // faqat shu tekshiruvniki ekani aniq.
+  const res = await fetch(`${BASE}/api/lessons`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", cookie },
+    body: JSON.stringify({
+      groupId,
+      weekdays: [6],
+      hour: 9,
+      minute: 30,
+      durationMin: 60,
+      weeks: 1,
+      note: TEST_LESSON_NOTE,
+    }),
+  });
+  const body = (await res.json().catch(() => null)) as { created?: number } | null;
+  const created = typeof body?.created === "number" ? body.created : 0;
+  record(
+    res.status === 201 && created > 0,
+    `${who}: dars jadvali tuzildi`,
+    res.status === 201 ? undefined : `javob ${res.status}`
+  );
+  if (created === 0) return;
+
+  // Yangi dars guruh sahifasida ko'rinadimi
+  const html = await (
+    await fetch(`${BASE}/guruh/${groupId}`, { headers: { cookie } })
+  ).text();
+  record(html.includes(TEST_LESSON_NOTE), `${who}: yangi dars guruh sahifasida ko'rinadi`);
+
+  const lesson = await prisma.lesson.findFirst({
+    where: { groupId, note: TEST_LESSON_NOTE },
+    select: { id: true },
+  });
+  if (!lesson) {
+    record(false, `${who}: dars bekor qilindi`, "yaratilgan dars topilmadi");
+    return;
+  }
+  const del = await fetch(`${BASE}/api/lessons/${lesson.id}`, {
+    method: "DELETE",
+    headers: { cookie },
+  });
+  record(del.status === 200, `${who}: dars bekor qilindi`, `javob ${del.status}`);
+}
+
+/**
  * Tekshiruv uchun haqiqiy ID'lar.
  *
  * ⚠️ Guruh AYNAN test ustozining guruhi bo'lishi shart. Ilgari bu yerda
@@ -222,6 +277,8 @@ async function main() {
   const student = await login("student1@testify.dev");
   if (student) {
     await checkPage(student, "/student", ["Keyingi qadam", "Tayyorgarlik", "Biletlar"]);
+    // Seed jadval tuzadi — o'quvchi keyingi darsni panelida ko'rishi kerak.
+    await checkPage(student, "/student", ["Keyingi dars"]);
     for (const path of [
       "/student/mashq",
       "/student/bilet",
@@ -323,6 +380,9 @@ async function main() {
     );
     // Mavjud bo'lmagan guruh — 404
     await checkNotFound(director, "/guruh/yoq-bunday-id", "Mavjud bo'lmagan guruh 404 beradi");
+    // Jadval tuzish direktorga ham ochiq — u tashkiliy ish, vazifa emas.
+    await checkPage(director, `/guruh/${ids.groupId}`, ["Dars jadvali"]);
+    await checkLessonFlow(director, ids.groupId, "Direktor");
     if (ids.foreignGroupId) {
       await checkNotFound(
         director,
@@ -347,6 +407,26 @@ async function main() {
       // bu sahifalar umuman yo'q edi.
       if (ids) {
         await checkPage(reception, `/guruh/${ids.groupId}`);
+        // Qabulxona jadvalni KO'RADI, lekin tuza olmaydi — u mijoz
+        // bilan ishlaydi, o'quv jarayoni bilan emas.
+        const receptionLesson = await fetch(`${BASE}/api/lessons`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", cookie: reception },
+          body: JSON.stringify({
+            groupId: ids.groupId,
+            weekdays: [6],
+            hour: 9,
+            minute: 0,
+            durationMin: 60,
+            weeks: 1,
+            note: TEST_LESSON_NOTE,
+          }),
+        });
+        record(
+          receptionLesson.status === 404,
+          "Qabulxona dars jadvalini tuza olmaydi",
+          `javob ${receptionLesson.status}`
+        );
         if (ids.studentId) await checkPage(reception, `/oquvchi/${ids.studentId}`);
       }
     }
@@ -375,7 +455,8 @@ async function main() {
       );
     }
     if (ids) {
-      await checkPage(tutor, `/guruh/${ids.groupId}`);
+      await checkPage(tutor, `/guruh/${ids.groupId}`, ["Dars jadvali", "Jadval tuzish"]);
+      await checkLessonFlow(tutor, ids.groupId, "Ustoz");
       if (ids.studentId) await checkPage(tutor, `/oquvchi/${ids.studentId}`);
       await checkRedirectsTo(
         tutor,
@@ -422,9 +503,16 @@ async function cleanup() {
     }
   }
 
+  // Skript yaratgan darslar: faqat o'z izohi bo'yicha va faqat shu
+  // ishga tushirishdagilari — seed jadvaliga tegilmaydi.
+  const deletedLessons = await prisma.lesson.deleteMany({
+    where: { note: TEST_LESSON_NOTE, createdAt: { gte: startedRunAt } },
+  });
+
   const parts: string[] = [];
   if (deletedUsers.count > 0) parts.push("vaqtinchalik qabulxona hisobi");
   if (deletedAttempts > 0) parts.push(`${deletedAttempts} ta test urinishi`);
+  if (deletedLessons.count > 0) parts.push(`${deletedLessons.count} ta dars`);
   if (parts.length > 0) {
     console.log(`\nTozalandi: ${parts.join(" va ")} o'chirildi.`);
   }

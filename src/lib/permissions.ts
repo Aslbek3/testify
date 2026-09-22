@@ -243,6 +243,22 @@ export function canManageAssignment(user: SessionUser, group: GroupRef): boolean
 }
 
 /**
+ * Dars jadvalini tuzish va o'zgartirish: guruhning HOZIRGI ustozi yoki
+ * shu tashkilot direktori.
+ *
+ * Vazifadan (`canManageAssignment`) farqi ataylab: vazifa — o'quv ishi,
+ * uni faqat ustoz beradi. Jadval esa TASHKILIY ish — xona, vaqt, ustozning
+ * bandligi direktorning mas'uliyati, u ko'pincha jadvalni o'zi tuzadi.
+ *
+ * Qabulxona jadvalga tegmaydi: u mijoz bilan ishlaydi, o'quv jarayonini
+ * rejalashtirmaydi (`docs/rollar.md`).
+ */
+export function canManageLesson(user: SessionUser, group: GroupRef): boolean {
+  if (isDirector(user)) return inOrganization(user, group.organizationId);
+  return isTutor(user) && user.id === group.tutorId;
+}
+
+/**
  * Vazifani bajarish (vazifa orqali test boshlash): shu guruhdagi o'quvchi.
  *
  * O'quvchining guruhi sessiyada yo'q — chaqiruvchi uni bazadan olib

@@ -19,11 +19,11 @@ avtomaktabga sotadi, ya'ni "tayyor" degani nimani anglatishini u biladi.
 |---|---|
 | Kod (MVP funksiyalari) | ~92% |
 | Kontent (savollar bazasi) | ~5% |
-| 15 qismning o'rtachasi | **76%** |
+| 16 qismning o'rtachasi | **77%** |
 
 ⚠️ Ilgari bu yerda "~84%" yozilgan edi — u haqiqiy o'rtacha emas, qo'lda
-qo'yilgan taxmin edi. Endi raqam jadvaldagi 15 ta foizdan hisoblanadi
-(jami 1140 / 15 = 76.0).
+qo'yilgan taxmin edi. Endi raqam jadvaldagi 16 ta foizdan hisoblanadi
+(jami 1225 / 16 = 76.6).
 
 Eng katta to'siq endi kodda emas, **kontentda**: dev bazada 66 ta savol,
 production'da 20 ta, raqobatchida (autotestlar.uz) 1 220 ta. Savollarni
@@ -48,7 +48,8 @@ savollarning o'zi.
 | 12 | Owner paneli | 85% | mavzu tahriri, direktorni bloklash, arxivlash |
 | 13 | Avtomaktab → platforma obunasi | 50% | UI yashirin (`ORGANIZATION_BILLING_UI_ENABLED = false`) |
 | 14 | **Savollar bazasi (kontent)** | **5%** | production 20 ta, dev 66 ta savol; bilet yo'q |
-| 15 | Avtomatik testlar | 30% | `scripts/tekshiruv-ui.ts` — 64 ta tekshiruv, ruxsat chegaralari bilan; qo'lda ishga tushiriladi, CI yo'q |
+| 15 | Avtomatik testlar | 30% | `scripts/tekshiruv-ui.ts` — 82 ta tekshiruv, ruxsat chegaralari bilan; qo'lda ishga tushiriladi, CI yo'q |
+| 16 | Dars jadvali | 85% | davomat (kim keldi), darsni ko'chirish — hozir faqat bekor qilish |
 
 ## Direktor hisobi — 70% 👤
 
@@ -119,10 +120,12 @@ Batafsil — `docs/dizayn.md`. Qisqacha nima o'zgardi:
 `953119a` dan keyin **13 ta commit** production'ga chiqarilmagan:
 vazifa berish, bildirishnomalar, xatolardan test, o'quvchi dizayni,
 ustoz uchun guruh sahifasi, qabulxona roli, ustoz profili, rasm yuklash,
-savollar importi, bilet rejimi.
+savollar importi, bilet rejimi, dizaynning to'liq qayta ishlanishi,
+birlashgan obyekt sahifalari, "Bugungi ish" paneli, dars jadvali.
 
-Production'da **5 ta migratsiya** kutyapti: `assignments`,
-`notifications`, `attempt_source`, `reception_role`, `question_tickets`.
+Production'da **6 ta migratsiya** kutyapti: `assignments`,
+`notifications`, `attempt_source`, `reception_role`, `question_tickets`,
+`lessons`.
 
 ⚠️ Deploydan oldin production test hisoblarining paroli almashtirilishi
 kerak — u GitHub tarixida ochiq turibdi (`muhim.md`).

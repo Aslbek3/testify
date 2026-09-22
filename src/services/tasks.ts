@@ -16,6 +16,8 @@ import { getReceptionOverview, EXPIRING_SOON_DAYS } from "@/services/reception";
 import { getGroupsForTutor, getRosterForGroup } from "@/services/tutorDashboard";
 import { listAssignmentsForGroup } from "@/services/assignments";
 import { attentionList } from "@/lib/attention";
+import { listTodayLessons } from "@/services/lessons";
+import { formatTime } from "@/lib/format";
 
 /**
  * Har bir rol uchun "bugungi ish" ro'yxatini yig'adi.
@@ -41,17 +43,46 @@ export async function getDirectorTasks(
   organizationId: string,
   userId: string
 ): Promise<RoleTask[]> {
-  const [pending, subscription, inactiveCount, silentTutors, unread, paymentSettings] =
-    await Promise.all([
+  const [
+    pending,
+    subscription,
+    inactiveCount,
+    silentTutors,
+    unread,
+    paymentSettings,
+    todayLessons,
+  ] = await Promise.all([
       listPendingStudentPayments(organizationId),
       getSubscriptionSummary(organizationId),
       countInactiveStudents(organizationId, INACTIVE_DAYS),
       listSilentTutors(organizationId, TUTOR_SILENT_DAYS),
       countUnreadNotifications(userId),
       getStudentPaymentSettings(organizationId),
+      listTodayLessons({ organizationId }),
     ]);
 
   const tasks: RoleTask[] = [];
+
+  // — Bugungi darslar: direktor uchun bu ma'lumot, harakat emas —
+  //   shuning uchun `info`. Ustozda esa bu kunning asosiy ishi.
+  if (todayLessons.length > 0) {
+    const first = todayLessons[0];
+    tasks.push({
+      id: "today-lessons",
+      severity: "info",
+      icon: "calendar",
+      title:
+        todayLessons.length === 1
+          ? `Bugun dars: ${first.groupName}`
+          : `Bugun ${todayLessons.length} ta dars bor`,
+      detail:
+        todayLessons.length === 1
+          ? `${formatTime(first.startsAt)}${first.topicName ? ` · ${first.topicName}` : ""}`
+          : `Birinchisi ${formatTime(first.startsAt)} da — ${first.groupName}`,
+      action: "Guruhni ochish",
+      href: `/guruh/${first.groupId}`,
+    });
+  }
 
   // — Pul birinchi: kutayotgan chek o'quvchining kirishini to'xtatib turadi.
   if (paymentSettings.enabled && pending.length > 0) {
@@ -233,6 +264,12 @@ export async function getTutorTasks(tutorId: string): Promise<RoleTask[]> {
     countUnreadNotifications(tutorId),
   ]);
 
+  // Bugungi darslar — ustozning kunlik ishi aynan shu bilan boshlanadi,
+  // shuning uchun ro'yxatning boshida turadi. Tashkilot ko'rsatilmaydi:
+  // ustozning guruhlari allaqachon o'z tashkilotida.
+  const todayLessons =
+    groups.length > 0 ? await listTodayLessons({ tutorId }) : [];
+
   const perGroup = await Promise.all(
     groups.map(async (group) => {
       const [assignments, roster] = await Promise.all([
@@ -244,6 +281,20 @@ export async function getTutorTasks(tutorId: string): Promise<RoleTask[]> {
   );
 
   const tasks: RoleTask[] = [];
+
+  for (const lesson of todayLessons) {
+    tasks.push({
+      id: `lesson-${lesson.id}`,
+      severity: "attention",
+      icon: "calendar",
+      title: `Bugungi dars: ${lesson.groupName}`,
+      detail: `${formatTime(lesson.startsAt)} · ${lesson.durationMin} daqiqa${
+        lesson.topicName ? ` · ${lesson.topicName}` : ""
+      }`,
+      action: "Guruhni ochish",
+      href: `/guruh/${lesson.groupId}`,
+    });
+  }
 
   // — Muddati yaqin vazifalar. Har biri alohida band: ustoz qaysi guruhga
   //   kirishini bilishi kerak, "3 ta vazifa" degan umumiy son yordam bermaydi.
