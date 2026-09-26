@@ -60,13 +60,13 @@ export function AssignmentList({
                 <p className="font-medium text-text">{item.title}</p>
                 {item.note && <p className="mt-0.5 text-sm text-text-muted">{item.note}</p>}
               </TableCell>
-              <TableCell>
+              <TableCell data-label="Muddat">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono tabular-nums">{item.dueDate}</span>
                   <Badge variant={item.due.variant}>{item.due.label}</Badge>
                 </div>
               </TableCell>
-              <TableCell>
+              <TableCell data-label="Bajardi">
                 <CompletionBar done={item.completedCount} total={item.students.length} />
               </TableCell>
               <TableCell align="right">

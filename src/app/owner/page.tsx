@@ -258,7 +258,12 @@ export default async function OwnerPage({
             </Link>
           </div>
         ) : (
-          <Table>
+          /* Yagona jadval kartochka rejimida EMAS: saralash havolalari ustun
+             sarlavhalarining ICHIDA turadi, kartochka rejimi esa sarlavha
+             qatorini yashiradi — telefonda saralash butunlay yo'qolardi.
+             Shuning uchun bu jadval eski holida (surilib) qoladi; owner
+             paneli asosan kompyuterda ishlatiladi. */
+          <Table mobile="scroll">
             <TableHead>
               <TableRow>
                 <TableHeaderCell className="!p-0">

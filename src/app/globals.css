@@ -338,6 +338,138 @@ h3 {
   animation: shimmer 1.6s ease-in-out infinite;
 }
 
+/* ——— Jadval ———
+
+   `.table-scroll` — jadvalning o'rovchisi. Chekkalardagi soya surish
+   mumkinligining vizual ishorasi: usiz jadval kesilgandek ko'rinardi va
+   foydalanuvchi o'ngda yana ustunlar borligini bilmasdi.
+
+   `background-attachment: local` hiylasi ataylab tanlandi: soya FAQAT
+   surish mumkin bo'lganda ko'rinadi va surilgan tomonga qarab o'zi
+   yo'qoladi. Oddiy `sm:hidden` bilan qo'yilgan gradient noto'g'ri bo'lardi —
+   jadval eng kami 640px, ya'ni u sidebar ochilgan planshetda ham suriladi,
+   lekin keng desktopda surilmaydi. Bu yechim JS'siz o'zi moslashadi.
+
+   Ilgari bu gradientlar `Table.tsx` ichida inline `style` bilan yozilgan
+   edi; mobil qoidalar shu yerga kelgani uchun ikkalasi bitta joyda
+   turgani ma'qul — biri o'zgarganda ikkinchisi ko'rinib turadi. */
+.table-scroll {
+  background-image:
+    /* Kartochka foni rangidagi "niqob" — kontent bilan birga suriladi
+       (local) va chekkaga yetganda soyani berkitadi. */
+    linear-gradient(to right, var(--bg), transparent),
+    linear-gradient(to left, var(--bg), transparent),
+    /* Soyaning o'zi — konteynerga mahkam (scroll), joyida qoladi. */
+    linear-gradient(to right, rgb(0 0 0 / 0.12), transparent),
+    linear-gradient(to left, rgb(0 0 0 / 0.12), transparent);
+  background-position: left center, right center, left center, right center;
+  background-repeat: no-repeat;
+  background-size: 28px 100%, 28px 100%, 10px 100%, 10px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
+/* ——— Jadval telefonda: qator = kartochka ———
+
+   Muammo: jadval eng kami 640px, telefon ekrani esa 390px. Ya'ni har bir
+   ro'yxat yon tomonga surib o'qilardi va o'ngdagi ustunlar (holat, ball,
+   amallar) ko'rinmay qolardi.
+
+   Yechim shu yerda, sahifalarda emas: jadvalni 17 ta fayl ishlatadi va
+   har birida ikkinchi — mobil — nusxa yozilsa, ustun qo'shilganda ikki
+   joyni yangilash kerak bo'lardi.
+
+   Qanday ishlaydi: `thead` yashiriladi, `tr` blokka aylanadi (ajratgich
+   chizig'i `TableRow` dagi `border-b` dan keladi), har bir katak esa
+   "yorliq — qiymat" qatoriga aylanadi. Yorliq CSS'dan chiqadi
+   (`content: attr(data-label)`), demak matn HTML'da bir marta turadi —
+   jadvalning sarlavhasi va kartochkaning yorlig'i bir-biridan ajralib
+   ketolmaydi.
+
+   ⚠️ Cheklov: `display: block` jadval semantikasini yo'qotadi, `thead`
+   esa yashirin. Shuning uchun yorliq matni MAJBURIY — usiz ekran
+   o'quvchisi ham, odam ham raqamning nimaligini bilmaydi.
+
+   `screen` ataylab: chop etishda jadval to'liq holida qolishi kerak
+   (`@media print` pastda). */
+@media screen and (max-width: 639.98px) {
+  /* Bu kenglikda surish yo'q — ishora ham kerak emas. */
+  .table-scroll {
+    background-image: none;
+  }
+
+  .table-cards,
+  .table-cards tbody,
+  .table-cards tr,
+  .table-cards td {
+    display: block;
+  }
+
+  /* Sahifada `min-w-[940px]` kabi sinf turgan bo'lsa ham bekor qiladi: bu
+     blok Tailwind qatlamlaridan tashqarida, ya'ni ustun turadi. */
+  .table-cards {
+    min-width: 0;
+  }
+
+  .table-cards thead {
+    display: none;
+  }
+
+  /* Gorizontal to'ldirish QATORGA beriladi, katakka emas: `!p-0` bilan
+     yozilgan kataklar (ichida butun maydonni egallagan havola bor) ham
+     chap chegaraga tekis tushadi. */
+  .table-cards tr {
+    padding: 0.5rem 1rem;
+  }
+
+  .table-cards td {
+    padding: 0.25rem 0;
+  }
+
+  /* Yorliq chapda SUZIB turadi (`float`), qiymat o'ng tomonda.
+     Nega grid emas: grid'ning ikkinchi ustuniga faqat BITTA element
+     tushadi, katakda esa ko'pincha ikkitasi bo'ladi (sana + "o'tdi"
+     belgisi, holat + rad etish sababi) — ikkinchisi ustun tashqarisiga,
+     yorliqning ostiga tushib ketardi. Suzuvchi yorliq katakda nechta
+     element borligiga bog'liq emas.
+
+     `flow-root` — suzuvchi yorliq katak balandligi ichida qolishi uchun.
+     `CompareBar` kabi flex bloklar suzuvchi yorliqni chetlab o'tib qolgan
+     kenglikni oladi (flex konteyner o'z formatlash kontekstini ochadi),
+     ya'ni taqqoslash shkalasi siqilib qolmaydi. */
+  .table-cards td[data-label]:not(:first-child) {
+    display: flow-root;
+    text-align: right;
+  }
+
+  .table-cards td[data-label]:not(:first-child)::before {
+    content: attr(data-label);
+    float: left;
+    /* Uzun yorliq qiymatga joy qoldirsin. */
+    max-width: 45%;
+    margin-right: 0.75rem;
+    text-align: left;
+    /* Yorliq — jadval sarlavhasi bilan bir xil rangda, faqat kichikroq:
+       u ma'lumot emas, ma'lumotning nomi. */
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    /* Raqamli ustunda katak `font-mono` bilan yoziladi va yorliq ham
+       monoshriftga o'tib ketardi — yorliq esa oddiy matn. */
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Birinchi katak — kartochkaning sarlavhasi (ism, guruh nomi, sana).
+     Unga yorliq qo'yilmaydi: "Guruh: Toshkent-1" emas, "Toshkent-1". */
+  .table-cards td:first-child {
+    padding-bottom: 0.375rem;
+  }
+
+  /* Yorliqsiz qolgan kataklar — amal tugmalari; ular o'ng chekkada. */
+  .table-cards td:not([data-label]):not(:first-child) {
+    text-align: right;
+  }
+}
+
 /* ——— Chop etish ———
    Jurnal qog'ozda ham ishlatiladi: avtomaktabda yig'ilishga chop etilgan
    ro'yxat bilan kiriladi. Shuning uchun bosishda ekran bezaklari olib

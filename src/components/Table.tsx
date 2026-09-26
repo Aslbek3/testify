@@ -2,40 +2,42 @@ import type { HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
 /**
- * Mobil ekranda gorizontal scroll bo'lishi uchun o'rovchi.
+ * Jadval o'rovchisi.
  *
- * Chekkalardagi soya — surish mumkinligining vizual ishorasi. Usiz jadval
- * kesilgandek ko'rinardi va foydalanuvchi o'ngda yana ustunlar borligini
- * bilmasdi.
+ * **Telefonda (640px dan tor) jadval gorizontal surilmaydi** — har bir
+ * qator kartochkaga aylanadi, ustun sarlavhasi esa katakning chap tomonida
+ * `data-label` dan chiqadi. Uslublarning o'zi `globals.css` dagi
+ * `.table-cards` blokida.
  *
- * `background-attachment: local` hiylasi ataylab tanlandi: soya FAQAT
- * surish mumkin bo'lganda ko'rinadi va surilgan tomonga qarab o'zi
- * yo'qoladi. Oddiy `sm:hidden` bilan qo'yilgan gradient noto'g'ri bo'lardi —
- * jadval eng kami 640px, ya'ni u sidebar ochilgan planshetda ham suriladi,
- * lekin keng desktopda surilmaydi. Bu yechim JS'siz o'zi moslashadi.
+ * Nega shu yo'l tanlandi (sahifalarda `hidden sm:block` + alohida
+ * `MobileCardList` emas): jadvalni 17 ta fayl ishlatadi. Ikkinchi mobil
+ * nusxa har birida qo'lda yozilganda ustun qo'shilganda ikki joyni
+ * yangilash kerak bo'lardi va nusxalar vaqt o'tib bir-biridan ajralib
+ * ketardi. Bu yerda esa tuzatish BITTA joyda bo'ladi.
+ *
+ * Katakka `data-label` qo'yilmasa yorliq ham chiqmaydi — qator o'qiladigan
+ * holda qoladi, faqat kontekstsiz. Shuning uchun yangi jadvalda birinchi
+ * ustundan boshqa hamma katakka `data-label` beriladi (birinchi ustun —
+ * kartochkaning sarlavhasi, unga yorliq kerak emas).
+ *
+ * `mobile="scroll"` — istisno: agar ustun SARLAVHASINING o'zida bosiladigan
+ * element bo'lsa (owner panelidagi saralash havolalari), kartochka rejimi
+ * sarlavha qatorini yashirib, o'sha funksiyani yo'qotadi.
  */
-export function Table({ className, ...props }: HTMLAttributes<HTMLTableElement>) {
+export function Table({
+  className,
+  mobile = "cards",
+  ...props
+}: HTMLAttributes<HTMLTableElement> & { mobile?: "cards" | "scroll" }) {
   return (
-    <div
-      className="overflow-x-auto"
-      style={{
-        backgroundImage: [
-          // Kartochka foni rangidagi "niqob" — u kontent bilan birga suriladi
-          // (local) va chekkaga yetganda soyani berkitadi.
-          "linear-gradient(to right, var(--color-bg), transparent)",
-          "linear-gradient(to left, var(--color-bg), transparent)",
-          // Soyaning o'zi — konteynerga mahkam (scroll), joyida qoladi.
-          "linear-gradient(to right, rgb(0 0 0 / 0.12), transparent)",
-          "linear-gradient(to left, rgb(0 0 0 / 0.12), transparent)",
-        ].join(","),
-        backgroundPosition: "left center, right center, left center, right center",
-        backgroundRepeat: "no-repeat",
-        backgroundSize: "28px 100%, 28px 100%, 10px 100%, 10px 100%",
-        backgroundAttachment: "local, local, scroll, scroll",
-      }}
-    >
+    // `.table-scroll` — chekkalardagi surish ishorasi (izohi globals.css da).
+    <div className="table-scroll overflow-x-auto">
       <table
-        className={cn("w-full min-w-[640px] border-collapse text-sm", className)}
+        className={cn(
+          "w-full min-w-[640px] border-collapse text-sm",
+          mobile === "cards" && "table-cards",
+          className
+        )}
         {...props}
       />
     </div>
@@ -66,7 +68,8 @@ export function TableRow({
     <tr
       className={cn(
         // Ichki ajratgich asosiy chegaradan och: 30 qatorli ro'yxatda to'q
-        // chiziqlar katakli qog'oz taassurotini berardi.
+        // chiziqlar katakli qog'oz taassurotini berardi. Telefonda aynan
+        // shu chiziq kartochkalarni bir-biridan ajratadi.
         "border-b border-border-subtle transition-colors last:border-0",
         clickable && "cursor-pointer hover:bg-brand-soft/50",
         className

@@ -50,20 +50,22 @@ export function AttemptHistoryTable({ history }: { history: AttemptHistoryItem[]
               }
             >
               <TableCell>{formatDate(attempt.date)}</TableCell>
-              <TableCell>
+              <TableCell data-label="Rejim">
                 <Badge variant={attempt.mode === "EXAM" ? "brand" : "neutral"}>
                   {attempt.mode === "EXAM" ? "Imtihon" : "Mashq"}
                 </Badge>
               </TableCell>
-              <TableCell align="right">{attempt.questionCount}</TableCell>
-              <TableCell align="right">
+              <TableCell align="right" data-label="Savollar soni">
+                {attempt.questionCount}
+              </TableCell>
+              <TableCell align="right" data-label="Ball">
                 {attempt.score === null ? (
                   <Badge variant="brand">Davom etmoqda</Badge>
                 ) : (
                   `${attempt.score}%`
                 )}
               </TableCell>
-              <TableCell align="right">
+              <TableCell align="right" data-label="Natija">
                 {attempt.isFinished ? (
                   <Link
                     href={href}

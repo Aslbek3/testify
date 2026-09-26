@@ -134,21 +134,25 @@ export function RosterTable({
                     </span>
                   )}
                 </TableCell>
-                <TableCell align="right">{student.examAttemptCount}</TableCell>
-                <TableCell align="right">{student.practiceAttemptCount}</TableCell>
-                <TableCell>
+                <TableCell align="right" data-label="Imtihon">
+                  {student.examAttemptCount}
+                </TableCell>
+                <TableCell align="right" data-label="Mashq">
+                  {student.practiceAttemptCount}
+                </TableCell>
+                <TableCell data-label="O'rtacha ball">
                   <CompareBar value={student.averageScore} average={groupAverage} />
                 </TableCell>
-                <TableCell>
+                <TableCell data-label="Oxirgi faollik">
                   <span className="font-mono text-[13px] tabular-nums text-text-muted">
                     {formatRelativeDays(student.lastActivityAt)}
                   </span>
                 </TableCell>
-                <TableCell>
+                <TableCell data-label="Holat">
                   <Badge variant={student.status.variant}>{student.status.label}</Badge>
                 </TableCell>
                 {paymentStatus && (
-                  <TableCell>
+                  <TableCell data-label="To'lov">
                     <StudentAccessBadge status={paymentStatus[student.studentId]} />
                   </TableCell>
                 )}

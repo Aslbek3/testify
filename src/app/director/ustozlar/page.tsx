@@ -240,7 +240,7 @@ export default async function TutorsJournalPage({
                             </span>
                           )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Guruhlari">
                         {row.groups.length === 0 ? (
                           <span className="text-text-faint">—</span>
                         ) : (
@@ -267,11 +267,13 @@ export default async function TutorsJournalPage({
                           </span>
                         )}
                       </TableCell>
-                      <TableCell align="right">{row.studentCount}</TableCell>
-                      <TableCell>
+                      <TableCell align="right" data-label="O'quvchilar">
+                        {row.studentCount}
+                      </TableCell>
+                      <TableCell data-label="O'rtacha ball">
                         <CompareBar value={row.averageScore} average={tutorAverage} />
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Oxirgi vazifa">
                         <span
                           className={cn(
                             "font-mono text-[13px] tabular-nums",
@@ -285,7 +287,7 @@ export default async function TutorsJournalPage({
                           {formatRelativeDays(row.lastAssignmentAt, now)}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Faollik">
                         <Badge variant={activity.variant}>{activity.label}</Badge>
                       </TableCell>
                       <TableCell align="right" className="no-print">

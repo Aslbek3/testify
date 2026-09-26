@@ -319,12 +319,12 @@ export default async function StudentDetailPage({
                           {formatDate(new Date(a.date))}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Rejim">
                         <Badge variant={a.mode === "EXAM" ? "brand" : "neutral"}>
                           {a.mode === "EXAM" ? "Imtihon" : "Mashq"}
                         </Badge>
                       </TableCell>
-                      <TableCell align="right">
+                      <TableCell align="right" data-label="Ball">
                         {a.score !== null ? `${a.score}%` : "—"}
                       </TableCell>
                     </TableRow>

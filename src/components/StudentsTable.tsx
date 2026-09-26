@@ -154,7 +154,7 @@ export function StudentsTable({
                     <span className="font-semibold text-text">{student.name}</span>
                   )}
                 </TableCell>
-                <TableCell>
+                <TableCell data-label="Guruh">
                   <div className="flex items-center gap-1">
                     <select
                       value={student.groupId}
@@ -182,7 +182,7 @@ export function StudentsTable({
                     )}
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell data-label="Ustoz">
                   {tutorBasePath ? (
                     <Link
                       href={`${tutorBasePath}/${student.tutorId}`}
@@ -196,30 +196,32 @@ export function StudentsTable({
                 </TableCell>
                 {showProgress && (
                   <>
-                    <TableCell align="right">{student.examAttemptCount}</TableCell>
-                    <TableCell>
+                    <TableCell align="right" data-label="Imtihonlar">
+                      {student.examAttemptCount}
+                    </TableCell>
+                    <TableCell data-label="O'rtacha ball">
                       <CompareBar
                         value={student.averageScore}
                         average={organizationAverage ?? null}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell data-label="Oxirgi faollik">
                       <span className="font-mono text-[13px] tabular-nums text-text-muted">
                         {formatRelativeDays(student.lastActivityAt)}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell data-label="Holat">
                       <Badge variant={student.status.variant}>{student.status.label}</Badge>
                     </TableCell>
                   </>
                 )}
-                <TableCell>
+                <TableCell data-label="Hisob">
                   <Badge variant={student.isActive ? "success" : "danger"}>
                     {student.isActive ? "Faol" : "Bloklangan"}
                   </Badge>
                 </TableCell>
                 {payments && (
-                  <TableCell>
+                  <TableCell data-label="To'lov">
                     <StudentAccessBadge status={payments.byStudent[student.studentId]} />
                   </TableCell>
                 )}

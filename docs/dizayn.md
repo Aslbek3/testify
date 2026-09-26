@@ -117,7 +117,7 @@ to'plamni ikkiga bo'lib yuborardi.)
 | `Button` | 6 variant (`primary`, `secondary`, `ghost`, `danger`, `ghost-dark`, `outline-dark`), 3 o'lcham |
 | `Badge` | Holat yorlig'i — rang + nuqta + matn |
 | `StatTile` | Ko'rsatkich: rangli ikonka doirasi + yorliq + katta raqam |
-| `Table` | Jadval; mobilda gorizontal scroll ishorasi bilan |
+| `Table` | Jadval; telefonda har bir qator kartochkaga aylanadi (7-bo'lim) |
 | `Field` · `PasswordField` | Kiritish maydonlari, umumiy `INPUT_CLASS` |
 | `Modal` | Yopish tugmasi bilan; `md` va `lg` |
 | `EmptyState` | Bo'sh holat: ikonka + sabab + keyingi qadam |
@@ -183,11 +183,33 @@ Yozish qoidalari `src/lib/tasks.ts` izohida:
 ## 7. Mobil
 
 - Barmoq nishoni kamida **44px** (`py-3`, desktopda `pointer-fine:py-2`)
-- Sahifa hech qachon gorizontal scroll bermaydi; jadval o'z konteyneri
-  ichida suriladi
+- Sahifa hech qachon gorizontal scroll bermaydi
 - O'quvchida pastki panel (Umumiy · Mashq · Imtihon · Xatolarim · Menyu)
-- Jurnal jadvallari 720px dan tor ekranda ham surilishi mumkin, lekin
-  taqqoslash chizig'i saqlanadi
+
+### Jadval telefonda (2026-09-26)
+
+**640px dan tor ekranda jadval surilmaydi — har bir qator kartochkaga
+aylanadi.** Ustun sarlavhasi katakning chap tomonida `data-label` dan
+chiqadi, taqqoslash shkalasi (`CompareBar`) o'rtacha chizig'i bilan
+saqlanadi. Ilgari jadval eng kami 640px edi, ya'ni 390px ekranda har bir
+ro'yxat yon tomonga surib o'qilardi va o'ngdagi ustunlar (holat, ball,
+amallar) ko'rinmay qolardi.
+
+Uslublar BITTA joyda — `globals.css` dagi `.table-cards` bloki. Sahifalarda
+`hidden sm:block` bilan ikkinchi mobil nusxa yozilmaydi: jadvalni 17 ta
+fayl ishlatadi va ikki nusxa vaqt o'tib bir-biridan ajralib ketardi.
+
+Qoidalar:
+
+1. **Birinchi ustundan boshqa hamma katakda `data-label` bo'lishi shart.**
+   `display: block` jadval semantikasini yo'qotadi va sarlavha qatori
+   yashiriladi — yorliqsiz raqam kontekstsiz qoladi.
+2. Birinchi katak — kartochkaning sarlavhasi (ism, guruh nomi, sana).
+   Unga yorliq qo'yilmaydi: «Guruh: Toshkent-1» emas, «Toshkent-1».
+3. Istisno `mobile="scroll"` — ustun SARLAVHASINING ichida bosiladigan
+   element bo'lsa (owner panelidagi saralash havolalari). Kartochka rejimi
+   sarlavha qatorini yashiradi, ya'ni o'sha funksiya yo'qolardi.
+4. Chop etishda o'zgarish yo'q — media so'rovi `screen` bilan cheklangan.
 
 ---
 

@@ -219,12 +219,16 @@ export default async function TutorDetailPage({
                         {group.name}
                       </Link>
                     </TableCell>
-                    <TableCell align="right">{group.studentCount}</TableCell>
-                    <TableCell>
+                    <TableCell align="right" data-label="O'quvchilar">
+                      {group.studentCount}
+                    </TableCell>
+                    <TableCell data-label="O'rtacha ball">
                       <CompareBar value={group.averageScore} average={tutorAverage} />
                     </TableCell>
-                    <TableCell align="right">{group.recentExamCount}</TableCell>
-                    <TableCell>
+                    <TableCell align="right" data-label="Hafta imtihonlari">
+                      {group.recentExamCount}
+                    </TableCell>
+                    <TableCell data-label="So'nggi faollik">
                       <span className="font-mono text-[13px] tabular-nums text-text-muted">
                         {formatRelativeDays(group.lastActivityAt)}
                       </span>
@@ -272,7 +276,7 @@ export default async function TutorDetailPage({
               {allAssignments.map((assignment) => (
                 <TableRow key={assignment.id}>
                   <TableCell className="font-medium">{assignment.title}</TableCell>
-                  <TableCell>
+                  <TableCell data-label="Guruh">
                     <Link
                       href={`/guruh/${assignment.groupId}`}
                       className="font-medium text-text-muted underline-offset-2 hover:text-brand hover:underline"
@@ -280,7 +284,7 @@ export default async function TutorDetailPage({
                       {assignment.groupName}
                     </Link>
                   </TableCell>
-                  <TableCell>
+                  <TableCell data-label="Muddat">
                     <span className="font-mono text-[13px] tabular-nums">
                       {formatDate(assignment.dueAt)}
                     </span>
@@ -290,7 +294,7 @@ export default async function TutorDetailPage({
                       </span>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell data-label="Bajardi">
                     <CompareBar
                       value={
                         assignment.students.length > 0

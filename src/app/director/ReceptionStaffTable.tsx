@@ -64,15 +64,15 @@ export function ReceptionStaffTable({ rows }: { rows: ReceptionStaffRow[] }) {
           {rows.map((row) => (
             <TableRow key={row.userId}>
               <TableCell>{row.name}</TableCell>
-              <TableCell>
+              <TableCell data-label="Email">
                 <span className="text-text-muted">{row.email}</span>
               </TableCell>
-              <TableCell>
+              <TableCell data-label="Holat">
                 <Badge variant={row.isActive ? "success" : "danger"}>
                   {row.isActive ? "Faol" : "Bloklangan"}
                 </Badge>
               </TableCell>
-              <TableCell>
+              <TableCell data-label="Qo'shilgan">
                 <span className="font-mono tabular-nums">{formatDate(row.createdAt)}</span>
               </TableCell>
               <TableCell align="right">

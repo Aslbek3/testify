@@ -290,7 +290,7 @@ export default async function TutorStudentsPage({
                           </span>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Guruh">
                         <Link
                           href={`/guruh/${row.groupId}`}
                           className="relative z-10 font-medium text-text-muted underline-offset-2 hover:text-brand hover:underline"
@@ -298,12 +298,16 @@ export default async function TutorStudentsPage({
                           {row.groupName}
                         </Link>
                       </TableCell>
-                      <TableCell align="right">{row.examAttemptCount}</TableCell>
-                      <TableCell align="right">{row.practiceAttemptCount}</TableCell>
-                      <TableCell>
+                      <TableCell align="right" data-label="Imtihon">
+                        {row.examAttemptCount}
+                      </TableCell>
+                      <TableCell align="right" data-label="Mashq">
+                        {row.practiceAttemptCount}
+                      </TableCell>
+                      <TableCell data-label="O'rtacha ball">
                         <CompareBar value={row.averageScore} average={ownAverage} />
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Oxirgi faollik">
                         <span
                           className={cn(
                             "font-mono text-[13px] tabular-nums",
@@ -313,7 +317,7 @@ export default async function TutorStudentsPage({
                           {formatRelativeDays(row.lastActivityAt, now)}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="To'lov">
                         {access.kind === "free" ? (
                           <Badge variant="neutral">—</Badge>
                         ) : (

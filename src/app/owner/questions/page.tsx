@@ -85,6 +85,7 @@ export default async function QuestionBankPage() {
                         </TableCell>
                         <TableCell
                           align="right"
+                          data-label="Savollar soni"
                           className="bg-surface-2/60 !py-2 text-[12px] font-semibold text-text-faint"
                         >
                           {group.questionCount}
@@ -101,7 +102,7 @@ export default async function QuestionBankPage() {
                             {topic.name}
                           </Link>
                         </TableCell>
-                        <TableCell className="!p-0" align="right">
+                        <TableCell className="!p-0" align="right" data-label="Savollar soni">
                           <Link
                             href={`/owner/questions/${topic.id}`}
                             className="block px-3 py-3"
@@ -229,9 +230,11 @@ export default async function QuestionBankPage() {
                       <span className="line-clamp-2">{question.questionText}</span>
                     </Link>
                   </TableCell>
-                  <TableCell>{question.topicName}</TableCell>
-                  <TableCell align="right">{question.answerCount}</TableCell>
-                  <TableCell align="right">
+                  <TableCell data-label="Mavzu">{question.topicName}</TableCell>
+                  <TableCell align="right" data-label="Javoblar">
+                    {question.answerCount}
+                  </TableCell>
+                  <TableCell align="right" data-label="Xato foizi">
                     <div className="flex items-center justify-end gap-2">
                       {question.needsReview && (
                         <Badge variant="danger">Tekshirish kerak</Badge>

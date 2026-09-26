@@ -44,11 +44,19 @@ export function StudentPaymentsTable({
         {payments.map((p) => (
           <TableRow key={p.id}>
             <TableCell>{formatDate(p.createdAt)}</TableCell>
-            {showStudent && <TableCell className="font-medium">{p.studentName}</TableCell>}
-            <TableCell align="right">{formatAmountUzs(p.amount)}</TableCell>
-            <TableCell align="right">{p.months} oy</TableCell>
-            <TableCell>{STUDENT_PAYMENT_METHOD_LABEL[p.method]}</TableCell>
-            <TableCell>
+            {showStudent && (
+              <TableCell className="font-medium" data-label="O'quvchi">
+                {p.studentName}
+              </TableCell>
+            )}
+            <TableCell align="right" data-label="Summa">
+              {formatAmountUzs(p.amount)}
+            </TableCell>
+            <TableCell align="right" data-label="Muddat">
+              {p.months} oy
+            </TableCell>
+            <TableCell data-label="Usul">{STUDENT_PAYMENT_METHOD_LABEL[p.method]}</TableCell>
+            <TableCell data-label="Holat">
               <Badge variant={PAYMENT_STATUS_VARIANT[p.status]}>
                 {PAYMENT_STATUS_LABEL[p.status]}
               </Badge>
@@ -60,7 +68,7 @@ export function StudentPaymentsTable({
                 </span>
               )}
             </TableCell>
-            <TableCell>
+            <TableCell data-label="Chek">
               {p.hasReceipt ? (
                 <a
                   href={`/api/student-payments/${p.id}/receipt`}

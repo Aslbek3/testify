@@ -65,15 +65,17 @@ export function PaymentHistoryCard({ payments }: { payments: PaymentRow[] }) {
             {payments.map((payment) => (
               <TableRow key={payment.id}>
                 <TableCell>{formatDate(payment.createdAt)}</TableCell>
-                <TableCell className="font-medium">
+                <TableCell className="font-medium" data-label="Avtomaktab">
                   {payment.organizationName}
                 </TableCell>
-                <TableCell align="right">
+                <TableCell align="right" data-label="Summa">
                   {formatAmountUzs(payment.amount)}
                 </TableCell>
-                <TableCell align="right">{payment.months} oy</TableCell>
-                <TableCell>{PLAN_LABEL[payment.plan]}</TableCell>
-                <TableCell>
+                <TableCell align="right" data-label="Muddat">
+                  {payment.months} oy
+                </TableCell>
+                <TableCell data-label="Tarif">{PLAN_LABEL[payment.plan]}</TableCell>
+                <TableCell data-label="Holat">
                   <Badge variant={PAYMENT_STATUS_VARIANT[payment.status]}>
                     {PAYMENT_STATUS_LABEL[payment.status]}
                   </Badge>

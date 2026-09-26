@@ -194,15 +194,15 @@ export default async function TutorAssignmentsPage({
                         </span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell data-label="Guruh">
                       <span className="text-text-muted">{row.groupName}</span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell data-label="Muddat">
                       <span className="font-mono text-[13px] tabular-nums text-text-muted">
                         {formatDate(row.dueAt)}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell data-label="Bajarilishi">
                       <div className="flex items-center gap-2.5">
                         <CompareBar value={percent} average={null} />
                         <span className="shrink-0 font-mono text-[12px] tabular-nums text-text-faint">
@@ -210,7 +210,7 @@ export default async function TutorAssignmentsPage({
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell data-label="Holat">
                       {row.isOverdue ? (
                         <Badge variant="neutral">Muddati o&apos;tgan</Badge>
                       ) : notDone === 0 ? (

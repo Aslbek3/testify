@@ -93,7 +93,7 @@ export function QuestionsTable({
           {questions.map((question) => (
             <TableRow key={question.id}>
               <TableCell className="max-w-xs">{truncate(question.text, 80)}</TableCell>
-              <TableCell className="max-w-xs">
+              <TableCell className="max-w-xs" data-label="To'g'ri javob">
                 <span className="text-text-muted">
                   {optionLetter(question.correctOptionIndex)}.
                 </span>{" "}
@@ -102,7 +102,7 @@ export function QuestionsTable({
               {/* Kontent sifati ko'rsatkichi: qonun bandiga havolasiz savollar
                   darhol ko'zga tashlansin — ustoz o'quvchiga asos ko'rsata
                   olishi uchun havola bo'lgani ma'qul. */}
-              <TableCell className="max-w-xs">
+              <TableCell className="max-w-xs" data-label="YHQ havolasi">
                 {question.legalReference ? (
                   truncate(question.legalReference, 40)
                 ) : (
@@ -114,7 +114,7 @@ export function QuestionsTable({
                   o'qib ko'ray". Javob berilmagan savolda "—", 5 tadan kam
                   javobda esa foiz so'nik rangda: raqam bor, lekin unga
                   tayanib savolni qayta yozish erta. */}
-              <TableCell align="right">
+              <TableCell align="right" data-label="Xato foizi">
                 {(() => {
                   const quality = qualityByQuestionId[question.id];
                   if (!quality) {

@@ -236,7 +236,7 @@ export default async function GroupsJournalPage({
                           {row.attemptCount} ta urinish
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Ustoz">
                         {/* Ustoz havolasi qator havolasi USTIDA turishi kerak,
                             aks holda u bosilmay qolardi. */}
                         <Link
@@ -246,14 +246,16 @@ export default async function GroupsJournalPage({
                           {row.tutorName}
                         </Link>
                       </TableCell>
-                      <TableCell align="right">{row.studentCount}</TableCell>
-                      <TableCell>
+                      <TableCell align="right" data-label="O'quvchilar">
+                        {row.studentCount}
+                      </TableCell>
+                      <TableCell data-label="O'rtacha ball">
                         <CompareBar
                           value={row.averageScore}
                           average={overview.averageScore}
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Oxirgi faollik">
                         <span
                           className={cn(
                             "font-mono text-[13px] tabular-nums",
@@ -263,7 +265,7 @@ export default async function GroupsJournalPage({
                           {formatRelativeDays(row.lastActivityAt, now)}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Holat">
                         {row.studentCount === 0 ? (
                           <Badge variant="neutral">Bo&apos;sh</Badge>
                         ) : (
