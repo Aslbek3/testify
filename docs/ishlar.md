@@ -104,7 +104,7 @@ istisno uchun alohida mexanizm kerak bo'lardi).
 
 ## 6. Qolganlar
 
-- 🔵 Avtomatik testlar: `scripts/tekshiruv-ui.ts` — 82 ta tekshiruv, jumladan
+- 🔵 Avtomatik testlar: `scripts/tekshiruv-ui.ts` — 104 ta tekshiruv, jumladan
   ruxsat chegaralari (kim qayerga kira olmaydi). Dev server ishlab turishini
   talab qiladi va qo'lda ishga tushiriladi; CI hali yo'q
 - ⬜ Monitoring: server yiqilsa xabar
@@ -113,8 +113,8 @@ istisno uchun alohida mexanizm kerak bo'lardi).
 - ⬜ `docs/arxiv.md`: o'chirilgan yoki uxlayotgan funksiyalar ro'yxati
 - ⬜ `CLAUDE.md` dagi eskirgan "Rollar bo'yicha holat" bo'limi o'rniga
   `docs/loyiha-holati.md` ga havola
-- ⚠️ `CLAUDE.md` dagi test paroli (`test1234`) dev bazadagi haqiqiy parolga
-  (`testify123`) mos kelmaydi — biri yangilanishi kerak
+- ✅ Test paroli aniqlandi (2026-09-26): haqiqiysi `testify123`
+  (`prisma/seed.ts` dagi `SEED_PASSWORD`), `CLAUDE.md` to'g'rilandi
 - ⬜ Onlayn to'lov (Click/Payme)
 - ⬜ Telegram bildirishnomalari
 - ⬜ Spaced repetition (aqlli takrorlash)

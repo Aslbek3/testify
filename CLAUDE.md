@@ -59,7 +59,7 @@ Qoidalar:
 
 ## Test hisoblari (faqat lokal dev baza — seed skript, `prisma/seed.ts`)
 
-Parol hammasida bir xil: test1234
+Parol hammasida bir xil: testify123 (`prisma/seed.ts` dagi `SEED_PASSWORD`)
 
 | Rol | Email |
 |---|---|
@@ -293,6 +293,24 @@ production'ga hech qachon shu holicha ko'chirilmaydi.
   (`166fc56`), keyin merge qo'lda birlashtirildi. **Xulosa: serverda
   hujjat tahrirlangan bo'lsa, u darhol commit qilinsin** — aks holda
   keyingi deployda yo'qolib ketishi mumkin.
+- **2026-09-26 (ikkinchi deploy) — g'oyalar to'plamidan 12 ta yaxshilanish**:
+  commit `238a62e` → `2dfc22b` (3 ta commit) ga yangilandi. Bitta
+  migratsiya: `20260926075915_saved_questions_reports_topic_category`
+  (`SavedQuestion` va `QuestionReport` jadvallari, `Topic.category`
+  ustuni — faqat qo'shimcha, mavjud ma'lumotga tegmagan). Build 19.3s,
+  xatosiz. `pm2 reload` (restart 22→23), loglarda xato yo'q,
+  `/api/health` `200`, yangi marshrutlar (`/student/raqamli`,
+  `/student/saqlanganlar`, `/student/shpargalka`) `307` bilan loginga
+  yo'naltiradi. Yangi: imtihon 3-xatoda avtomatik to'xtaydi, biletlar
+  filtri, raqamli savollar rejimi, seriya (streak) panelda, xatolar
+  badge'i, telefon raqami, kutayotgan cheklar summasi, mavzu guruhlari,
+  saqlanganlar (xatcho'p), savolga shikoyat, shpargalkalar.
+  ⚠️ **Shpargalkadagi raqamlar YHQ bilan SOLISHTIRILMAGAN**
+  (`src/data/shpargalkalar.ts`, `verified: false`) — ekranda
+  ogohlantirish chiziladi. Tasdiqlangach `verified: true` qilinsin.
+  ⚠️ **Test paroli aniqlandi**: dev bazada `testify123`
+  (`prisma/seed.ts:6` — `SEED_PASSWORD`), `CLAUDE.md` dagi `test1234`
+  eskirgan edi. Yuqoridagi jadval to'g'rilandi.
 
 
 

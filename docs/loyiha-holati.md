@@ -48,7 +48,7 @@ savollarning o'zi.
 | 12 | Owner paneli | 85% | mavzu tahriri, direktorni bloklash, arxivlash |
 | 13 | Avtomaktab → platforma obunasi | 50% | UI yashirin (`ORGANIZATION_BILLING_UI_ENABLED = false`) |
 | 14 | **Savollar bazasi (kontent)** | **5%** | production 20 ta, dev 66 ta savol; bilet yo'q |
-| 15 | Avtomatik testlar | 30% | `scripts/tekshiruv-ui.ts` — 82 ta tekshiruv, ruxsat chegaralari bilan; qo'lda ishga tushiriladi, CI yo'q |
+| 15 | Avtomatik testlar | 30% | `scripts/tekshiruv-ui.ts` — 104 ta tekshiruv, ruxsat chegaralari bilan; qo'lda ishga tushiriladi, CI yo'q |
 | 16 | Dars jadvali | 85% | davomat (kim keldi), darsni ko'chirish — hozir faqat bekor qilish |
 
 ## Direktor hisobi — 70% 👤
