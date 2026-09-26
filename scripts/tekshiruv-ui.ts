@@ -383,6 +383,19 @@ async function main() {
     );
     await checkPage(student, "/student/bilet?filtr=yangi");
     await checkPage(student, "/student/bilet?filtr=xatolar");
+    // Shpargalka jadvalidagi haqiqiy qiymat va tekshirilmaganlik belgisi
+    await checkPage(student, "/student/shpargalka/tezlik", [
+      "Aholi punktlaridan tashqarida",
+      "km/soat",
+      "solishtirilmagan",
+    ]);
+    // ⚠️ `checkNotFound` EMAS: `/student` ostida `loading.tsx` bor va
+    // unda `notFound()` 404 statusi emas, 200 javobi ICHIDA keladi
+    // (`muhim.md` — `redirect()` bilan bir xil holat). Shuning uchun
+    // status emas, mazmun tekshiriladi.
+    await checkPage(student, "/student/shpargalka/yoq-bunday", [
+      "Sahifa topilmadi",
+    ]);
     // Xatcho'p va shikoyat oqimi
     await checkSavedAndReportFlow(student);
     for (const path of [
@@ -396,6 +409,10 @@ async function main() {
       "/student/raqamli",
       // Saqlanganlar — xatcho'p ro'yxati
       "/student/saqlanganlar",
+      // Shpargalkalar — ma'lumotnoma bo'limi
+      "/student/shpargalka",
+      "/student/shpargalka/tezlik",
+      "/student/shpargalka/jarima-ballari",
       "/profil",
       "/bildirishnomalar",
     ]) {
