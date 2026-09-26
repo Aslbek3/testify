@@ -209,6 +209,14 @@ production'ga hech qachon shu holicha ko'chirilmaydi.
   sessionVersion'ni oshiradi, ya'ni eski sessiyalar darhol tugaydi).
   Tanlangan parolni bu faylga YOZMANG. Bu hisoblarni yaratgan
   `owner@testif.gt.tc` eski owner hisobiga tegilmagan, u ham hali bor.
+
+  **2026-09-26**: to'rttala hisobning paroli Aslbekning iltimosiga ko'ra
+  qayta o'rnatildi (`reset-test-accounts.ts`), eski sessiyalar darhol
+  tugadi. Qiymat bu yerga yozilmaydi. ⚠️ Tanlangan parol lug'atdagi
+  keng tarqalgan qatorlardan — `owner@testify.dev` esa **App Owner**,
+  ya'ni platformadagi barcha tashkilotlarni boshqaradi. Aslbekka
+  aytilgan tavsiya: owner hisobiga alohida kuchli parol qo'yish yoki
+  uni `isActive: false` qilib qo'yib, kerak bo'lganda yoqish.
 - **Production'dagi test savollari (2026-09-06)**: dastlab 0 ta savol
   bor edi (`prisma/seed.ts` faqat lokal dev bazaga ishlaydi, production
   hech qachon to'liq seed qilinmagan). Tezkor test uchun 64 tadan
