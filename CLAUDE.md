@@ -128,12 +128,13 @@ production'ga hech qachon shu holicha ko'chirilmaydi.
   chetlab o'tar edi. Bu fix ⚠️ bilan Nginx konfiguratsiyasiga bog'liq:
   proxy yo'lida bittadan ortiq bo'lmasa ishlaydi (`docs/deploy.md`
   3-bo'limiga qara).
-- ⚠️ **fail2ban `corepanel-login` jail — ilovaning rate-limit'iga bog'liq
-  (2026-09-08)**: server darajasida `/etc/fail2ban/jail.local`da
-  `corepanel-login` jail'i `POST /api/auth/login` 401'larini kuzatib
-  turadi (endi testify'ning o'z `access_log`idan —
-  `/var/log/nginx/testify_access.log`, avval umumiy `access.log`dan
-  edi). Qiymatlari (`maxretry=50`, `findtime=5m`, `bantime=15m`) ataylab
+- ⚠️ **fail2ban `testify-login` jail — ilovaning rate-limit'iga bog'liq
+  (2026-09-08, avval `corepanel-login` nomi bilan yurgan, shu kuni
+  to'g'ri nomga o'zgartirildi)**: server darajasida
+  `/etc/fail2ban/jail.local`da `testify-login` jail'i
+  `POST /api/auth/login` 401'larini kuzatib turadi (testify'ning o'z
+  `access_log`idan — `/var/log/nginx/testify_access.log`). Qiymatlari
+  (`maxretry=50`, `findtime=5m`, `bantime=15m`) ataylab
   `src/lib/rateLimit.ts`dagi `LOGIN_IP_RATE_LIMIT` (40 urinish/15 daqiqa)
   dan YUQORI turadi: normal foydalanuvchi (masalan bitta NAT ortidagi
   30 o'quvchilik sinf) ilovaning o'z 429 javobiga uriladi (bu fail2ban
@@ -141,13 +142,33 @@ production'ga hech qachon shu holicha ko'chirilmaydi.
   fail2ban faqat ilovani chetlab o'tgan/haddan tashqari hajmli trafikni
   tutadi. **MUHIM: bu ikkisi bir-biriga bog'liq — `rateLimit.ts`dagi
   `LOGIN_IP_RATE_LIMIT.maxAttempts` yoki `windowMs` o'zgarsa,
-  `jail.local`dagi `corepanel-login`ning `maxretry`/`findtime`/`bantime`
+  `jail.local`dagi `testify-login`ning `maxretry`/`findtime`/`bantime`
   ham shunga qarab qayta ko'rilishi shart** (fail2ban chegarasi doim
   ilova chegarasidan yuqori qolishi kerak), aks holda butun sayt yana
   oddiy foydalanuvchilarni bloklay boshlaydi. Asosiy brute-force himoyasi
   bu emas — u hisob (email) bo'yicha cheklov (`LOGIN_ACCOUNT_RATE_LIMIT`,
   10/15 daqiqa, IP almashtirish bilan aylanib o'tilmaydi); fail2ban shunchaki
   ikkinchi, hajmli-hujumga qarshi qatlam.
+- ⚠️ **Mijoz onboarding — ofis IP'sini `ignoreip`ga qo'shish (2026-09-08)**:
+  mahsulot avtomaktablar uchun, har bir mijozning doimiy ofis IP'si
+  bo'ladi. **Yangi mijoz ulanganda** uning statik IP'si
+  `/etc/fail2ban/jail.local`dagi `[DEFAULT]` bo'limidagi `ignoreip`
+  qatoriga qo'shilishi SHART — aks holda o'sha ofisdagi ko'p o'quvchi/
+  ustoz bir xil NAT IP orqali login qilganda (yoki birov ko'p marta
+  noto'g'ri parol kiritganda) butun ofis `testify-login` jayli tomonidan
+  15 daqiqaga bloklanib qolishi mumkin. To'lovchi mijoz hech qachon
+  firewall'ga urilmasligi kerak.
+- ⚠️ **HSTS qisqa muddat bilan yoqilgan (2026-09-08)**:
+  `/etc/nginx/sites-available/testify`da
+  `Strict-Transport-Security: max-age=300` (5 daqiqa) bor,
+  `includeSubDomains`/`preload` YO'Q — ataylab, chunki bu sinov domeni
+  (`testif.duckdns.org`) va HSTS'ni orqaga qaytarib bo'lmaydi. **Muddatni
+  oshirish sharti**: kamida bitta HAQIQIY (dry-run emas) avto-sertifikat
+  yangilanishi muvaffaqiyatli o'tgani ko'rilsin (certbot.timer orqali,
+  keyingisi ~har kuni ikki marta ishlaydi), shundan keyin bosqichma-bosqich:
+  1 kun → 1 hafta → 1 yil. Haqiqiy production domeniga o'tilganda bu
+  qiymat qayta ko'rib chiqilishi kerak — hozirgi uzoq muddat sinov
+  domeniga foyda bermaydi.
 - **Production test hisoblari (2026-09-06)**: tezkor test uchun 4 rolli
   hisob production DB'da (`testify_prod`) yaratildi/tiklandi.
 
@@ -197,3 +218,45 @@ production'ga hech qachon shu holicha ko'chirilmaydi.
   tekshirildi. **Xulosa**: kelajakda katta o'zgarishdan oldin har doim
   avval `git fetch && git log HEAD..origin/main` bilan uzoq
   branch oldinda emasligini tekshir.
+- **2026-09-11 deploy — o'quvchi to'lovi (avtomaktab to'lovi, chek bilan)**:
+  commit `5a483b8` → `953119a` (7 ta commit) ga yangilandi. Yangi
+  funksiya: o'quvchi to'lov cheki (rasm/PDF, 5 MB gacha) yuklaydi,
+  direktor tasdiqlaydi/rad etadi (`src/services/studentPayments.ts`,
+  `src/app/student/tolov/`, `src/app/director/tolovlar/`,
+  `PaymentReviewActions.tsx`). Shu bilan bog'liq:
+  - Ikkita yangi migratsiya qo'llandi (ikkalasi ham FAQAT qo'shimcha —
+    yangi jadval/ustun, mavjud ma'lumotga tegmagan):
+    `20260909172017_add_payment_and_subscription` (`Payment` jadvali,
+    `Organization.subscriptionEndsAt`) va `20260911073010_student_payments`
+    (`StudentPayment` jadvali, `Organization.paymentCardNumber` /
+    `paymentCardHolder` / `priceOneMonth` / `priceSixMonths` /
+    `studentPaymentsEnabledAt` / `trialDays`, `StudentProfile.paidUntil`).
+  - Cheklar **diskda** saqlanadi: `storage/receipts/` (`public/` dan
+    tashqarida, git'ga tushmaydi, `chmod 700`, PM2 ilova
+    foydalanuvchisi — root — egasi). `src/lib/receiptStorage.ts` orqali
+    o'qiladi/yoziladi, to'g'ridan-to'g'ri static URL orqali ochilmaydi.
+  - `scripts/backup.sh` endi bazadan tashqari `storage/receipts/`ni ham
+    (rsync bor bo'lsa rsync, bo'lmasa cp bilan) `backups/receipts/`ga
+    nusxalaydi — chiqishida "Cheklar nusxalandi: ... (N ta fayl)" qatori
+    chiqadi.
+  - Nginx'da `client_max_body_size 10m;` testify blokida allaqachon bor
+    edi (o'zgartirilmadi) — 5 MB'gacha chek yuklash 413'ga urilmaydi.
+  - `studentPaymentsEnabledAt` har bir tashkilotda direktor o'zi
+    yoqmaguncha `NULL` qoladi — deploy vaqtida hech bir o'quvchi
+    to'satdan to'lov talab qilinib qolmadi (tekshirildi: production'da
+    barcha tashkilotlarda `NULL`, `StudentPayment` jadvali bo'sh edi).
+  - Deploy jarayonida kutilmagan narsa chiqmadi, orqaga qaytarishga
+    hojat bo'lmadi.
+- **2026-09-18 deploy — vazifalar, bildirishnomalar, Qabulxona roli,
+  bilet rejimi**: commit `953119a` → `edc211e` (15 ta commit) ga
+  yangilandi. Beshta yangi migratsiya qo'llandi (barchasi FAQAT
+  qo'shimcha jadval/ustun — mavjud ma'lumotga tegmagan):
+  `20260913164233_assignments`, `20260913171140_notifications`,
+  `20260917175506_attempt_source`, `20260917181826_reception_role`,
+  `20260917194342_question_tickets`. Build ~1m16s, xatosiz. `pm2 reload
+  testify` bilan qo'llandi (restart soni 20→21), loglarda xato yo'q,
+  `/api/health` `200` qaytardi. Yangi: ustoz→guruh vazifalari,
+  bildirishnomalar (qo'ng'iroqcha), Qabulxona (RECEPTION) roli,
+  o'quvchi uchun bilet rejimi va diqqat rejimi, savolga rasm yuklash,
+  savollarni JSON'dan ommaviy import. Orqaga qaytarishga hojat
+  bo'lmadi.
