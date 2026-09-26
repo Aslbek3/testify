@@ -50,6 +50,13 @@ export function Button({
   iconEnd,
   className,
   children,
+  // HTML'da forma ichidagi `<button>` standart bo'yicha `submit` bo'ladi.
+  // Ya'ni `<form>` ichiga `onClick` bilan qo'shilgan har qanday tugma
+  // formani ham YUBORIB yuborardi — bu odatda kutilmagan xatti-harakat
+  // va uni topish qiyin (sahifa "o'z-o'zidan yangilanib ketdi").
+  // Standart qiymat `button`: yuborish kerak bo'lganda `type="submit"`
+  // ochiq yoziladi, ya'ni niyat kodda ko'rinib turadi.
+  type = "button",
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
@@ -63,6 +70,7 @@ export function Button({
 
   return (
     <button
+      type={type}
       className={cn(
         // font-sans — raqamli (font-mono) ustunlar ichida (masalan "Amallar"
         // ustunidagi tugmalar) ham shrift meros olib qolmasin.

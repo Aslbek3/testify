@@ -97,7 +97,7 @@ export function QuestionActions({
           aria-pressed={saved}
           aria-label={saved ? "Saqlanganlardan olib tashlash" : "Savolni saqlash"}
           title={saved ? "Saqlanganlardan olib tashlash" : "Savolni saqlash"}
-          className={cn(buttonClass, saved && (dark ? "text-[#5eead4]" : "text-brand"))}
+          className={cn(buttonClass, saved && (dark ? "text-test-accent" : "text-brand"))}
         >
           <Icon
             name="bookmark"

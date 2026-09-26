@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
-    "create-owner": "tsx scripts/create-owner.ts"
+    "create-owner": "tsx scripts/create-owner.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test \"tests/*.test.ts\""
   },
   "dependencies": {
     "@prisma/client": "6.19.3",

@@ -66,7 +66,9 @@ async function main() {
   });
   console.log(`Organization: ${org.name} (id: ${org.id})`);
 
-  const director = await upsertUser({
+  // Qaytgan qiymat kerak emas — direktor hech narsaga bog'lanmaydi
+  // (tashkilot allaqachon yuqorida yaratilgan).
+  await upsertUser({
     name: "Test Direktor",
     email: "director@testify.dev",
     role: "DIRECTOR",

@@ -31,25 +31,30 @@ function RoadArtwork() {
       viewBox="0 0 420 260"
       fill="none"
       aria-hidden="true"
-      className="pointer-events-none absolute -bottom-6 left-0 w-[85%] max-w-[420px] opacity-70"
+      // Rang `currentColor` orqali BREND tokenidan keladi. Ilgari bu yerda
+      // uchta ko'k hex (#3b82f6, #38bdf8, #7dd3fc) turardi — ular token
+      // emas edi va brend turkuaziga ham mos kelmasdi: kirish sahifasi
+      // ilovaning birinchi ekrani, unda brend rangi ko'rinishi kerak.
+      // Chuqurlik endi rang bilan emas, `strokeOpacity` bilan beriladi.
+      className="pointer-events-none absolute -bottom-6 left-0 w-[85%] max-w-[420px] text-brand opacity-70"
     >
       {/* Yo'lning ikki cheti — pastda kengayib, tepada bir nuqtaga yaqinlashadi */}
       <path
         d="M40 260C60 190 120 150 170 120 215 93 250 60 262 8"
-        stroke="#3b82f6"
+        stroke="currentColor"
         strokeOpacity="0.55"
         strokeWidth="2"
       />
       <path
         d="M250 260C240 196 250 150 272 118 292 89 306 52 308 12"
-        stroke="#38bdf8"
+        stroke="currentColor"
         strokeOpacity="0.5"
         strokeWidth="2"
       />
       {/* Markaziy uzuq chiziq */}
       <path
         d="M150 260C155 198 190 155 220 122 245 95 268 58 276 10"
-        stroke="#7dd3fc"
+        stroke="currentColor"
         strokeOpacity="0.45"
         strokeWidth="2"
         strokeDasharray="12 14"

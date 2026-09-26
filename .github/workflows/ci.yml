@@ -1,0 +1,44 @@
+# Uzluksiz integratsiya — har push va pull request'da.
+#
+# Nega faqat shu uchtasi: birlik testlari baza ham, server ham talab
+# qilmaydi (sof funksiyalar), ya'ni ular sekundlarda tugaydi va har
+# safar ishlaydi. `scripts/tekshiruv-ui.ts` (110 ta HTTP tekshiruv) esa
+# ishlab turgan dev server va to'ldirilgan bazani talab qiladi — u
+# qo'lda ishga tushiriladi. Ikkalasini aralashtirsak, CI sekin va
+# ishonchsiz bo'lib qolardi.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tekshiruv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `npm ci` postinstall orqali `prisma generate` ni ham ishga
+      # tushiradi — tiplar usiz tayyor bo'lmaydi. Bazaga ULANMAYDI.
+      - name: Bog'liqliklarni o'rnatish
+        run: npm ci
+
+      - name: Lint
+        run: npx eslint src scripts tests
+
+      - name: Birlik testlari
+        run: npm test
+
+      # Next.js marshrut tiplari (`.next/types`) — usiz `tsc` sahifa
+      # propslarini topa olmaydi (`muhim.md` dagi eslatma).
+      - name: Marshrut tiplarini generatsiya qilish
+        run: npx next typegen
+
+      - name: TypeScript
+        run: npm run typecheck

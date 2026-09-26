@@ -199,6 +199,33 @@
   --brand-shadow: var(--d-brand-shadow);
 }
 
+/* ——— Test ekrani (to'q qobiq) ———
+
+   Test va imtihon ekrani ataylab TO'Q fonda chiziladi: o'quvchi 25 daqiqa
+   davomida faqat savolga qarashi kerak, atrofdagi panel esa e'tiborni
+   tortmasligi kerak. Shu sabab u ilovaning och/qorong'i rejimiga
+   QO'SHILMAYDI — har ikki rejimda ham bir xil to'q qoladi va `--d-*`
+   variantlari yo'q.
+
+   Ilgari bu ranglar `TestRunner.tsx` ichida 21 marta qo'lda hex bilan
+   yozilgan edi. Natijada eng ko'p ishlatiladigan ekran dizayn tizimidan
+   tashqarida qolgandi: brend rangi o'zgarsa unga yetib bormasdi.
+
+   Ma'nosi qat'iy: yashil — to'g'ri javob, qizil — xato, sariq — saqlanmadi
+   (tarmoq muammosi), turkuaz — urg'u. `-ink` bilan tugaganlari o'sha rang
+   ustiga tushadigan MATN rangi (kontrast uchun juda to'q). */
+:root {
+  --test-shell: #111c2e;
+  --test-accent: #5eead4;
+  --test-ok: #34d399;
+  --test-ok-ink: #062b20;
+  --test-wrong: #f87171;
+  --test-wrong-soft: #fca5a5;
+  --test-wrong-ink: #3f0d0d;
+  --test-warn: #fbbf24;
+  --test-warn-soft: #fcd34d;
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-bg-subtle: var(--bg-subtle);
@@ -226,6 +253,17 @@
   --color-navy-soft: var(--navy-soft);
   --color-sidebar: var(--sidebar-bg);
   --color-skeleton: var(--skeleton);
+
+  /* Test ekranining qat'iy palitrasi (yuqoridagi izohga qara). */
+  --color-test-shell: var(--test-shell);
+  --color-test-accent: var(--test-accent);
+  --color-test-ok: var(--test-ok);
+  --color-test-ok-ink: var(--test-ok-ink);
+  --color-test-wrong: var(--test-wrong);
+  --color-test-wrong-soft: var(--test-wrong-soft);
+  --color-test-wrong-ink: var(--test-wrong-ink);
+  --color-test-warn: var(--test-warn);
+  --color-test-warn-soft: var(--test-warn-soft);
 
   /* Radius shkalasi (spetsifikatsiya: kartochka 16-17px, modal 18px,
      maydon/tugma 10-12px). Ilgari butun ilovada `rounded-md` (6px)

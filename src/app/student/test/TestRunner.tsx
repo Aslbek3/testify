@@ -358,7 +358,7 @@ export function TestRunner({
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div className="overflow-hidden rounded-xl border border-white/10 bg-[#111c2e] shadow-raised">
+      <div className="overflow-hidden rounded-xl border border-white/10 bg-test-shell shadow-raised">
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <span
@@ -366,7 +366,7 @@ export function TestRunner({
                 "rounded-md px-2.5 py-1 text-xs font-semibold",
                 mode === "EXAM"
                   ? "bg-white/10 text-white/85"
-                  : "bg-brand/20 text-[#5eead4]"
+                  : "bg-brand/20 text-test-accent"
               )}
             >
               {modeLabel}
@@ -379,7 +379,7 @@ export function TestRunner({
             <span
               className={cn(
                 "font-mono text-base font-semibold tabular-nums",
-                isDanger ? "text-[#fca5a5]" : "text-white"
+                isDanger ? "text-test-wrong-soft" : "text-white"
               )}
             >
               {formatTime(secondsLeft)}
@@ -435,13 +435,13 @@ export function TestRunner({
               // Saqlanmagan javob birinchi o'rinda — u boshqa hamma narsadan
               // muhimroq signal (javob yo'qolgan bo'lishi mumkin).
               status === "failed"
-                ? "bg-[#f87171]"
+                ? "bg-test-wrong"
                 : status === "retrying" || status === "saving"
-                  ? "bg-[#fbbf24]"
+                  ? "bg-test-warn"
                   : knowsCorrectness
                     ? answer?.isCorrect
-                      ? "bg-[#34d399]"
-                      : "bg-[#f87171]"
+                      ? "bg-test-ok"
+                      : "bg-test-wrong"
                     : isAnswered
                       ? "bg-brand"
                       : "bg-white/15";
@@ -518,21 +518,21 @@ export function TestRunner({
             </div>
 
             {currentStatus === "retrying" && (
-              <p className="flex items-center gap-1.5 rounded-md border border-[#fbbf24]/40 bg-[#fbbf24]/10 px-4 py-3 text-sm text-[#fcd34d]">
+              <p className="flex items-center gap-1.5 rounded-md border border-test-warn/40 bg-test-warn/10 px-4 py-3 text-sm text-test-warn-soft">
                 <WarningIcon className="h-4 w-4 shrink-0" />
                 Saqlanmadi, qayta urinilmoqda...
               </p>
             )}
             {currentStatus === "failed" && (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#f87171]/40 bg-[#f87171]/10 px-4 py-3">
-                <p className="text-sm text-[#fca5a5]">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-test-wrong/40 bg-test-wrong/10 px-4 py-3">
+                <p className="text-sm text-test-wrong-soft">
                   Javobingiz saqlanmadi — internet aloqasi uzilgan bo&apos;lishi
                   mumkin.
                 </p>
                 <button
                   type="button"
                   onClick={() => retrySave(currentQuestion.id)}
-                  className="shrink-0 rounded-md bg-[#f87171] px-3.5 py-1.5 text-xs font-semibold text-[#3f0d0d]"
+                  className="shrink-0 rounded-md bg-test-wrong px-3.5 py-1.5 text-xs font-semibold text-test-wrong-ink"
                 >
                   Qayta urinish
                 </button>
@@ -564,15 +564,15 @@ export function TestRunner({
                     className={cn(
                       "flex w-full items-center gap-3 rounded-md border p-4 text-left transition-colors",
                       isTheCorrectOne
-                        ? "border-[#34d399] bg-[#34d399]/15"
+                        ? "border-test-ok bg-test-ok/15"
                         : isWrongSelected
-                          ? "border-[#f87171] bg-[#f87171]/15"
+                          ? "border-test-wrong bg-test-wrong/15"
                           : showUnsaved
                             ? cn(
                                 "border-dashed",
                                 currentStatus === "failed"
-                                  ? "border-[#f87171]"
-                                  : "border-[#fbbf24]"
+                                  ? "border-test-wrong"
+                                  : "border-test-warn"
                               )
                             : isSelected
                               ? "border-brand bg-brand/20"
@@ -584,13 +584,13 @@ export function TestRunner({
                       className={cn(
                         "flex h-7 w-7 shrink-0 items-center justify-center rounded-sm font-mono text-[13px] font-bold",
                         isTheCorrectOne
-                          ? "bg-[#34d399] text-[#062b20]"
+                          ? "bg-test-ok text-test-ok-ink"
                           : isWrongSelected
-                            ? "bg-[#f87171] text-[#3f0d0d]"
+                            ? "bg-test-wrong text-test-wrong-ink"
                             : showUnsaved
                               ? currentStatus === "failed"
-                                ? "bg-[#f87171]/20 text-[#fca5a5]"
-                                : "bg-[#fbbf24]/20 text-[#fcd34d]"
+                                ? "bg-test-wrong/20 text-test-wrong-soft"
+                                : "bg-test-warn/20 text-test-warn-soft"
                               : isSelected
                                 ? "bg-brand text-white"
                                 : "bg-white/10 text-white/55"
@@ -607,7 +607,7 @@ export function TestRunner({
                       {option}
                     </span>
                     {isTheCorrectOne && (
-                      <span className="ml-auto text-sm font-bold text-[#34d399]">✓</span>
+                      <span className="ml-auto text-sm font-bold text-test-ok">✓</span>
                     )}
                   </button>
                 );
@@ -617,7 +617,7 @@ export function TestRunner({
             {mode === "PRACTICE" &&
               (currentAnswer?.explanation || currentAnswer?.legalReference) && (
                 <div className="flex flex-col gap-1 rounded-md border border-brand/25 bg-brand/12 px-4 py-3.5">
-                  <p className="text-xs font-bold text-[#5eead4]">Izoh</p>
+                  <p className="text-xs font-bold text-test-accent">Izoh</p>
                   {currentAnswer.explanation && (
                     <p className="text-sm leading-relaxed text-white/85">
                       {currentAnswer.explanation}
