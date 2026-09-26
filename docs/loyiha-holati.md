@@ -19,11 +19,11 @@ avtomaktabga sotadi, ya'ni "tayyor" degani nimani anglatishini u biladi.
 |---|---|
 | Kod (MVP funksiyalari) | ~92% |
 | Kontent (savollar bazasi) | ~5% |
-| 18 qismning o'rtachasi | **74%** |
+| 18 qismning o'rtachasi | **75%** |
 
 ⚠️ Ilgari bu yerda "~84%" yozilgan edi — u haqiqiy o'rtacha emas, qo'lda
 qo'yilgan taxmin edi. Endi raqam jadvaldagi 18 ta foizdan hisoblanadi
-(jami 1325 / 18 = 73.6). 2026-09-26 da ikkita qism qo'shildi:
+(jami 1345 / 18 = 74.7). 2026-09-26 da ikkita qism qo'shildi:
 "Ma'lumotnoma" (25%) va "Mobil" (70%) — ilgari mobil "UI va mobil"
 ichida 95% deb turardi, lekin o'lchov boshqasini ko'rsatdi.
 Raqamning tushishi yomonlashuv emas: yashirin bo'shliqlar ro'yxatga
@@ -49,7 +49,7 @@ savollarning o'zi.
 | 9 | Infratuzilma | 90% | monitoring, CI |
 | 10 | Bildirishnomalar | 80% | Telegram; menyudagi son real vaqtda yangilanmaydi |
 | 11 | UI (kompyuter) | 95% | owner/questions ekranlari chuqurroq ishlanmagan |
-| 18 | **Mobil (telefon)** | **70%** | 17 ta jadval `min-w-[640px]` bilan yon tomonga siljiydi; kartochka ko'rinishi yo'q. O'quvchi oqimi ~90%, xodimlar oqimi ~55% |
+| 18 | Mobil (telefon) | 90% | jadvallar telefonda kartochkaga aylanadi (`globals.css` `.table-cards`). Qolgani: haqiqiy qurilmada ko'z bilan tekshirilmagan |
 | 12 | Owner paneli | 85% | mavzu tahriri, direktorni bloklash, arxivlash |
 | 13 | Avtomaktab → platforma obunasi | 50% | UI yashirin (`ORGANIZATION_BILLING_UI_ENABLED = false`) |
 | 14 | **Savollar bazasi (kontent)** | **5%** | production 20 ta, dev 66 ta savol; bilet yo'q |
