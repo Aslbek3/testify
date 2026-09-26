@@ -42,7 +42,7 @@ savollarning o'zi.
 | 6 | Vazifa berish | 90% | takroriy vazifa (har hafta avtomatik) |
 | 7 | O'quvchi: test yechish | 95% | — |
 | 8 | Xatolar ustida ishlash | 90% | aqlli takrorlash (spaced repetition) |
-| 9 | Infratuzilma | 85% | monitoring, CI |
+| 9 | Infratuzilma | 90% | monitoring, CI |
 | 10 | Bildirishnomalar | 80% | Telegram; menyudagi son real vaqtda yangilanmaydi |
 | 11 | UI va mobil | 95% | owner/questions ekranlari chuqurroq ishlanmagan |
 | 12 | Owner paneli | 85% | mavzu tahriri, direktorni bloklash, arxivlash |
@@ -117,24 +117,20 @@ Batafsil — `docs/dizayn.md`. Qisqacha nima o'zgardi:
 
 ## Chiqarilmagan ish
 
-`953119a` dan keyin **13 ta commit** production'ga chiqarilmagan:
-vazifa berish, bildirishnomalar, xatolardan test, o'quvchi dizayni,
-ustoz uchun guruh sahifasi, qabulxona roli, ustoz profili, rasm yuklash,
-savollar importi, bilet rejimi, dizaynning to'liq qayta ishlanishi,
-birlashgan obyekt sahifalari, "Bugungi ish" paneli, dars jadvali.
+**Yo'q — hammasi chiqarilgan.** 2026-09-26 da `edc211e` → `238a62e`
+(11 ta commit) production'ga qo'llandi: dizayn poydevori, uchta jurnal,
+birlashgan obyekt sahifalari, "Bugungi ish" paneli, faollik grafigi,
+ustozning bo'limlari, dars jadvali. `lessons` migratsiyasi qo'llandi,
+kutayotgan migratsiya qolmadi (`migrate status` → up to date).
+Tafsiloti `CLAUDE.md` dagi deploy tarixida.
 
-Production'da **6 ta migratsiya** kutyapti: `assignments`,
-`notifications`, `attempt_source`, `reception_role`, `question_tickets`,
-`lessons`.
-
-⚠️ Deploydan oldin production test hisoblarining paroli almashtirilishi
-kerak — u GitHub tarixida ochiq turibdi (`muhim.md`).
+⚠️ Production test hisoblarining paroli GitHub tarixida ochiq turibdi.
+`muhim.md` dagi qaror (2026-09-18): hozircha o'z holicha qoladi.
 
 ## Keyingi qadamlar
 
-1. **Deploy** — 13 ta ish bir joyda to'planib qoldi, jonli saytda
-   sinalmagan.
-2. **Savollar bazasini to'ldirish** — import tayyor, manba kerak.
+1. **Savollar bazasini to'ldirish** — import tayyor, manba kerak.
+   Eng katta to'siq shu: production'da 20 ta savol bor.
+2. `docs/gidoyalar.md` dagi yig'ilgan g'oyalarni saralash.
 3. Qabulxona uchun amallar jurnali (pul unda bo'lgani uchun).
 4. O'quvchilarni Excel'dan ommaviy import qilish.
-5. Avtomatik testlar (birinchisi — ruxsatlar matritsasi).

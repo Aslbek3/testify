@@ -273,6 +273,26 @@ production'ga hech qachon shu holicha ko'chirilmaydi.
   o'quvchi uchun bilet rejimi va diqqat rejimi, savolga rasm yuklash,
   savollarni JSON'dan ommaviy import. Orqaga qaytarishga hojat
   bo'lmadi.
+- **2026-09-26 deploy — dizayn, jurnallar, "Bugungi ish", dars jadvali**:
+  commit `edc211e` → `238a62e` (11 ta commit) ga yangilandi. Bitta
+  migratsiya qo'llandi: `20260922150104_lessons` (`Lesson` jadvali —
+  faqat qo'shimcha, mavjud ma'lumotga tegmagan; boshqa 5 tasi
+  2026-09-18 da allaqachon qo'llangan edi — `docs/loyiha-holati.md`
+  dagi "6 ta migratsiya kutyapti" yozuvi eskirgan edi). Build 1m11s,
+  xatosiz. `pm2 reload testify` (restart 21→22), loglarda xato yo'q,
+  `/api/health` `200`. Yangi: turkuaz dizayn poydevori va ikonka
+  to'plami, uchta jurnal (guruhlar/ustozlar/o'quvchilar), birlashgan
+  obyekt sahifalari (`/guruh`, `/ustoz`, `/oquvchi` — eski
+  `/director/guruh/...` va `/tutor/guruh/...` shularga yo'naltiriladi),
+  "Bugungi ish" paneli, faollik grafigi, ustozning "O'quvchilarim" va
+  "Vazifalar" bo'limlari, dars jadvali.
+  ⚠️ **Deploy paytida `CLAUDE.md` da merge ziddiyati chiqdi**: serverda
+  commit qilinmagan 70 qator yozuv turgan edi (fail2ban jail nomi,
+  mijoz IP'sini `ignoreip`ga qo'shish sharti, HSTS, oldingi ikki
+  deployning hisoboti). Avval o'sha o'zgarish alohida commit qilindi
+  (`166fc56`), keyin merge qo'lda birlashtirildi. **Xulosa: serverda
+  hujjat tahrirlangan bo'lsa, u darhol commit qilinsin** — aks holda
+  keyingi deployda yo'qolib ketishi mumkin.
 
 
 
