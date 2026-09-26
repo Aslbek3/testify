@@ -384,6 +384,15 @@ async function main() {
     await checkPage(student, "/student/bilet?filtr=yangi");
     await checkPage(student, "/student/bilet?filtr=xatolar");
     // Shpargalka jadvalidagi haqiqiy qiymat va tekshirilmaganlik belgisi
+    // Katalog DEMO ekanini yashirmasligi kerak
+    await checkPage(student, "/student/belgilar", [
+      "Katalog to&#x27;ldirilmoqda",
+      "Ogohlantiruvchi belgilar",
+    ]);
+    await checkPage(student, "/student/belgilar/ogohlantiruvchi", [
+      "Xavfli burilish",
+      "belgi bor",
+    ]);
     await checkPage(student, "/student/shpargalka/tezlik", [
       "Aholi punktlaridan tashqarida",
       "km/soat",
@@ -413,6 +422,11 @@ async function main() {
       "/student/shpargalka",
       "/student/shpargalka/tezlik",
       "/student/shpargalka/jarima-ballari",
+      // Yo'l belgilari katalogi (demo) va chalg'ituvchi savollar (demo)
+      "/student/belgilar",
+      "/student/belgilar/ogohlantiruvchi",
+      "/student/belgilar/taqiqlovchi",
+      "/student/chalgituvchi",
       "/profil",
       "/bildirishnomalar",
     ]) {

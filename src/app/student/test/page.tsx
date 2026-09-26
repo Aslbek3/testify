@@ -11,6 +11,7 @@ import { startAssignmentAttempt, AssignmentError } from "@/services/assignments"
 import { startMistakesAttempt } from "@/services/mistakes";
 import { startTicketAttempt } from "@/services/tickets";
 import { startNumericAttempt } from "@/services/numericQuestions";
+import { startTrickyAttempt } from "@/services/trickyQuestions";
 import { listSavedQuestionIds } from "@/services/savedQuestions";
 import { parseMistakeSources, parseTopicIds } from "@/lib/mistakeFilters";
 import { EXAM_MAX_WRONG } from "@/lib/examRules";
@@ -31,6 +32,8 @@ export default async function TestPage({
     bilet?: string;
     /** Raqamli savollar mashqi — `1` bo'lsa shu rejim boshlanadi. */
     raqamli?: string;
+    /** Chalg'ituvchi savollar mashqi. */
+    chalgituvchi?: string;
     /** Mavzu bo'yicha mashq — "keyingi qadam" tavsiyasi shu havolani beradi. */
     mavzuMashq?: string;
     manba?: string;
@@ -38,7 +41,7 @@ export default async function TestPage({
   }>;
 }) {
   const user = await requireActiveStudent();
-  const { attemptId, mode, savollar, vazifa, xatolar, manba, mavzu, bilet, raqamli } =
+  const { attemptId, mode, savollar, vazifa, xatolar, manba, mavzu, bilet, raqamli, chalgituvchi } =
     await searchParams;
   // `mavzu` ikki joyda ishlatiladi: xatolar filtrida (yuqoridagi) va oddiy
   // mashqda mavzu tanlashda (quyida) — ikkalasi bir-biriga xalaqit bermaydi,
@@ -85,6 +88,20 @@ export default async function TestPage({
     } catch (error) {
       if (error instanceof AttemptError) {
         redirect(`/student/bilet?xato=${encodeURIComponent(error.message)}`);
+      }
+      throw error;
+    }
+    redirect(`/student/test?attemptId=${started.attemptId}`);
+  }
+
+  // Chalg'ituvchi savollar — ro'yxatni platforma statistikasi belgilaydi.
+  if (chalgituvchi) {
+    let started;
+    try {
+      started = await startTrickyAttempt({ user });
+    } catch (error) {
+      if (error instanceof AttemptError) {
+        redirect(`/student/chalgituvchi?xato=${encodeURIComponent(error.message)}`);
       }
       throw error;
     }

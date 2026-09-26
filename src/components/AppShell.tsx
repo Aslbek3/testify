@@ -55,7 +55,9 @@ const NAV_ITEMS: Record<Role, NavItem[]> = {
     { label: "Imtihon", href: "/student/imtihon", icon: "clipboardCheck" },
     { label: "Xatolarim", href: "/student/xatolarim", icon: "alertTriangle" },
     { label: "Saqlanganlar", href: "/student/saqlanganlar", icon: "bookmark" },
+    { label: "Chalg'ituvchi", href: "/student/chalgituvchi", icon: "alertTriangle" },
     { label: "Shpargalkalar", href: "/student/shpargalka", icon: "book" },
+    { label: "Yo'l belgilari", href: "/student/belgilar", icon: "shield" },
     { label: "To'lov", href: "/student/tolov", icon: "creditCard" },
   ],
 };

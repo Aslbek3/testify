@@ -452,6 +452,33 @@ export function listLowQualityQuestions(limit = 10): Promise<QuestionQualityStat
 }
 
 /**
+ * "Chalg'ituvchi" savollar — ko'pchilik qoqiladigan savollar.
+ *
+ * ⚠️ DEMO (2026-09-26): chegara ataylab PAST (`minAnswers: 2`), chunki
+ * platformada hali kam javob bor va qat'iy chegara bilan ro'yxat doim
+ * bo'sh chiqardi. Ma'lumot to'plangach `MIN_ANSWERS_FOR_QUALITY` (5)
+ * ga qaytariladi — shunda ro'yxat tasodifiy emas, statistik bo'ladi.
+ *
+ * Owner uchun `listLowQualityQuestions` bilan AYNI so'rovdan oziqlanadi,
+ * lekin ma'nosi boshqa: owner uchun bu "savol xato bo'lishi mumkin"
+ * signali, o'quvchi uchun esa "bu savolda ko'pchilik qoqiladi, diqqat
+ * qil" degani. Shuning uchun bu yerda `needsReview` emas, shunchaki
+ * xato foizi bo'yicha tartib ishlatiladi.
+ */
+export const TRICKY_MIN_ANSWERS = 2;
+export const TRICKY_MIN_WRONG_PERCENT = 40;
+
+export async function listTrickyQuestions(
+  limit = 20
+): Promise<QuestionQualityStat[]> {
+  const rows = await queryQuestionQuality({
+    minAnswers: TRICKY_MIN_ANSWERS,
+    limit,
+  });
+  return rows.filter((row) => row.wrongPercent >= TRICKY_MIN_WRONG_PERCENT);
+}
+
+/**
  * Bitta mavzu savollarining xato foizi, savol ID'si bo'yicha to'plam.
  *
  * Savollar jadvalidagi ustun uchun — shuning uchun `minAnswers: 1`:
