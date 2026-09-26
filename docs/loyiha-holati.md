@@ -19,11 +19,12 @@ avtomaktabga sotadi, ya'ni "tayyor" degani nimani anglatishini u biladi.
 |---|---|
 | Kod (MVP funksiyalari) | ~92% |
 | Kontent (savollar bazasi) | ~5% |
-| 16 qismning o'rtachasi | **77%** |
+| 17 qismning o'rtachasi | **74%** |
 
 ⚠️ Ilgari bu yerda "~84%" yozilgan edi — u haqiqiy o'rtacha emas, qo'lda
-qo'yilgan taxmin edi. Endi raqam jadvaldagi 16 ta foizdan hisoblanadi
-(jami 1225 / 16 = 76.6).
+qo'yilgan taxmin edi. Endi raqam jadvaldagi 17 ta foizdan hisoblanadi
+(jami 1250 / 17 = 73.5 — yangi "Ma'lumotnoma" qismi 25% bilan qo'shildi,
+shuning uchun o'rtacha pasaydi).
 
 Eng katta to'siq endi kodda emas, **kontentda**: dev bazada 66 ta savol,
 production'da 20 ta, raqobatchida (autotestlar.uz) 1 220 ta. Savollarni
@@ -48,7 +49,8 @@ savollarning o'zi.
 | 12 | Owner paneli | 85% | mavzu tahriri, direktorni bloklash, arxivlash |
 | 13 | Avtomaktab → platforma obunasi | 50% | UI yashirin (`ORGANIZATION_BILLING_UI_ENABLED = false`) |
 | 14 | **Savollar bazasi (kontent)** | **5%** | production 20 ta, dev 66 ta savol; bilet yo'q |
-| 15 | Avtomatik testlar | 30% | `scripts/tekshiruv-ui.ts` — 104 ta tekshiruv, ruxsat chegaralari bilan; qo'lda ishga tushiriladi, CI yo'q |
+| 15 | Avtomatik testlar | 30% | `scripts/tekshiruv-ui.ts` — 110 ta tekshiruv, ruxsat chegaralari bilan; qo'lda ishga tushiriladi, CI yo'q |
+| 17 | Ma'lumotnoma (shpargalka, yo'l belgilari) | 25% | shakl tayyor, kontent yo'q: 283 ta belgidan 20 tasi, 8 ta shpargalkadan 2 tasi |
 | 16 | Dars jadvali | 85% | davomat (kim keldi), darsni ko'chirish — hozir faqat bekor qilish |
 
 ## Direktor hisobi — 70% 👤

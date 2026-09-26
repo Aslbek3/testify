@@ -104,7 +104,7 @@ istisno uchun alohida mexanizm kerak bo'lardi).
 
 ## 6. Qolganlar
 
-- 🔵 Avtomatik testlar: `scripts/tekshiruv-ui.ts` — 104 ta tekshiruv, jumladan
+- 🔵 Avtomatik testlar: `scripts/tekshiruv-ui.ts` — 110 ta tekshiruv, jumladan
   ruxsat chegaralari (kim qayerga kira olmaydi). Dev server ishlab turishini
   talab qiladi va qo'lda ishga tushiriladi; CI hali yo'q
 - ⬜ Monitoring: server yiqilsa xabar

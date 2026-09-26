@@ -39,7 +39,7 @@ yuboriladi, natija Prisma orqali bazadan tekshiriladi, skript oxirida o'zi
 yaratgan hamma narsani o'chiradi. Shu usulda tekshirilgan: to'lov oqimi (jonli
 saytda), vazifa berish (51 ta tekshiruv), bildirishnomalar (38 ta).
 
-**Doimiy skript (2026-09-21):** `scripts/tekshiruv-ui.ts` — 104 ta tekshiruv.
+**Doimiy skript (2026-09-21):** `scripts/tekshiruv-ui.ts` — 110 ta tekshiruv.
 
 ```
 npm run dev -- -p 3150          # birinchi terminal

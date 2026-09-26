@@ -9,7 +9,9 @@ Har bir g'oya uchta narsa bilan yoziladi:
 - **Bizda nima bor** — hozirgi holat, aniq fayl bilan
 - **Narxi** — arzon / o'rtacha / katta (bazaga o'zgarish kerakmi?)
 
-**Holat (2026-09-26): 21 tadan 12 tasi bajarildi va productionga chiqarildi.**
+**Holat (2026-09-26): 21 tadan 12 tasi to'liq bajarildi va productionga
+chiqarildi, 2 tasi (#8 yo'l belgilari, #14 chalg'ituvchi) DEMO shaklida —
+shakli tayyor, kontenti keyin to'ldiriladi.**
 Qolgan 9 tasi pastda ⬜ bilan belgilangan.
 
 ---
@@ -58,7 +60,7 @@ yo'q. Oson Pravada esa butun bir bo'lim.
 |---|---|---|---|---|
 | 6 | **Shpargalkalar** (`osonprava-shpargalkalar.jpg`) | "Imtihonda ko'p uchraydigan, yodlash qiyin ma'lumotlar": ruxsat etilgan tezlik, tezlik va reaksiya, to'xtash taqiqlangan masofa, favqulodda to'xtash belgisi, gabarit o'lchamlari, yuk joylashtirish, shatakka olish, shina naqshlari | O'rtacha (yangi model yoki statik kontent) | ⬜ |
 | 7 | **Jadval ko'rinishidagi shpargalka** (`osonprava-shpargalka-tezlik.jpg`, `-jarima.jpg`) | Raqam chapda katta va rangli, matn o'ngda. "100 km/soat — Yengil avto". Jarima ballari: "Kichik xatolik — 9 ta", har biri "5 ball" | Arzon (shakl, kontent alohida) | ✅ bajarildi |
-| 8 | **Yo'l belgilari katalogi** (`osonprava-yol-belgilari.jpg`) | Kategoriya bo'yicha, haqiqiy belgi rasmi bilan, soni ko'rsatilgan: Ogohlantiruvchi 51 ta, Taqiqlovchi 39 ta, Axborot-ishora 87 ta... | Katta (~300 ta belgi rasmi kerak) | ⬜ |
+| 8 | **Yo'l belgilari katalogi** (`osonprava-yol-belgilari.jpg`) | Kategoriya bo'yicha, haqiqiy belgi rasmi bilan, soni ko'rsatilgan: Ogohlantiruvchi 51 ta, Taqiqlovchi 39 ta, Axborot-ishora 87 ta... | Katta (~300 ta belgi rasmi kerak) | 🟡 demo tayyor |
 | 9 | **Darslik** (`osonprava-asosiy-1.jpg`) | "1-dars. Ogohlantiruvchi..." — mavzu bo'yicha o'qish materiali. Manba 1 dagi **"Mening o'quv yo'lim"** (#1) bilan bir xil g'oya, boshqa tomondan | Katta | ⬜ |
 
 ### B. Test rejimi g'oyalari
@@ -69,7 +71,7 @@ yo'q. Oson Pravada esa butun bir bo'lim.
 | 11 | **Savol sonini tanlash: 50 / 100 / 200 / 500** (`osonprava-savol-soni.jpg`) | Bizda "Maraton" bor, lekin soni qat'iy | Arzon | ✅ allaqachon bor edi |
 | 12 | **Biletlarda filtr: Barchasi / Yangi / Xatolar** (`osonprava-biletlar.jpg`) | Biletlar bor, filtr yo'q | Arzon | ✅ bajarildi |
 | 13 | **Mavzular kategoriyaga guruhlangan + savol soni** (`osonprava-mavzular.jpg`) | Mavzular tekis ro'yxat. "YO'L BELGILARI" kabi katta guruh yo'q | Arzon (`Topic.category`) | ✅ bajarildi |
-| 14 | **"Chalg'ituvchi" savollar** (`osonprava-asosiy-2.jpg`) | Yo'q. Bu — ko'pchilik qoqiladigan savollar to'plami. `docs/loyiha-holati.md` dagi "savol sifati statistikasi" g'oyasining **o'quvchi tomoni** | O'rtacha | ⬜ |
+| 14 | **"Chalg'ituvchi" savollar** (`osonprava-asosiy-2.jpg`) | Yo'q. Bu — ko'pchilik qoqiladigan savollar to'plami. `docs/loyiha-holati.md` dagi "savol sifati statistikasi" g'oyasining **o'quvchi tomoni** | O'rtacha | 🟡 demo tayyor |
 | 15 | **Saqlanganlar** (xatcho'p) | Yo'q. O'quvchi savolni belgilab qo'yadi, keyin qaytadi | Arzon | ✅ bajarildi |
 | 16 | **Savolga shikoyat (bayroqcha)** — imtihon sarlavhasidagi flag tugmasi | Yo'q. Bu — men taklif qilgan "xabarlar"ning arzon muqobili: o'quvchi noto'g'ri savolni belgilaydi, owner ko'radi | Arzon | ✅ bajarildi |
 | 17 | **Raqamli savollar** | Yo'q. Ichida raqam bor savollar alohida (yodlash uchun) | Arzon | ✅ bajarildi |
