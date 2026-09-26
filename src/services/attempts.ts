@@ -233,7 +233,21 @@ export async function startAttempt(input: {
 }
 
 export type SaveAnswerResult =
-  | { mode: "EXAM" }
+  | {
+      mode: "EXAM";
+      /**
+       * Imtihon SHU javobdan keyin avtomatik yakunlandi: xatolar soni
+       * `EXAM_MAX_WRONG` dan oshib ketdi.
+       *
+       * Faqat shu holatda qaytariladi — normal javobda maydon umuman
+       * bo'lmaydi, ya'ni javobning to'g'ri-noto'g'riligi baribir
+       * oshkor qilinmaydi.
+       */
+      stoppedByMistakes: true;
+      /** Nechta xato bo'lgani — to'xtash ekranida ko'rsatiladi. */
+      wrongCount: number;
+    }
+  | { mode: "EXAM"; stoppedByMistakes?: undefined }
   | {
       mode: "PRACTICE";
       isCorrect: boolean;
@@ -388,7 +402,38 @@ export async function saveAnswer(input: {
   }
 
   if (attempt.mode === "EXAM") {
-    // Imtihon rejimida hech qanday feedback qaytarilmaydi.
+    // HAQIQIY imtihon qoidasi: ruxsat etilganidan ko'p xato qilingan
+    // lahzada imtihon to'xtaydi. Ilgari `EXAM_MAX_WRONG` faqat O'TISH
+    // BALLINI hisoblashda ishlatilardi, imtihonning o'zi esa 20 ta
+    // savolning oxirigacha davom etaverardi — ya'ni mashq bilan
+    // imtihonning farqi faqat taymer edi.
+    //
+    // Xatolar HOZIRGI javoblardan sanaladi (saqlanganlar emas): imtihonda
+    // javobni o'zgartirish mumkin, xato javobni to'g'rilagan o'quvchining
+    // hisobi kamayishi kerak.
+    //
+    // Bu to'g'ri javobni oshkor qilmaydi: o'quvchi faqat imtihon
+    // tugaganini biladi, qaysi savol xato bo'lganini natija ekrani
+    // ko'rsatadi — u allaqachon hamma narsani ko'rsatadigan joy.
+    const wrongCount = await prisma.attemptAnswer.count({
+      where: {
+        attemptId: input.attemptId,
+        questionId: { in: attempt.questionIds },
+        isCorrect: false,
+      },
+    });
+
+    if (wrongCount > EXAM_MAX_WRONG) {
+      await closeAttemptNow({
+        id: input.attemptId,
+        mode: attempt.mode,
+        startedAt: attempt.startedAt,
+        questionIds: attempt.questionIds,
+      });
+      return { mode: "EXAM", stoppedByMistakes: true, wrongCount };
+    }
+
+    // Aks holda hech qanday feedback qaytarilmaydi.
     return { mode: "EXAM" };
   }
 
@@ -653,6 +698,33 @@ export async function finalizeExpiredAttempts(studentId: string): Promise<number
 /** Vaqti tugagan imtihon qachon yakunlangan hisoblanadi. */
 function expiredFinishedAt(startedAt: Date): Date {
   return new Date(startedAt.getTime() + EXAM_DURATION_SECONDS * 1000);
+}
+
+/**
+ * Urinishni HOZIR yopadi — ruxsat tekshirmasdan.
+ *
+ * `finishAttempt` dan farqi: chaqiruvchi egalikni allaqachon tekshirgan
+ * (`saveAnswer` ichidan chaqiriladi) va "allaqachon yakunlangan" holati
+ * xato emas — shartli `updateMany` buni o'zi hal qiladi.
+ */
+async function closeAttemptNow(attempt: {
+  id: string;
+  mode: AttemptMode;
+  startedAt: Date;
+  questionIds: string[];
+}): Promise<void> {
+  const { score } = await scoreAttempt(attempt);
+
+  // `finishAttempt` bilan AYNI qoida: vaqti tugagan imtihon "hozir" emas,
+  // muddat tugagan lahzada yakunlangan deb yoziladi.
+  const expiryAt = expiredFinishedAt(attempt.startedAt);
+  const now = new Date();
+  const finishedAt = attempt.mode === "EXAM" && now > expiryAt ? expiryAt : now;
+
+  await prisma.attempt.updateMany({
+    where: { id: attempt.id, finishedAt: null },
+    data: { finishedAt, score },
+  });
 }
 
 export async function finishAttempt(input: {

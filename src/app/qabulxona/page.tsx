@@ -8,7 +8,8 @@ import { StatTile } from "@/components/StatTile";
 import { EmptyState } from "@/components/EmptyState";
 import { Icon } from "@/components/Icon";
 import { describeStudentAccess } from "@/lib/labels";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatAmountUzs } from "@/lib/format";
+import { formatPhone } from "@/lib/phone";
 import { EXPIRING_SOON_DAYS, getReceptionOverview } from "@/services/reception";
 import { getReceptionTasks } from "@/services/tasks";
 import { getUserName } from "@/services/users";
@@ -58,8 +59,12 @@ export default async function ReceptionHomePage() {
               tone="brand"
               label="Kutayotgan cheklar"
               value={overview.pendingPaymentCount}
+              // Summa aynan shu yerda: "3 ta chek" qancha pul ekanini
+              // aytmaydi, qabulxona uchun esa ish tartibi shunga bog'liq.
               sub={
-                overview.pendingPaymentCount > 0 ? "Ko'rib chiqilmagan" : "Hammasi ko'rilgan"
+                overview.pendingPaymentCount > 0
+                  ? formatAmountUzs(overview.pendingPaymentAmount)
+                  : "Hammasi ko'rilgan"
               }
             />
             <StatTile
@@ -115,9 +120,20 @@ export default async function ReceptionHomePage() {
                         </p>
                         <p className="text-[12px] text-text-muted">
                           {student.groupName ?? "Guruhsiz"} ·{" "}
-                          {/* Telefon maydoni hozircha to'ldirilmaydi — shunda
-                              qabulxona email orqali bog'lanadi. */}
-                          {student.phone ?? student.email}
+                          {/* Telefon bo'lsa — o'sha: qabulxona o'quvchi bilan
+                              telefon orqali gaplashadi. Eski yozuvlarda u
+                              yo'q (maydon endi to'ldirila boshladi), shunda
+                              email qoladi. */}
+                          {student.phone ? (
+                            <a
+                              href={`tel:${student.phone}`}
+                              className="font-mono tabular-nums text-brand underline-offset-2 hover:underline"
+                            >
+                              {formatPhone(student.phone)}
+                            </a>
+                          ) : (
+                            student.email
+                          )}
                         </p>
                       </div>
                       <span className="flex items-center gap-2">

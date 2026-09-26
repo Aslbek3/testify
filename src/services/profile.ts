@@ -136,23 +136,33 @@ function countStreak(dayKeys: Set<string>, nowMs: number): number {
  * Faqat O'QUVCHIDA chaqiriladi: ustoz/direktor/owner profilida "kun
  * ketma-ket" yoki "o'rtacha ball" ma'nosiz.
  */
+/**
+ * Ketma-ket faol kunlar soni — alohida, chunki o'quvchi PANELIGA ham
+ * kerak, u yerda esa `getStudentProfileStats` ning qolgani (barcha
+ * urinishlarni tortib olish) ortiqcha bo'lardi.
+ */
+export async function getStreakDays(studentId: string): Promise<number> {
+  // Faol kunlar bazada ajratiladi — barcha urinishlarni tortib olib
+  // JS'da guruhlash shart emas.
+  const dayRows = await prisma.$queryRaw<{ d: Date }[]>`
+    SELECT DISTINCT
+      (a."finishedAt" + make_interval(hours => ${UZBEKISTAN_UTC_OFFSET_HOURS}::int))::date AS d
+    FROM "Attempt" a
+    WHERE a."studentId" = ${studentId}
+      AND a."finishedAt" IS NOT NULL
+  `;
+  return countStreak(new Set(dayRows.map((r) => toDayKey(r.d))), Date.now());
+}
+
 export async function getStudentProfileStats(
   studentId: string
 ): Promise<StudentProfileStats> {
-  const [attempts, dayRows] = await Promise.all([
+  const [attempts, streakDays] = await Promise.all([
     prisma.attempt.findMany({
       where: { studentId, finishedAt: { not: null } },
       select: { mode: true, score: true },
     }),
-    // Faol kunlar bazada ajratiladi — barcha urinishlarni tortib olib
-    // JS'da guruhlash shart emas.
-    prisma.$queryRaw<{ d: Date }[]>`
-      SELECT DISTINCT
-        (a."finishedAt" + make_interval(hours => ${UZBEKISTAN_UTC_OFFSET_HOURS}::int))::date AS d
-      FROM "Attempt" a
-      WHERE a."studentId" = ${studentId}
-        AND a."finishedAt" IS NOT NULL
-    `,
+    getStreakDays(studentId),
   ]);
 
   const examScores = attempts
@@ -166,7 +176,7 @@ export async function getStudentProfileStats(
       examScores.length > 0
         ? Math.round(examScores.reduce((sum, s) => sum + s, 0) / examScores.length)
         : null,
-    streakDays: countStreak(new Set(dayRows.map((r) => toDayKey(r.d))), Date.now()),
+    streakDays,
   };
 }
 

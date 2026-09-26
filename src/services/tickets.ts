@@ -40,6 +40,63 @@ export async function listTickets(): Promise<TicketSummary[]> {
   }));
 }
 
+export type TicketProgress = {
+  /** Shu biletdan nechta savolga javob berilgan (yakunlangan urinishlarda). */
+  answeredCount: number;
+  /** Shundan nechtasining SO'NGGI javobi hali ham xato. */
+  wrongCount: number;
+};
+
+/**
+ * O'quvchining biletlar bo'yicha holati — ro'yxatdagi filtr uchun.
+ *
+ * "Xato" ning ta'rifi `getStudentMistakes` bilan AYNI: savolning so'nggi
+ * javobi noto'g'ri bo'lsa, u hali hal qilinmagan hisoblanadi. Ikki joyda
+ * ikki xil ta'rif bo'lsa, "Xatolar" filtridagi bilet "Xatolarim"
+ * bo'limida ko'rinmay qolishi mumkin edi.
+ *
+ * Faqat YAKUNLANGAN urinishlar sanaladi — yarmida tashlab ketilgan bilet
+ * "ishlangan" emas.
+ */
+export async function getTicketProgressForStudent(
+  studentId: string
+): Promise<Map<number, TicketProgress>> {
+  const rows = await prisma.$queryRaw<
+    { number: number; answeredCount: number; wrongCount: number }[]
+  >`
+    WITH answers AS (
+      SELECT aa."questionId", aa."isCorrect", aa."answeredAt", aa."id"
+      FROM "AttemptAnswer" aa
+      JOIN "Attempt" a ON a."id" = aa."attemptId"
+      WHERE a."studentId" = ${studentId}
+        AND a."finishedAt" IS NOT NULL
+    ),
+    per_question AS (
+      SELECT
+        "questionId",
+        (array_agg("isCorrect" ORDER BY "answeredAt" DESC, "id" DESC))[1]
+          AS "lastIsCorrect"
+      FROM answers
+      GROUP BY "questionId"
+    )
+    SELECT
+      q."ticketNumber"                                        AS "number",
+      COUNT(*)::int                                           AS "answeredCount",
+      COUNT(*) FILTER (WHERE NOT p."lastIsCorrect")::int       AS "wrongCount"
+    FROM per_question p
+    JOIN "Question" q ON q."id" = p."questionId"
+    WHERE q."ticketNumber" IS NOT NULL
+    GROUP BY q."ticketNumber"
+  `;
+
+  return new Map(
+    rows.map((row) => [
+      row.number,
+      { answeredCount: row.answeredCount, wrongCount: row.wrongCount },
+    ])
+  );
+}
+
 /**
  * Biletni boshlash.
  *

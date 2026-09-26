@@ -70,9 +70,14 @@ function initialAnswersMap(attempt: ResumableAttempt): Record<string, LocalAnswe
 export function TestRunner({
   attempt,
   examDurationSeconds,
+  maxWrong,
 }: {
   attempt: ResumableAttempt;
   examDurationSeconds: number;
+  /** Imtihonda ruxsat etilgan xato soni (`EXAM_MAX_WRONG`). Qoidalar
+   *  fayli emas, prop orqali keladi — `examDurationSeconds` bilan bir xil
+   *  usul, klient komponenti server qoidalariga bog'lanib qolmasin. */
+  maxWrong: number;
 }) {
   const router = useRouter();
   const { questions, mode, attemptId } = attempt;
@@ -87,6 +92,9 @@ export function TestRunner({
   const [saveStatus, setSaveStatus] = useState<Record<string, SaveStatus>>({});
   const [finishing, setFinishing] = useState(false);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
+  // Imtihon xatolar chegarasidan o'tib ketgani uchun server tomonda
+  // avtomatik yakunlandi. `null` — bunday bo'lmagan.
+  const [stoppedWrongCount, setStoppedWrongCount] = useState<number | null>(null);
   const finishTriggered = useRef(false);
   // Har bir savol uchun so'nggi so'ralgan variant — eski (allaqachon
   // ustidan bosilgan) qayta urinish javobi kelib qolsa, uni e'tiborsiz
@@ -199,6 +207,21 @@ export function TestRunner({
 
       const data = await res.json();
       if (latestSelectionRef.current[questionId] !== optionIndex) return;
+
+      // Imtihon xatolar chegarasidan o'tgani uchun server uni ALLAQACHON
+      // yakunladi. Shuning uchun `handleFinish` chaqirilmaydi (u 409
+      // olardi) — faqat `finishTriggered` belgilanadi, aks holda taymer
+      // keyinroq yana yakunlashga urinadi.
+      if (data.mode === "EXAM" && data.stoppedByMistakes) {
+        finishTriggered.current = true;
+        setSaveStatus((prev) => {
+          const next = { ...prev };
+          delete next[questionId];
+          return next;
+        });
+        setStoppedWrongCount(data.wrongCount);
+        return;
+      }
 
       if (data.mode === "PRACTICE") {
         setAnswers((prev) => ({
@@ -695,6 +718,37 @@ export function TestRunner({
                 : failedQuestions.length > 0
                   ? "Baribir yakunlash"
                   : "Ha, yakunlash"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Imtihon xatolar chegarasidan o'tib ketganda. Bekor qilish tugmasi
+          YO'Q va oyna yopilmaydi: imtihon allaqachon tugagan, ortga yo'l
+          yo'q — yagona harakat natijani ko'rish. */}
+      <Modal
+        open={stoppedWrongCount !== null}
+        onClose={() => {}}
+        title="Imtihon to'xtatildi"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-text">
+            {stoppedWrongCount} ta xato qildingiz. Haqiqiy imtihon qoidasiga
+            ko&apos;ra {maxWrong} tadan ortiq xatoga yo&apos;l
+            qo&apos;yilmaydi, shuning uchun imtihon avtomatik yakunlandi.
+          </p>
+          <p className="text-xs leading-relaxed text-text-muted">
+            Natija ekranida har bir savolning to&apos;g&apos;ri javobi va
+            izohi ochiladi. Xatolaringiz &quot;Xatolarim&quot; bo&apos;limiga
+            tushadi.
+          </p>
+          <div className="flex justify-end pt-2">
+            <Button
+              type="button"
+              onClick={() => router.push(`/student/test/${attemptId}/natija`)}
+              iconEnd="arrowRight"
+            >
+              Natijani ko&apos;rish
             </Button>
           </div>
         </div>

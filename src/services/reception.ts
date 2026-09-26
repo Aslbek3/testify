@@ -28,6 +28,14 @@ export type NewStudentToday = {
 export type ReceptionOverview = {
   /** Kutayotgan cheklar soni. */
   pendingPaymentCount: number;
+  /**
+   * O'sha cheklardagi umumiy summa (so'm).
+   *
+   * Son yolg'iz turganda "3 ta chek" qancha pul ekanini aytmaydi —
+   * qabulxona uchun esa aynan shu muhim: 3 ta chek 150 000 so'mmi yoki
+   * 1 350 000 so'mmi, ish tartibi boshqacha bo'ladi.
+   */
+  pendingPaymentAmount: number;
   studentCount: number;
   expiringSoon: ExpiringStudent[];
   addedToday: NewStudentToday[];
@@ -83,8 +91,13 @@ export async function getReceptionOverview(
   organizationId: string,
   now: Date = new Date()
 ): Promise<ReceptionOverview> {
-  const [pendingPaymentCount, students] = await Promise.all([
-    prisma.studentPayment.count({ where: { organizationId, status: "PENDING" } }),
+  const [pendingPayments, students] = await Promise.all([
+    // `aggregate` bitta so'rovda ham sonini, ham summasini beradi.
+    prisma.studentPayment.aggregate({
+      where: { organizationId, status: "PENDING" },
+      _count: true,
+      _sum: { amount: true },
+    }),
     prisma.user.findMany({
       // `studentProfile` sharti direktor panelidagi `studentScope` bilan
       // bir xil: guruhsiz STUDENT qatori hech qaysi ro'yxatda sanalmaydi.
@@ -157,7 +170,9 @@ export async function getReceptionOverview(
   addedToday.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   return {
-    pendingPaymentCount,
+    pendingPaymentCount: pendingPayments._count,
+    // Bo'sh to'plamda `_sum` `null` qaytaradi.
+    pendingPaymentAmount: pendingPayments._sum.amount ?? 0,
     studentCount: students.length,
     expiringSoon,
     addedToday,

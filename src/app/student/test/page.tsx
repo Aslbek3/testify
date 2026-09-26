@@ -10,7 +10,9 @@ import { getStudentGroupId } from "@/services/studentDashboard";
 import { startAssignmentAttempt, AssignmentError } from "@/services/assignments";
 import { startMistakesAttempt } from "@/services/mistakes";
 import { startTicketAttempt } from "@/services/tickets";
+import { startNumericAttempt } from "@/services/numericQuestions";
 import { parseMistakeSources, parseTopicIds } from "@/lib/mistakeFilters";
+import { EXAM_MAX_WRONG } from "@/lib/examRules";
 import { TestRunner } from "./TestRunner";
 import type { AttemptMode } from "@prisma/client";
 
@@ -26,6 +28,8 @@ export default async function TestPage({
     vazifa?: string;
     xatolar?: string;
     bilet?: string;
+    /** Raqamli savollar mashqi — `1` bo'lsa shu rejim boshlanadi. */
+    raqamli?: string;
     /** Mavzu bo'yicha mashq — "keyingi qadam" tavsiyasi shu havolani beradi. */
     mavzuMashq?: string;
     manba?: string;
@@ -33,7 +37,7 @@ export default async function TestPage({
   }>;
 }) {
   const user = await requireActiveStudent();
-  const { attemptId, mode, savollar, vazifa, xatolar, manba, mavzu, bilet } =
+  const { attemptId, mode, savollar, vazifa, xatolar, manba, mavzu, bilet, raqamli } =
     await searchParams;
   // `mavzu` ikki joyda ishlatiladi: xatolar filtrida (yuqoridagi) va oddiy
   // mashqda mavzu tanlashda (quyida) — ikkalasi bir-biriga xalaqit bermaydi,
@@ -57,7 +61,13 @@ export default async function TestPage({
       redirect(`/student/test/${attemptId}/natija`);
     }
 
-    return <TestRunner attempt={resumed} examDurationSeconds={EXAM_DURATION_SECONDS} />;
+    return (
+      <TestRunner
+        attempt={resumed}
+        examDurationSeconds={EXAM_DURATION_SECONDS}
+        maxWrong={EXAM_MAX_WRONG}
+      />
+    );
   }
 
   // Bilet — savollar va ularning tartibi biletning o'zidan.
@@ -68,6 +78,20 @@ export default async function TestPage({
     } catch (error) {
       if (error instanceof AttemptError) {
         redirect(`/student/bilet?xato=${encodeURIComponent(error.message)}`);
+      }
+      throw error;
+    }
+    redirect(`/student/test?attemptId=${started.attemptId}`);
+  }
+
+  // Raqamli savollar — savollar ro'yxatini shartning o'zi belgilaydi.
+  if (raqamli) {
+    let started;
+    try {
+      started = await startNumericAttempt({ user });
+    } catch (error) {
+      if (error instanceof AttemptError) {
+        redirect(`/student/raqamli?xato=${encodeURIComponent(error.message)}`);
       }
       throw error;
     }

@@ -102,6 +102,24 @@ async function checkDenied(cookie: string, path: string, label: string) {
   record(denied, label, denied ? undefined : `javob ${res.status}`);
 }
 
+/**
+ * Sahifada berilganlardan KAMIDA BITTASI bo'lishini tekshiradi.
+ *
+ * Ba'zi bloklar ma'lumotga qarab ikki xil matn chizadi (masalan seriya:
+ * "3 kun ketma-ket" yoki "Seriya boshlanmagan"). `checkPage` hammasini
+ * talab qiladi, ya'ni bunday blokni u bilan tekshirib bo'lmaydi.
+ */
+async function checkPageAny(cookie: string, path: string, anyOf: string[], label: string) {
+  const res = await fetch(`${BASE}${path}`, { headers: { cookie } });
+  if (res.status !== 200) {
+    record(false, label, `javob ${res.status}`);
+    return;
+  }
+  const html = await res.text();
+  const found = anyOf.some((needle) => html.includes(needle));
+  record(found, label, found ? undefined : `hech biri topilmadi: ${anyOf.join(" | ")}`);
+}
+
 /** Sahifa 404 berishini tekshiradi — begona obyektga kirishga urinish. */
 async function checkNotFound(cookie: string, path: string, label: string) {
   const res = await fetch(`${BASE}${path}`, { headers: { cookie } });
@@ -279,6 +297,26 @@ async function main() {
     await checkPage(student, "/student", ["Keyingi qadam", "Tayyorgarlik", "Biletlar"]);
     // Seed jadval tuzadi — o'quvchi keyingi darsni panelida ko'rishi kerak.
     await checkPage(student, "/student", ["Keyingi dars"]);
+    // Yangi plitkalar va seriya ko'rsatkichi panelda bo'lishi kerak.
+    await checkPage(student, "/student", ["Raqamli savollar", "Xatolarim"]);
+    await checkPageAny(
+      student,
+      "/student",
+      ["kun ketma-ket", "Seriya boshlanmagan"],
+      "Panelda seriya ko'rsatkichi bor"
+    );
+    // Biletlar. ⚠️ Dev bazada bilet savollari YO'Q (`ticketNumber` hamma
+    // savolda null), shuning uchun filtr tabletkalari chizilmaydi — bu
+    // to'g'ri xatti-harakat. Shu sabab filtrning O'ZI emas, sahifaning
+    // ikkala holatda ham ishlashi tekshiriladi.
+    await checkPageAny(
+      student,
+      "/student/bilet",
+      ["Biletlar hali kiritilmagan", "Barchasi"],
+      "Biletlar sahifasi holatga mos chiziladi"
+    );
+    await checkPage(student, "/student/bilet?filtr=yangi");
+    await checkPage(student, "/student/bilet?filtr=xatolar");
     for (const path of [
       "/student/mashq",
       "/student/bilet",
@@ -286,6 +324,8 @@ async function main() {
       "/student/maraton",
       "/student/xatolarim",
       "/student/tolov",
+      // Raqamli savollar — yangi rejim
+      "/student/raqamli",
       "/profil",
       "/bildirishnomalar",
     ]) {

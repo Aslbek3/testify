@@ -6,6 +6,7 @@ import { Modal } from "@/components/Modal";
 import { Button } from "@/components/Button";
 import { Field, SelectField } from "@/components/Field";
 import { PasswordField } from "@/components/PasswordField";
+import { PHONE_HINT } from "@/lib/phone";
 
 /**
  * O'quvchi qo'shish — direktor, qabulxona va ustoz uchun BITTA modal.
@@ -32,6 +33,7 @@ export function NewStudentModal({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [groupId, setGroupId] = useState(groups[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -54,7 +56,7 @@ export function NewStudentModal({
     const res = await fetch("/api/students", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, groupId }),
+      body: JSON.stringify({ name, email, password, groupId, phone }),
     });
     const data = await res.json();
     setLoading(false);
@@ -68,6 +70,7 @@ export function NewStudentModal({
     setName("");
     setEmail("");
     setPassword("");
+    setPhone("");
     await refresh();
   }
 
@@ -139,6 +142,17 @@ export function NewStudentModal({
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+          />
+          {/* Telefon MAJBURIY emas: avtomaktab uni bilmasligi mumkin va
+              shu sabab o'quvchi qo'shishni to'xtatib qo'yish noto'g'ri.
+              Lekin kiritilsa — qabulxona aynan shu orqali bog'lanadi. */}
+          <Field
+            id="new-student-phone"
+            label="Telefon"
+            type="tel"
+            hint={`Majburiy emas. ${PHONE_HINT}`}
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
           />
           <PasswordField
             id="new-student-password"

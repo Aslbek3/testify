@@ -4,6 +4,7 @@ import { canCreateStudent } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
 import { INVALID_EMAIL_MESSAGE, isValidEmail, normalizeEmail } from "@/lib/email";
 import { validatePassword } from "@/lib/password";
+import { normalizePhone, INVALID_PHONE_MESSAGE } from "@/lib/phone";
 import { registerStudent, RegistrationError } from "@/services/auth";
 import { getGroupPermissionContext } from "@/services/users";
 
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
   const email = typeof body?.email === "string" ? normalizeEmail(body.email) : "";
   const password = typeof body?.password === "string" ? body.password : "";
   const groupId = typeof body?.groupId === "string" ? body.groupId : "";
+  const rawPhone = typeof body?.phone === "string" ? body.phone : "";
 
   if (!name || !email || !password || !groupId) {
     return NextResponse.json(
@@ -54,9 +56,21 @@ export async function POST(request: Request) {
   if (passwordError) {
     return NextResponse.json({ error: passwordError }, { status: 400 });
   }
+  // Telefon MAJBURIY emas (bo'sh bo'lsa `null`), lekin kiritilgan bo'lsa
+  // o'qib bo'ladigan shaklda saqlanishi kerak.
+  const phone = normalizePhone(rawPhone);
+  if (phone === false) {
+    return NextResponse.json({ error: INVALID_PHONE_MESSAGE }, { status: 400 });
+  }
 
   try {
-    const student = await registerStudent({ name, email, password, groupId });
+    const student = await registerStudent({
+      name,
+      email,
+      password,
+      groupId,
+      phone: phone ?? undefined,
+    });
     return NextResponse.json({ id: student.id }, { status: 201 });
   } catch (error) {
     if (error instanceof RegistrationError) {

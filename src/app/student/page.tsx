@@ -17,6 +17,7 @@ import { finalizeExpiredAttempts } from "@/services/attempts";
 import { listAssignmentsForStudent } from "@/services/assignments";
 import { getStudentMistakes } from "@/services/mistakes";
 import { getUserName } from "@/services/users";
+import { getStreakDays } from "@/services/profile";
 import { getNextLessonForStudent } from "@/services/lessons";
 import { getNextStep } from "@/lib/nextStep";
 import { readinessFromScore } from "@/lib/readiness";
@@ -79,6 +80,26 @@ const MODES: {
     icon: "clipboardCheck",
     tone: "bg-warning-soft text-warning",
   },
+  {
+    href: "/student/raqamli",
+    label: "Raqamli savollar",
+    description: "Tezlik, masofa, o'lcham — yodlash eng qiyin savollar.",
+    icon: "target",
+    // Mashq bilan AYNI ohang — u ham mashqning varianti, alohida
+    // rejim emas. Rang bu yerda ma'no: bir xil tabiatli ikki bo'lim.
+    tone: "bg-info-soft text-info",
+  },
+  // Xatolar ustida ishlash ham REJIM — ilgari u faqat "Tayyorgarlik"
+  // kartochkasi ichidagi ogohlantirish havolasi edi va boshqa rejimlar
+  // qatorida ko'rinmasdi. Hal qilinmagan xato soni plitkaning o'zida
+  // turadi: raqam harakatga eng yaqin joyda bo'lishi kerak.
+  {
+    href: "/student/xatolarim",
+    label: "Xatolarim",
+    description: "Xato qilgan savollaringizni qayta ishlang.",
+    icon: "alertTriangle",
+    tone: "bg-danger-soft text-danger",
+  },
 ];
 
 /**
@@ -128,16 +149,25 @@ export default async function StudentPage({
 
   // Ism sessiyada saqlanmaydi (JWT faqat o'zgarmaydigan identifikatorlarni
   // olib yuradi) — shuning uchun qolgan so'rovlar bilan birga o'qiladi.
-  const [overview, mastery, history, assignments, mistakes, userName, nextLesson] =
-    await Promise.all([
-      getStudentOverview(user.id),
-      getMasteryByTopic(user.id),
-      getAttemptHistory(user.id),
-      listAssignmentsForStudent(user.id),
-      getStudentMistakes(user.id),
-      getUserName(user.id),
-      getNextLessonForStudent(user.id),
-    ]);
+  const [
+    overview,
+    mastery,
+    history,
+    assignments,
+    mistakes,
+    userName,
+    nextLesson,
+    streakDays,
+  ] = await Promise.all([
+    getStudentOverview(user.id),
+    getMasteryByTopic(user.id),
+    getAttemptHistory(user.id),
+    listAssignmentsForStudent(user.id),
+    getStudentMistakes(user.id),
+    getUserName(user.id),
+    getNextLessonForStudent(user.id),
+    getStreakDays(user.id),
+  ]);
 
   // Ro'yxat o'sish bo'yicha saralangan, ya'ni birinchisi — eng zaif mavzu.
   const nextStep = getNextStep({
@@ -205,8 +235,12 @@ export default async function StudentPage({
                 >
                   <Icon name={mode.icon} />
                 </span>
-                <span className="mt-3.5 font-display text-sm font-bold text-text">
+                <span className="mt-3.5 flex items-center gap-2 font-display text-sm font-bold text-text">
                   {mode.label}
+                  {mode.href === "/student/xatolarim" &&
+                    mistakes.stillWrongCount > 0 && (
+                      <Badge variant="danger">{mistakes.stillWrongCount}</Badge>
+                    )}
                 </span>
                 <span className="mt-1 text-[11px] leading-snug text-text-muted">
                   {mode.description}
@@ -279,23 +313,36 @@ export default async function StudentPage({
             <MiniStat icon="users" label="Guruh" value={overview.groupName ?? "—"} />
           </div>
 
-          {mistakes.stillWrongCount > 0 && (
-            <Link
-              href="/student/xatolarim"
-              className="mt-3 flex items-center gap-2.5 rounded-md bg-warning-soft px-3.5 py-3 transition-colors hover:brightness-[0.97]"
-            >
-              <Icon name="alertTriangle" className="h-4 w-4 text-warning" />
-              <span className="min-w-0 flex-1">
-                <span className="block text-[12px] font-bold text-text">
-                  {mistakes.stillWrongCount} ta xato hal qilinmagan
-                </span>
-                <span className="block text-[11px] text-text-muted">
-                  Xatolarim bo&apos;limida ustida ishlang
-                </span>
+          {/* Ketma-ket faol kunlar. Ilgari bu faqat profil sahifasida
+              turardi — ya'ni odat ko'rsatkichi odam kunda ochadigan
+              ekranda ko'rinmasdi. Ball emas, shuning uchun halqa bilan
+              raqobatlashmaydi: alohida qator, boshqa ohang. */}
+          <div
+            className={cn(
+              "mt-3 flex items-center gap-2.5 rounded-md px-3.5 py-3",
+              streakDays > 0 ? "bg-brand-soft" : "bg-surface-2/70"
+            )}
+          >
+            <Icon
+              name="flame"
+              className={cn(
+                "h-4 w-4",
+                streakDays > 0 ? "text-brand" : "text-text-faint"
+              )}
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[12px] font-bold text-text">
+                {streakDays > 0
+                  ? `${streakDays} kun ketma-ket`
+                  : "Seriya boshlanmagan"}
               </span>
-              <Icon name="chevronRight" className="h-4 w-4 text-text-faint" />
-            </Link>
-          )}
+              <span className="block text-[11px] text-text-muted">
+                {streakDays > 0
+                  ? "Bugun ham mashq qilsangiz uzilmaydi"
+                  : "Bugun bitta test yeching — seriya bugundan boshlanadi"}
+              </span>
+            </span>
+          </div>
           </Card>
         </div>
       </div>
