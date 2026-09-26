@@ -55,6 +55,8 @@ bilan o'zgartiriladi.
 | To'lovlar tarixini ko'rish | — | ✅ | ✅ | — | o'ziniki | ❌ |
 | Chek rasmini ochish | — | ✅ | ✅ | — | o'ziniki | ❌ |
 | **O'quv** |||||||
+| Dars jadvalini tuzish, bekor qilish | — | ✅ | — | o'z guruhi | — | ❌ |
+| Dars jadvalini ko'rish | — | ✅ | ✅ | o'z guruhi | o'z guruhi | ❌ |
 | Vazifa berish, o'chirish | — | — | — | ✅ | — | ❌ |
 | Guruh tahlili, zaif mavzular | — | ✅ | ko'rish | ✅ | — | ❌ |
 | Test ishlash | — | — | — | — | ✅ | ❌ |

@@ -1,18 +1,124 @@
 @import "tailwindcss";
 
+/*
+  Dizayn tokenlari — yagona manba.
+
+  Qiymatlar `Testify production frontend design specification` hujjatidan
+  olingan (brend: turkuaz #0ea79a, sirt: oq, sahifa: #f4f7fb, navy sidebar).
+
+  Tuzilishi ataylab shunday:
+  1) `:root` da YORUG' rejim qiymatlari va yonida `--d-*` prefiksi bilan
+     QORONG'I rejim qiymatlari e'lon qilinadi;
+  2) pastdagi ikki selektor (tizim afzalligi va qo'lda tanlangan "dark")
+     faqat `--bg: var(--d-bg)` ko'rinishida ULAYDI.
+
+  Sabab: ilgari qorong'i palitra ikki joyda to'liq takrorlanardi — biri
+  o'zgartirilib ikkinchisi unutilsa, tugmani bosib qo'yilgan qorong'i rejim
+  tizimnikidan boshqacha ko'rinardi. Endi rang qiymati bitta joyda yoziladi.
+
+  Spetsifikatsiya "faqat yorug' mavzu" deydi, lekin ilovada ishlayotgan
+  ThemeToggle allaqachon bor — uni olib tashlash orqaga qadam bo'lardi.
+  Shuning uchun qorong'i palitra saqlanadi va yangi brendga moslandi.
+*/
+
 :root {
+  /* — Sirtlar ———————————————————————————————————————————————
+     `--bg` = kartochka/sirt (oq), `--bg-subtle` = sahifa foni.
+     Nomlar tarixiy: 100+ joyda ishlatilgan, o'zgartirilmaydi. */
   --bg: #ffffff;
-  --bg-subtle: #eff2f6;
-  --border: #dfe3ea;
-  --text: #14171f;
-  --text-muted: #5c6270;
-  --brand: #1e4b8c;
-  --brand-soft: #e8effa;
-  --success: #1f8a5f;
-  --warning: #b8790e;
-  --danger: #c0362c;
-  --sidebar-bg: #1b2430;
-  --skeleton: #dfe3ea;
+  --bg-subtle: #f4f7fb;
+  /* Kartochka ICHIDAGI to'ldirish uchun (shkala yo'li, jadval sarlavhasi) —
+     sahifa fonidan bir pog'ona quyuqroq, aks holda oq kartochka ichida
+     `--bg-subtle` ko'rinmay qoladi. */
+  --surface-2: #edf3f8;
+  /* Ochiladigan qatlam (modal, menyu). */
+  --elevated: #ffffff;
+
+  /* — Chegaralar ————————————————————————————————————————————— */
+  --border: #dfe8f0;
+  /* Ichki ajratgichlar (ro'yxat qatorlari orasi) — asosiy chegaradan
+     yumshoqroq, aks holda uzun ro'yxat katakli qog'ozga o'xshab qoladi. */
+  --border-subtle: #edf2f6;
+
+  /* — Matn ——————————————————————————————————————————————————— */
+  --text: #112337;
+  --text-muted: #718297;
+  /* Uchinchi daraja — izoh, birlik, vaqt belgisi. Ilgari bunday matn ham
+     `--text-muted` bilan yozilar edi va ikki daraja bir xil ko'rinardi. */
+  --text-faint: #93a3b6;
+
+  /* — Brend ————————————————————————————————————————————————— */
+  --brand: #0ea79a;
+  --brand-hover: #0c8f84;
+  --brand-soft: #dff6f2;
+
+  /* — Yordamchi ranglar ————————————————————————————————————
+     Ko'rsatkich plitkalarini bir-biridan ajratish uchun (spetsifikatsiyadagi
+     pastel ikonka doiralari). Uzun matn rangi sifatida ishlatilmaydi. */
+  --info: #367fd4;
+  --info-soft: #eaf2fd;
+  --purple: #765ac8;
+  --purple-soft: #f0ebff;
+
+  /* — Holat ranglari ————————————————————————————————————————
+     Qizil FAQAT haqiqiy muammo uchun (dizayn qoidasi "e").
+     "Yaxshi" holat brend turkuazi bilan bir xil — spetsifikatsiyada
+     `Faol / Tasdiqlangan / To'langan` aynan shu rangda. */
+  --success: #0ea79a;
+  --success-soft: #dff6f2;
+  --warning: #b87911;
+  --warning-soft: #fff3d8;
+  --danger: #c74352;
+  --danger-soft: #fdecef;
+
+  /* — Qobiq ————————————————————————————————————————————————— */
+  --navy: #0b1930;
+  --navy-soft: #132743;
+  --sidebar-bg: var(--navy);
+  --skeleton: #e4ecf3;
+
+  /* — Soyalar ————————————————————————————————————————————————
+     Past kontrastli, keng tarqalgan soya — spetsifikatsiya qoidasi:
+     "ajratish uchun chegara, ierarxiya uchun soya, ikkalasi ham keskin emas". */
+  --shadow-1: 0 12px 30px rgb(16 32 51 / 0.055);
+  --shadow-2: 0 18px 50px rgb(16 32 51 / 0.08);
+  --shadow-3: 0 24px 70px rgb(16 32 51 / 0.16);
+  /* Brend tugmasi va faol menyu bandi uchun — neytral soya turkuaz ustida
+     kir ko'rinadi. */
+  --brand-shadow: 0 10px 24px rgb(14 167 154 / 0.22);
+
+  /* ——— Qorong'i rejim qiymatlari ———
+     Bu yerda faqat E'LON qilinadi; pastdagi ikki selektor ishga soladi. */
+  --d-bg: #152233;
+  --d-bg-subtle: #0b1420;
+  --d-surface-2: #1c2b3f;
+  --d-elevated: #1a2941;
+  --d-border: #26384f;
+  --d-border-subtle: #1e2d40;
+  --d-text: #e7eef6;
+  --d-text-muted: #93a7bd;
+  --d-text-faint: #6d8299;
+  --d-brand: #2fc9ba;
+  --d-brand-hover: #4fd8cb;
+  --d-brand-soft: #113a38;
+  --d-info: #5b9ae0;
+  --d-info-soft: #14283f;
+  --d-purple: #9b85e0;
+  --d-purple-soft: #241f3d;
+  --d-success: #2fc9ba;
+  --d-success-soft: #113a38;
+  --d-warning: #d9a03b;
+  --d-warning-soft: #2f2612;
+  --d-danger: #e4707c;
+  --d-danger-soft: #331d22;
+  --d-navy: #070f1b;
+  --d-navy-soft: #101d2e;
+  --d-skeleton: #1f2c3d;
+  --d-shadow-1: 0 1px 2px rgb(0 0 0 / 0.5);
+  --d-shadow-2: 0 2px 6px rgb(0 0 0 / 0.45), 0 12px 30px -8px rgb(0 0 0 / 0.6);
+  --d-shadow-3: 0 2px 10px rgb(0 0 0 / 0.5), 0 22px 60px -14px rgb(0 0 0 / 0.7);
+  --d-brand-shadow: 0 10px 24px rgb(14 167 154 / 0.3);
+
   color-scheme: light dark;
 }
 
@@ -24,56 +130,123 @@
   color-scheme: dark;
 }
 
-/* Tizim afzalligi bo'yicha qorong'i rejim — foydalanuvchi aniq "light"
-   tanlamagan bo'lsa. */
+/* Qorong'i palitrani ulash. Ikki selektor bir xil ro'yxatni ishlatadi:
+   biri tizim afzalligi (foydalanuvchi aniq "light" tanlamagan bo'lsa),
+   ikkinchisi sidebar tugmasi orqali tanlangan "dark". */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #171a21;
-    --bg-subtle: #0d0f13;
-    --border: #262b35;
-    --text: #e7e9ee;
-    --text-muted: #8b92a3;
-    --brand: #4f86d1;
-    --brand-soft: #1c2c42;
-    --success: #34b374;
-    --warning: #d99a2b;
-    --danger: #e0584c;
-    --sidebar-bg: #101319;
-    --skeleton: #232833;
+    --bg: var(--d-bg);
+    --bg-subtle: var(--d-bg-subtle);
+    --surface-2: var(--d-surface-2);
+    --elevated: var(--d-elevated);
+    --border: var(--d-border);
+    --border-subtle: var(--d-border-subtle);
+    --text: var(--d-text);
+    --text-muted: var(--d-text-muted);
+    --text-faint: var(--d-text-faint);
+    --brand: var(--d-brand);
+    --brand-hover: var(--d-brand-hover);
+    --brand-soft: var(--d-brand-soft);
+    --info: var(--d-info);
+    --info-soft: var(--d-info-soft);
+    --purple: var(--d-purple);
+    --purple-soft: var(--d-purple-soft);
+    --success: var(--d-success);
+    --success-soft: var(--d-success-soft);
+    --warning: var(--d-warning);
+    --warning-soft: var(--d-warning-soft);
+    --danger: var(--d-danger);
+    --danger-soft: var(--d-danger-soft);
+    --navy: var(--d-navy);
+    --navy-soft: var(--d-navy-soft);
+    --skeleton: var(--d-skeleton);
+    --shadow-1: var(--d-shadow-1);
+    --shadow-2: var(--d-shadow-2);
+    --shadow-3: var(--d-shadow-3);
+    --brand-shadow: var(--d-brand-shadow);
   }
 }
 
-/* Foydalanuvchi sidebar'dagi tugma orqali aniq "dark" tanlagan bo'lsa —
-   tizim afzalligidan qat'iy nazar. */
 :root[data-theme="dark"] {
-  --bg: #171a21;
-  --bg-subtle: #0d0f13;
-  --border: #262b35;
-  --text: #e7e9ee;
-  --text-muted: #8b92a3;
-  --brand: #4f86d1;
-  --brand-soft: #1c2c42;
-  --success: #34b374;
-  --warning: #d99a2b;
-  --danger: #e0584c;
-  --sidebar-bg: #101319;
-  --skeleton: #232833;
+  --bg: var(--d-bg);
+  --bg-subtle: var(--d-bg-subtle);
+  --surface-2: var(--d-surface-2);
+  --elevated: var(--d-elevated);
+  --border: var(--d-border);
+  --border-subtle: var(--d-border-subtle);
+  --text: var(--d-text);
+  --text-muted: var(--d-text-muted);
+  --text-faint: var(--d-text-faint);
+  --brand: var(--d-brand);
+  --brand-hover: var(--d-brand-hover);
+  --brand-soft: var(--d-brand-soft);
+  --info: var(--d-info);
+  --info-soft: var(--d-info-soft);
+  --purple: var(--d-purple);
+  --purple-soft: var(--d-purple-soft);
+  --success: var(--d-success);
+  --success-soft: var(--d-success-soft);
+  --warning: var(--d-warning);
+  --warning-soft: var(--d-warning-soft);
+  --danger: var(--d-danger);
+  --danger-soft: var(--d-danger-soft);
+  --navy: var(--d-navy);
+  --navy-soft: var(--d-navy-soft);
+  --skeleton: var(--d-skeleton);
+  --shadow-1: var(--d-shadow-1);
+  --shadow-2: var(--d-shadow-2);
+  --shadow-3: var(--d-shadow-3);
+  --brand-shadow: var(--d-brand-shadow);
 }
 
 @theme inline {
   --color-bg: var(--bg);
   --color-bg-subtle: var(--bg-subtle);
+  --color-surface-2: var(--surface-2);
+  --color-elevated: var(--elevated);
   --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
   --color-text: var(--text);
   --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
   --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
   --color-brand-soft: var(--brand-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-purple: var(--purple);
+  --color-purple-soft: var(--purple-soft);
   --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
   --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-navy: var(--navy);
+  --color-navy-soft: var(--navy-soft);
   --color-sidebar: var(--sidebar-bg);
   --color-skeleton: var(--skeleton);
-  --font-sans: var(--font-inter);
+
+  /* Radius shkalasi (spetsifikatsiya: kartochka 16-17px, modal 18px,
+     maydon/tugma 10-12px). Ilgari butun ilovada `rounded-md` (6px)
+     ishlatilardi va hamma element o'tkir qutichaga o'xshardi. Shkala shu
+     yerda o'zgartirilgani uchun mavjud sahifalar hech qanday tahrirsiz
+     yangi o'lchamga o'tadi. */
+  --radius-sm: 0.5rem; /*     8px — kichik belgi, ikonka kvadrati */
+  --radius-md: 0.6875rem; /* 11px — tugma, maydon */
+  --radius-lg: 1.0625rem; /* 17px — kartochka */
+  --radius-xl: 1.25rem; /*   20px — modal, hero blok */
+  --radius-2xl: 1.5rem; /*   24px */
+
+  --shadow-card: var(--shadow-1);
+  --shadow-raised: var(--shadow-2);
+  --shadow-pop: var(--shadow-3);
+  --shadow-brand: var(--brand-shadow);
+
+  --font-sans: var(--font-dm-sans);
+  /* Sarlavhalar va katta raqamlar uchun — matn shriftidan ajralib tursin.
+     Ilgari butun ilova bitta shrift va bitta o'lchamda (14px) edi. */
+  --font-display: var(--font-space-grotesk);
   --font-mono: var(--font-jetbrains-mono);
 }
 
@@ -83,13 +256,46 @@ body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Sarlavhalarda harflar orasi siqiladi — spetsifikatsiya: sahifa sarlavhasi
+   uchun -0.04em. Katta o'lchamda standart oraliq tarqoq ko'rinadi. */
+h1,
+h2,
+h3 {
+  letter-spacing: -0.03em;
+}
+
+::selection {
+  background: var(--brand-soft);
+  color: var(--text);
+}
+
 :focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
 
-/* Faqat foydalanuvchi harakati bilan ochiladigan elementlar uchun
-   (masalan Modal) — kartochkalarga umumiy hover-animatsiya qo'shilmaydi. */
+/* Scrollbar — qorong'i rejimda tizimning oq chizig'i sahifani kesib
+   o'tardi. Faqat ko'rsatkichli qurilmalarda (telefonda scrollbar
+   ko'rinmaydi). */
+@media (pointer: fine) {
+  * {
+    scrollbar-color: var(--border) transparent;
+    scrollbar-width: thin;
+  }
+}
+
+/* Harakat: faqat foydalanuvchi harakatiga javob (hover, bosish, ochilish).
+   Kartochkalarga o'z-o'zidan ishlaydigan animatsiya qo'shilmaydi. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -102,10 +308,85 @@ body {
 @keyframes modal-in {
   from {
     opacity: 0;
-    transform: translateY(4px) scale(0.98);
+    transform: translateY(8px) scale(0.98);
   }
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* Skeleton uchun — `animate-pulse` dan farqi: yorug'lik chapdan o'ngga
+   o'tadi, ya'ni "yuklanmoqda" degani "o'chib-yonmoqda" dan aniqroq. */
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton {
+  background-image: linear-gradient(
+    90deg,
+    var(--skeleton) 25%,
+    color-mix(in srgb, var(--skeleton) 55%, var(--bg)) 37%,
+    var(--skeleton) 50%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* ——— Chop etish ———
+   Jurnal qog'ozda ham ishlatiladi: avtomaktabda yig'ilishga chop etilgan
+   ro'yxat bilan kiriladi. Shuning uchun bosishda ekran bezaklari olib
+   tashlanadi va faqat ma'lumot qoladi.
+
+   Sidebar, pastki panel va barcha tugmalar `no-print` bilan emas, teg
+   bo'yicha yashiriladi — shunda yangi sahifa qo'shilganda uni alohida
+   belgilash esdan chiqmaydi. */
+@media print {
+  :root {
+    --bg: #ffffff;
+    --bg-subtle: #ffffff;
+    --surface-2: #f2f2f2;
+    --border: #bbbbbb;
+    --border-subtle: #dddddd;
+    --text: #000000;
+    --text-muted: #444444;
+    --text-faint: #666666;
+    --shadow-1: none;
+    --shadow-2: none;
+    --shadow-3: none;
+    --brand-shadow: none;
+  }
+
+  aside,
+  header button,
+  nav[aria-label="Asosiy bo'limlar"],
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  /* Jadval qatori sahifa chegarasida ikkiga bo'linmasin. */
+  tr,
+  li {
+    break-inside: avoid;
+  }
+
+  /* Havola ekranda ko'k, qog'ozda esa oddiy matn — rangli siyoh bekorga
+     sarflanmaydi va chop etilgan ro'yxat toza ko'rinadi. */
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
   }
 }

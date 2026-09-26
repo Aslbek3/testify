@@ -1,18 +1,29 @@
 # Testify — loyiha holati
 
-Oxirgi yangilanish: 2026-09-18 · Tekshirilgan commit: `d66c7fe`
+Oxirgi yangilanish: 2026-09-21 · Tekshirilgan commit: `588da9e`
 
 Bu fayl "nima tayyor, nima yo'q" degan savolga javob beradi. Foizlar —
-kodni ko'rib chiqib qo'yilgan baho, "avtomaktabga sotsa bo'ladigan
-mahsulot" o'lchoviga nisbatan. Aniq o'lchov emas, yo'nalish ko'rsatkichi.
+"avtomaktabga sotsa bo'ladigan mahsulot" o'lchoviga nisbatan baho. Aniq
+o'lchov emas, yo'nalish ko'rsatkichi.
+
+Baho ikki manbadan keladi va ular **ajratib ko'rsatiladi**:
+- 👤 — loyiha egasining (Aslbek) o'z bahosi, sanasi bilan;
+- qolgani — kodni ko'rib chiqib qo'yilgan taxmin.
+
+Kelishmovchilik bo'lsa **egasining bahosi ustun turadi**: u mahsulotni
+avtomaktabga sotadi, ya'ni "tayyor" degani nimani anglatishini u biladi.
 
 ## Umumiy
 
 | O'lchov | Holat |
 |---|---|
-| Kod (MVP funksiyalari) | ~90% |
+| Kod (MVP funksiyalari) | ~92% |
 | Kontent (savollar bazasi) | ~5% |
-| 14 qismning o'rtachasi | **~80%** |
+| 16 qismning o'rtachasi | **77%** |
+
+⚠️ Ilgari bu yerda "~84%" yozilgan edi — u haqiqiy o'rtacha emas, qo'lda
+qo'yilgan taxmin edi. Endi raqam jadvaldagi 16 ta foizdan hisoblanadi
+(jami 1225 / 16 = 76.6).
 
 Eng katta to'siq endi kodda emas, **kontentda**: dev bazada 66 ta savol,
 production'da 20 ta, raqobatchida (autotestlar.uz) 1 220 ta. Savollarni
@@ -24,7 +35,7 @@ savollarning o'zi.
 | # | Qism | Tayyor | Yetishmaydi |
 |---|---|---|---|
 | 1 | Kirish va xavfsizlik | 90% | SMS/telefon orqali kirish |
-| 2 | Direktor paneli | 95% | — |
+| 2 | Direktor paneli | **70%** 👤 | pastga qara |
 | 3 | Qabulxona (5-rol) | 90% | amallar jurnali, ommaviy import |
 | 4 | O'quvchi to'lovi | 90% | Click/Payme orqali onlayn to'lov |
 | 5 | Ustoz paneli | 95% | — |
@@ -33,11 +44,40 @@ savollarning o'zi.
 | 8 | Xatolar ustida ishlash | 90% | aqlli takrorlash (spaced repetition) |
 | 9 | Infratuzilma | 85% | monitoring, CI |
 | 10 | Bildirishnomalar | 80% | Telegram; menyudagi son real vaqtda yangilanmaydi |
-| 11 | UI va mobil | 90% | — |
+| 11 | UI va mobil | 95% | owner/questions ekranlari chuqurroq ishlanmagan |
 | 12 | Owner paneli | 85% | mavzu tahriri, direktorni bloklash, arxivlash |
 | 13 | Avtomaktab → platforma obunasi | 50% | UI yashirin (`ORGANIZATION_BILLING_UI_ENABLED = false`) |
 | 14 | **Savollar bazasi (kontent)** | **5%** | production 20 ta, dev 66 ta savol; bilet yo'q |
-| 15 | Avtomatik testlar | 10% | tekshiruv skriptlari bor, lekin qo'lda ishga tushiriladi |
+| 15 | Avtomatik testlar | 30% | `scripts/tekshiruv-ui.ts` — 82 ta tekshiruv, ruxsat chegaralari bilan; qo'lda ishga tushiriladi, CI yo'q |
+| 16 | Dars jadvali | 85% | davomat (kim keldi), darsni ko'chirish — hozir faqat bekor qilish |
+
+## Direktor hisobi — 70% 👤
+
+**Aslbekning bahosi, 2026-09-21 da tasdiqlangan.** Ilgari bu yerda 95%
+turardi (kod bo'yicha taxmin), lekin u faqat PANEL ko'rinishini
+o'lchagan. 70% — direktor rolining to'liq ishi bo'yicha baho.
+
+Tayyor:
+- Panel: ko'rsatkichlar, faollik grafigi (7/30/90 kun), "Bugungi ish"
+- Uchta jurnal: guruhlar, ustozlar, o'quvchilar — taqqoslash chizig'i bilan
+- Obyekt sahifalari: guruh, ustoz, o'quvchi (barcha rollar uchun umumiy)
+- Ustoz va qabulxona xodimi yaratish, bloklash, parol tiklash
+- Guruh yaratish, tahrirlash, o'chirish; o'quvchini guruhlar orasida ko'chirish
+- To'lov sozlamalari, chek tasdiqlash, naqd to'lov, to'lovlar tarixi
+- To'rtta ruxsat kaliti
+
+Kodda kuzatilgan bo'shliqlar (bu — kuzatuv, egasining ro'yxati emas):
+- Qabulxona **amallar jurnali** yo'q — pul qabulxonada, lekin "kim,
+  qachon, nima qildi" yozilmaydi (`docs/ishlar.md` 4-bo'lim)
+- O'quvchilarni **Excel/CSV dan ommaviy import** qilish yo'q — 200 ta
+  o'quvchi qo'lda kiritiladi
+- **"O'tgan oyga nisbatan" trend** yo'q: o'quvchi/guruh/ustoz sonining
+  tarixi bazada saqlanmaydi, buning uchun yangi jadval kerak
+- **Tarif (Plan)** faqat yorliq — hech narsani cheklamaydi
+- **Guruhni arxivlash** yo'q: faqat o'chirish bor, u ham urinishi bor
+  guruhda ishlamaydi
+- Avtomaktab → platforma obunasi UI yashirin
+  (`ORGANIZATION_BILLING_UI_ENABLED = false`)
 
 ## Rollar
 
@@ -46,6 +86,25 @@ qabulxona mijoz bilan ishlaydi · direktor boshqaradi · owner platformani
 boshqaradi.** To'rtta kalit direktor sozlamalarida: qabulxona pul bilan
 ishlaydimi, natijalarni ko'radimi; ustoz o'quvchi qo'shadimi, parol
 tiklaydimi.
+
+## Dizayn (2026-09-21 da to'liq qayta ishlandi)
+
+Batafsil — `docs/dizayn.md`. Qisqacha nima o'zgardi:
+
+- **Tokenlar**: brend ko'kdan turkuazga (`#0ea79a`), navy sidebar,
+  3 pog'onali soya, radius shkalasi. Ilgari butun ilovada bitta ham soya
+  yo'q edi va hamma element 6px radiusli quticha ko'rinardi.
+- **Shriftlar**: Space Grotesk + DM Sans. Ilgari butun ilova 14px da
+  yozilgan edi (`text-sm` 315 marta, `text-base` 11 marta).
+- **Ikonkalar**: 40 ta. Ilgari 114 faylning 4 tasida SVG bor edi.
+- **Uchta jurnal** (guruhlar, ustozlar, o'quvchilar) — taqqoslash
+  chizig'i bilan.
+- **Obyekt sahifalari birlashtirildi**: `/guruh/[id]`, `/ustoz/[id]`,
+  `/oquvchi/[id]` — barcha rollar uchun bitta sahifa. Qabulxona guruh va
+  o'quvchi sahifalarini qo'shimcha kodsiz oldi.
+- **"Bugungi ish" paneli** — direktor, qabulxona va ustoz uchun.
+- **Test ekrani** to'q (navy) o'rganish qobig'iga o'tkazildi.
+- ALL CAPS yorliqlar butunlay olib tashlandi.
 
 ## Arxitektura qoidalari — bajarilgan
 
@@ -61,10 +120,12 @@ tiklaydimi.
 `953119a` dan keyin **13 ta commit** production'ga chiqarilmagan:
 vazifa berish, bildirishnomalar, xatolardan test, o'quvchi dizayni,
 ustoz uchun guruh sahifasi, qabulxona roli, ustoz profili, rasm yuklash,
-savollar importi, bilet rejimi.
+savollar importi, bilet rejimi, dizaynning to'liq qayta ishlanishi,
+birlashgan obyekt sahifalari, "Bugungi ish" paneli, dars jadvali.
 
-Production'da **5 ta migratsiya** kutyapti: `assignments`,
-`notifications`, `attempt_source`, `reception_role`, `question_tickets`.
+Production'da **6 ta migratsiya** kutyapti: `assignments`,
+`notifications`, `attempt_source`, `reception_role`, `question_tickets`,
+`lessons`.
 
 ⚠️ Deploydan oldin production test hisoblarining paroli almashtirilishi
 kerak — u GitHub tarixida ochiq turibdi (`muhim.md`).

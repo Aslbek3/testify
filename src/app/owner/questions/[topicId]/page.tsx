@@ -41,7 +41,9 @@ export default async function TopicDetailPage({
           >
             &larr; Mavzular ro&apos;yxatiga qaytish
           </Link>
-          <h1 className="mt-1 text-xl font-semibold text-text">{topic.name}</h1>
+          <h1 className="mt-1 font-display text-[26px] font-bold tracking-[-0.04em] text-text sm:text-[30px]">
+            {topic.name}
+          </h1>
           <p className="mt-1 text-sm text-text-muted">
             Ushbu mavzuga tegishli savollarni shu yerdan qo&apos;shing, tahrirlang
             yoki o&apos;chiring.

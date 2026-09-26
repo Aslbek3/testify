@@ -2,6 +2,10 @@ import { prisma } from "@/lib/prisma";
 import type { AttemptMode } from "@prisma/client";
 import { readinessFromScore, type ReadinessStatus } from "@/lib/readiness";
 import { getMasteryByTopic, type TopicMastery } from "@/services/studentDashboard";
+import {
+  listAssignmentsForGroup,
+  type GroupAssignment,
+} from "@/services/assignments";
 
 export type TutorGroup = { id: string; name: string };
 
@@ -31,7 +35,19 @@ export type RosterEntry = {
 
 export type StudentGroupContext = {
   student: { userId: string; organizationId: string | null };
+  /**
+   * Ruxsat tekshiruvi uchun MINIMAL ma'lumot (`GroupRef`) — ataylab
+   * shunday: `lib/permissions.ts` funksiyalari faqat shu ikki maydonga
+   * tayanadi va ularga ortiqcha narsa berilsa, tekshiruv nimaga
+   * asoslanayotgani ko'rinmay qolardi.
+   */
   group: { tutorId: string; organizationId: string };
+  /**
+   * Ko'rsatish uchun — guruh sahifasiga havola va yo'l ko'rsatkich.
+   * `group` ichiga qo'shilmadi: u ruxsat tekshiruvining kiritmasi.
+   */
+  groupId: string;
+  groupName: string;
 };
 
 export type StudentDetail = {
@@ -346,7 +362,9 @@ export async function getStudentGroupContext(
     select: {
       userId: true,
       user: { select: { organizationId: true } },
-      group: { select: { tutorId: true, organizationId: true } },
+      group: {
+        select: { id: true, name: true, tutorId: true, organizationId: true },
+      },
     },
   });
   if (!profile) return null;
@@ -354,6 +372,8 @@ export async function getStudentGroupContext(
   return {
     student: { userId: profile.userId, organizationId: profile.user.organizationId },
     group: { tutorId: profile.group.tutorId, organizationId: profile.group.organizationId },
+    groupId: profile.group.id,
+    groupName: profile.group.name,
   };
 }
 
@@ -456,4 +476,85 @@ export async function getGroupSummariesForTutor(
       };
     })
   );
+}
+
+/** Ustozning barcha o'quvchilari — guruh nomi bilan birga. */
+export type TutorStudentRow = RosterEntry & {
+  groupId: string;
+  groupName: string;
+};
+
+/**
+ * Ustozning BARCHA guruhlaridagi o'quvchilar bitta ro'yxatda.
+ *
+ * Nega kerak: 3 guruhi bor ustoz hozir har guruhni alohida ochishi kerak
+ * edi. "Aziz qaysi guruhda edi?", "45 o'quvchim ichida kim eng orqada?"
+ * degan savollarga javob yo'q edi.
+ *
+ * Har guruh uchun `getRosterForGroup` chaqiriladi — ustozda guruh kam
+ * (odatda 1-4 ta), shuning uchun alohida birlashtirilgan so'rov yozish
+ * ortiqcha murakkablik bo'lardi. Direktorda esa bu yo'l tanlanmagan:
+ * u yerda guruh 8-20 ta va o'sha sababdan alohida funksiya bor
+ * (`listStudentsForOrganization`).
+ */
+export async function listStudentsForTutor(
+  tutorId: string
+): Promise<TutorStudentRow[]> {
+  const groups = await getGroupsForTutor(tutorId);
+  if (groups.length === 0) return [];
+
+  const rosters = await Promise.all(
+    groups.map(async (group) => {
+      const roster = await getRosterForGroup(group.id);
+      return roster.map((entry) => ({
+        ...entry,
+        groupId: group.id,
+        groupName: group.name,
+      }));
+    })
+  );
+
+  return rosters.flat().sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** Guruh nomi qo'shilgan vazifa — ustozning umumiy ro'yxati uchun. */
+export type TutorAssignmentRow = GroupAssignment & {
+  groupId: string;
+  groupName: string;
+};
+
+/**
+ * Ustozning barcha guruhlaridagi vazifalar, muddati bo'yicha tartiblangan.
+ *
+ * Vazifa berish — ustozning YAGONA o'ziga xos ishi (direktor ham,
+ * qabulxona ham qila olmaydi), lekin u faqat guruh sahifasi ichida
+ * ko'rinardi. 3 guruhga vazifa bergan ustoz "qaysisining muddati yaqin,
+ * kim bajarmagan?" degan savolga uchta sahifani ochmasdan javob topa
+ * olmasdi.
+ *
+ * Tartib: muddati yaqinlari birinchi, muddati o'tganlari oxirida —
+ * o'tgan vazifa endi harakat talab qilmaydi, u faqat tarix.
+ */
+export async function listAssignmentsForTutor(
+  tutorId: string,
+  now: Date = new Date()
+): Promise<TutorAssignmentRow[]> {
+  const groups = await getGroupsForTutor(tutorId);
+  if (groups.length === 0) return [];
+
+  const perGroup = await Promise.all(
+    groups.map(async (group) => {
+      const assignments = await listAssignmentsForGroup(group.id, now);
+      return assignments.map((assignment) => ({
+        ...assignment,
+        groupId: group.id,
+        groupName: group.name,
+      }));
+    })
+  );
+
+  return perGroup.flat().sort((a, b) => {
+    if (a.isOverdue !== b.isOverdue) return a.isOverdue ? 1 : -1;
+    return a.dueAt.getTime() - b.dueAt.getTime();
+  });
 }

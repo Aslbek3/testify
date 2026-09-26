@@ -280,6 +280,7 @@ model User {
   studentPayments         StudentPayment[] @relation("StudentPaymentStudent")
   studentPaymentsReviewed StudentPayment[] @relation("StudentPaymentReviewer")
   assignmentsCreated      Assignment[]     @relation("AssignmentCreatedBy")
+  lessonsCreated          Lesson[]         @relation("LessonCreatedBy")
   notifications           Notification[]
 
   @@index([organizationId])
@@ -344,6 +345,7 @@ model Group {
   students     StudentProfile[]
   attempts     Attempt[]
   assignments  Assignment[]
+  lessons      Lesson[]
 
   @@index([organizationId])
   @@index([tutorId])
@@ -402,6 +404,41 @@ model Assignment {
   @@index([groupId, dueAt])
 }
 
+/// Guruhning bitta darsi — aniq sana va soatda.
+///
+/// Takrorlanish QOIDASI saqlanmaydi ("har dushanba 14:00"). Jadval
+/// tuzilganda darslar bir yo'la yaratiladi va har biri alohida yozuv
+/// bo'ladi. Sabab: dars ko'chiriladi, bekor qilinadi, mavzusi
+/// o'zgaradi — takrorlanish qoidasi bo'lsa, har bir istisno uchun
+/// alohida mexanizm kerak bo'lardi. Alohida yozuvda istisno shunchaki
+/// o'sha qatorni tahrirlash demak.
+model Lesson {
+  id       String   @id @default(cuid())
+  groupId  String
+  /// Dars boshlanish vaqti. Sana ham, soat ham shu yerda.
+  startsAt DateTime
+  /// Davomiyligi, daqiqada. Avtomaktabda odatda 90 yoki 120.
+  durationMin Int @default(90)
+  /// O'tiladigan mavzu. Ixtiyoriy: amaliy dars yoki takrorlash bo'lishi
+  /// mumkin, unda mavzu tanlanmaydi.
+  topicId  String?
+  /// Qisqa izoh: "amaliyot", "nazorat ishi", "o'quv markazida".
+  note     String?
+  /// Jadvalni kim tuzgani. Guruh boshqa ustozga o'tsa ham tarix saqlanadi.
+  createdById String
+  createdAt   DateTime @default(now())
+
+  group     Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  topic     Topic? @relation(fields: [topicId], references: [id])
+  createdBy User   @relation("LessonCreatedBy", fields: [createdById], references: [id])
+
+  /// "Bugungi dars" va "keyingi dars" so'rovlari aynan shu tartibda
+  /// qidiradi — guruh bo'yicha, vaqt bo'yicha saralangan.
+  @@index([groupId, startsAt])
+  /// Butun tashkilot bo'yicha "bugungi darslar" uchun.
+  @@index([startsAt])
+}
+
 model StudentProfile {
   id        String    @id @default(cuid())
   userId    String    @unique
@@ -422,6 +459,7 @@ model Topic {
   name String
 
   questions Question[]
+  lessons   Lesson[]
 }
 
 model Question {

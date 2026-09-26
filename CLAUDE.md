@@ -21,9 +21,22 @@ Hozircha email + parol (bcrypt hash). Kelajakda telefon+SMS OTP qo'shiladi —
 shuning uchun User modelida `phone` maydoni ham bo'lsin (hozir ishlatilmasa ham).
 
 ## Dizayn qoidasi
-Standart AI-generatsiya uslubidan (krem fon+terracotta rang, bir xil radiusli 
-kartochkalar, ALL CAPS yorliqlar) qat'iyan qoch. Flat, professional, 
-funksional dizayn. Rang va shrift tokenlari alohida promptda beriladi.
+
+To'liq tavsif — `docs/dizayn.md`. Qisqacha:
+
+- **Brend**: turkuaz `#0ea79a`, navy sidebar `#0b1930`, sahifa foni `#f4f7fb`.
+  Barcha ranglar `src/app/globals.css` dagi tokenlardan olinadi — komponentda
+  bevosita hex yozilmaydi.
+- **Shriftlar**: Space Grotesk (sarlavha va katta raqam) + DM Sans (matn) +
+  JetBrains Mono (jadvaldagi raqam).
+- **ALL CAPS yorliqlar ishlatilmaydi.** Ajratish rang, qalinlik va fon bilan.
+- **Krem fon + terracotta**, bir xil radiusli kartochkalar va boshqa standart
+  AI-generatsiya uslubidan qat'iyan qochiladi.
+- **Rang — ma'no, bezak emas.** Qizil faqat haqiqiy muammo uchun; yordamchi
+  ranglar (`info`, `purple`) faqat ko'rsatkichlarni bir-biridan ajratish uchun.
+- **Har bir bo'sh holatda keyingi qadam tugmasi bo'ladi** (`EmptyState`).
+- **Kartochkaga o'z-o'zidan ishlaydigan hover-animatsiya qo'shilmaydi.**
+  Harakat faqat foydalanuvchi harakatiga javoban (tugma, havola, modal).
 
 ## Umumiy qoida
 Har bir katta qadamdan oldin qisqacha reja yoz, tasdiqlanmaguncha davom etma. 
@@ -46,7 +59,7 @@ Qoidalar:
 
 ## Test hisoblari (faqat lokal dev baza — seed skript, `prisma/seed.ts`)
 
-Parol hammasida bir xil: **testify123**
+Parol hammasida bir xil: test1234
 
 | Rol | Email |
 |---|---|
@@ -260,3 +273,44 @@ production'ga hech qachon shu holicha ko'chirilmaydi.
   o'quvchi uchun bilet rejimi va diqqat rejimi, savolga rasm yuklash,
   savollarni JSON'dan ommaviy import. Orqaga qaytarishga hojat
   bo'lmadi.
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+Rollar bo'yicha holat
+Owner — tashkilot yaratadi, direktor yaratadi, savol/mavzu qo'shadi.
+Yo'q: tarif va holatni o'zgartirish, tashkilotni arxivlash, mavzuni qayta nomlash/o'chirish, direktorni bloklash, savol sifati statistikasi (qaysi savolda hamma qoqiladi), rasm yuklash.
+
+Direktor — ustoz va guruh yaratadi, o'quvchini guruhlar orasida ko'chiradi, ustozni bloklaydi va parolini tiklaydi.
+Yo'q: guruh nomini o'zgartirish, guruhni boshqa ustozga berish, bo'sh guruhni o'chirish, bitta guruhning ichiga kirib ko'rish.
+
+Ustoz — o'quvchi yaratadi, bloklaydi, parolini tiklaydi, guruh tahlilini ko'radi.
+Yo'q: bitta o'quvchining alohida sahifasi (hozir faqat jadval ichida ochiladi), vazifa berish.
+
+Hamma rollar uchun — bitta ham profil/sozlamalar sahifasi yo'q: hech kim o'z parolini o'zgartira olmaydi. Ustoz o'quvchining parolini tiklay oladi, lekin o'zinikini emas.
+
+Taklif — uch bosqich
+1-bosqich: yo'q bo'lgani sezilib turadigan narsalar
+
+O'z parolini o'zgartirish — hamma rol uchun bitta sahifa. Bugun sessionVersion mexanizmi tayyor, ulanadi xolos
+Owner: tashkilot tarifi va holatini o'zgartirish — yuqoridagi bo'shliq
+Direktor: guruhni tahrirlash — nom, ustoz, bo'sh guruhni o'chirish
+Mobil UI — o'lchov natijalari kelmoqda
+2-bosqich: chuqurlashtirish
+5. Ustoz: o'quvchining alohida sahifasi (progress, urinishlar, xatolari)
+6. Direktor: guruh sahifasi
+7. Owner: savol sifati statistikasi — qaysi savolda 90% xato qiladi (ehtimol savolning o'zi noto'g'ri)
+
+3-bosqich: yangi tushunchalar (avval kelishish kerak)
+8. Vazifa berish (ustoz → guruh: "shu hafta 2 ta imtihon")
+9. Bildirishnomalar

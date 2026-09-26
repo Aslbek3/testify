@@ -33,7 +33,9 @@ export default async function ReceptionPaymentsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-text">To&apos;lovlar</h1>
+        <h1 className="font-display text-[26px] font-bold tracking-[-0.04em] text-text sm:text-[30px]">
+        To&apos;lovlar
+      </h1>
         <p className="mt-1 text-sm text-text-muted">
           {user.switches.receptionHandlesPayments
             ? "Chekni tasdiqlashdan oldin kartaga pul tushganini tekshiring. Naqd to'lov \"O'quvchilar\" sahifasida belgilanadi."

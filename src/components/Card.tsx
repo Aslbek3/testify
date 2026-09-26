@@ -1,16 +1,25 @@
 import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
+import { Icon, type IconName } from "@/components/Icon";
 
 type CardProps = HTMLAttributes<HTMLDivElement>;
 
 /**
  * Bazaviy konteyner. Hajm/ustuvorlikni chaqiruvchi joy belgilaydi
  * (className orqali) — bu yerda hech qanday standart hover-effekt yo'q.
+ *
+ * Soya ataylab juda yumshoq (`shadow-card`): u kartochkani "ko'tarish"
+ * uchun emas, oq sirtni oq bo'lmagan fondan ajratish uchun. Ilgari bu ish
+ * faqat 1px kulrang chiziq bilan bajarilardi va uzun sahifa bir varaq
+ * katakli qog'ozga o'xshab qolardi.
  */
 export function Card({ className, ...props }: CardProps) {
   return (
     <div
-      className={cn("rounded-lg border border-border bg-bg p-6", className)}
+      className={cn(
+        "rounded-lg border border-border bg-bg p-5 shadow-card sm:p-6",
+        className
+      )}
       {...props}
     />
   );
@@ -33,11 +42,34 @@ export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElemen
   );
 }
 
-export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
+export function CardTitle({
+  className,
+  icon,
+  children,
+  ...props
+}: HTMLAttributes<HTMLHeadingElement> & { icon?: IconName }) {
   return (
     <h3
-      className={cn("text-base font-semibold text-text", className)}
+      className={cn(
+        // Spetsifikatsiya: bo'lim sarlavhasi 16-19px, 700, display shrift.
+        "flex items-center gap-2 font-display text-base font-bold text-text",
+        className
+      )}
       {...props}
-    />
+    >
+      {icon && (
+        // Ikonka sarlavhadan bir pog'ona och: u yo'nalish beradi, lekin
+        // sarlavhaning o'zidan ko'zga ko'proq tashlanmasligi kerak.
+        <Icon name={icon} className="h-[18px] w-[18px] text-text-faint" />
+      )}
+      {children}
+    </h3>
   );
+}
+
+/** Sarlavha ostidagi izoh — CardHeader ichida o'ng tomonda turadigan
+ *  qisqa matn uchun. Ilgari har joyda `<span className="text-sm
+ *  text-text-muted">` qo'lda yozilardi. */
+export function CardNote({ className, ...props }: HTMLAttributes<HTMLSpanElement>) {
+  return <span className={cn("text-[13px] text-text-faint", className)} {...props} />;
 }

@@ -39,6 +39,23 @@ yuboriladi, natija Prisma orqali bazadan tekshiriladi, skript oxirida o'zi
 yaratgan hamma narsani o'chiradi. Shu usulda tekshirilgan: to'lov oqimi (jonli
 saytda), vazifa berish (51 ta tekshiruv), bildirishnomalar (38 ta).
 
+**Doimiy skript (2026-09-21):** `scripts/tekshiruv-ui.ts` — 82 ta tekshiruv.
+
+```
+npm run dev -- -p 3150          # birinchi terminal
+npx tsx scripts/tekshiruv-ui.ts # ikkinchi terminal
+```
+
+Nimani tekshiradi: har bir rolning sahifalari 200 qaytaradimi, kutilgan matn
+bormi, dizayn tokenlari CSS'ga yetganmi, va **ruxsat chegaralari** (kim
+qayerga kira olmaydi). Qabulxona hisobi seed'da yo'q — skript uni o'zi
+yaratadi va o'chiradi; test ekrani urinish yaratadi, u ham o'chiriladi
+(faqat shu ishga tushirishda yaratilganlari).
+
+⚠️ **Papka o'chirilib qayta yaratilsa** (masalan yo'l ko'chirilganda) dev
+server yangi yo'lni ko'rmay 404 berishi mumkin. Bunda serverni qayta ishga
+tushirish kerak (`.next/dev` ni o'chirib).
+
 Next.js eslatmalari:
 - `loading.tsx` bor sahifada `redirect()` 307 emas, 200 javobi ichida keladi
   (`<meta refresh>` yoki RSC'dagi `NEXT_REDIRECT`) — skript shuni o'qishi kerak.
@@ -84,8 +101,42 @@ Next.js eslatmalari:
     qo'lda yakunlandi. Bu kompyuterda uzoq davom etadigan fon agentiga
     tayanmaslik kerak.
 
+## Dizayn (2026-09-21)
+
+UI to'liq qayta ishlandi — `docs/dizayn.md`. Asosiy qarorlar:
+
+1. **Brend turkuaz** (`#0ea79a`), navy sidebar. Manba — foydalanuvchi bergan
+   `Testify production frontend design specification` va maketlar. O'sha
+   hujjat Downloads'dan o'chib ketgan, shuning uchun mazmuni `docs/dizayn.md`
+   ga ko'chirildi.
+2. **Obyekt sahifalari birlashtirildi**: `/guruh/[id]`, `/ustoz/[id]`,
+   `/oquvchi/[id]` — rol papkasidan tashqarida, barcha rollar uchun bitta.
+   Sabab: guruh sahifasi ikki nusxada edi va qabulxonaga uchinchisi kerak
+   bo'lardi. Eski manzillar `redirect()` bilan ishlaydi.
+3. **Maketdan uchta narsa OLIB TASHLANDI**, chunki orqasida ma'lumot yo'q:
+   sana tanlagich, yulduzli reyting (100 pog'onani 5 ga siqadi), "Bugungi
+   maqsad" bloki. O'rniga: amal tugmalari, "Faollik" ustuni, obuna holati.
+4. **Qilinmagan**: faollik grafigi va "o'tgan oyga nisbatan" trend — ikkalasi
+   ham yangi ma'lumot to'plashni talab qiladi (o'quvchi/guruh sonining tarixi
+   saqlanmaydi).
+
+## Egasining baholari
+
+Loyiha egasi (Aslbek) qo'ygan baholar — `docs/loyiha-holati.md` da 👤
+belgisi bilan. Ular kod bo'yicha taxmindan USTUN turadi.
+
+- **2026-09-21 — Direktor hisobi: 70%** (tasdiqlangan). Ilgari hujjatda
+  95% turardi, lekin u faqat panel ko'rinishini o'lchagan edi. 70% —
+  rolning to'liq ishi bo'yicha. Kuzatilgan bo'shliqlar ro'yxati
+  `docs/loyiha-holati.md` da.
+
 ## Ochiq savollar
 
+- ⚠️ **Test paroli mos kelmaydi:** `CLAUDE.md` da `test1234` yozilgan, dev
+  bazadagi hash esa `testify123` ga mos keladi. Qaysi biri to'g'ri —
+  hujjatni tuzatish yoki `RESET_TEST_PASSWORD` bilan bazani yangilash kerak.
+  Tekshiruv skripti hozir `testify123` bilan ishlaydi (`TEST_PASSWORD`
+  muhit o'zgaruvchisi bilan almashtiriladi).
 - **Deploy qachon?** 13 ta commit va 5 ta migratsiya production'da yo'q
   (`docs/loyiha-holati.md`). Parollar o'zgartirilmaydi — deploy faqat
   yangi funksiyalarni chiqaradi.

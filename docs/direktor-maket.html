@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Testify — direktor paneli, taklif etilayotgan maket</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Tokenlar — src/app/globals.css dan AYNAN ko'chirilgan.
+   Bu yerda ko'ringan rang kodda ham shunday chiqadi.
+   ============================================================ */
+:root{
+  --bg:#ffffff; --bg-subtle:#f4f7fb; --surface-2:#edf3f8;
+  --border:#dfe8f0; --border-subtle:#edf2f6;
+  --text:#112337; --text-muted:#718297; --text-faint:#93a3b6;
+  --brand:#0ea79a; --brand-hover:#0c8f84; --brand-soft:#dff6f2;
+  --info:#367fd4; --info-soft:#eaf2fd;
+  --purple:#765ac8; --purple-soft:#f0ebff;
+  --warning:#b87911; --warning-soft:#fff3d8;
+  --danger:#c74352; --danger-soft:#fdecef;
+  --navy:#0b1930; --navy-soft:#132743;
+  --shadow-1:0 12px 30px rgba(16,32,51,.055);
+  --shadow-2:0 18px 50px rgba(16,32,51,.08);
+  --brand-shadow:0 10px 24px rgba(14,167,154,.22);
+  --r-sm:8px; --r-md:11px; --r-lg:17px; --r-xl:20px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#dde5ee;color:var(--text);
+  font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;font-family:'Space Grotesk',sans-serif;letter-spacing:-.03em}
+svg{display:block}
+
+/* ---------- Ko'rish paneli (maketning bir qismi emas) ---------- */
+.toolbar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 20px}
+.toolbar .t-brand{display:flex;align-items:center;gap:9px;font-family:'Space Grotesk';font-weight:700;font-size:15px}
+.toolbar .mark{width:28px;height:28px;border-radius:var(--r-sm);background:var(--brand);color:#fff;
+  display:grid;place-items:center;font-weight:700;font-size:13px}
+.toolbar p{margin:0;font-size:12px;color:var(--text-muted);max-width:460px}
+.switch{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;cursor:pointer;user-select:none}
+.switch input{width:0;height:0;opacity:0;position:absolute}
+.track{width:42px;height:24px;border-radius:99px;background:#cfd9e4;position:relative;transition:background .18s}
+.track:after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s}
+.switch input:checked + .track{background:var(--brand)}
+.switch input:checked + .track:after{transform:translateX(18px)}
+.switch input:focus-visible + .track{outline:2px solid var(--brand);outline-offset:2px}
+
+/* Izoh belgilari — faqat "farqlar" rejimida */
+.ann{display:none}
+body.diff .ann{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;
+  padding:3px 7px;border-radius:99px;vertical-align:middle;font-family:'DM Sans';letter-spacing:0;line-height:1.3}
+.ann.keep{background:var(--brand-soft);color:#08776d}
+.ann.newdata{background:var(--warning-soft);color:#8c5a06}
+.ann.added{background:var(--info-soft);color:#2a66ad}
+.ann.fixed{background:var(--purple-soft);color:#5b45a5}
+body.diff .hl-newdata{outline:2px dashed rgba(184,121,17,.5);outline-offset:4px;border-radius:var(--r-md)}
+.removed{display:none}
+body.diff .removed{display:block;position:relative;border:1.5px dashed var(--danger);
+  background:var(--danger-soft);border-radius:var(--r-lg);padding:17px 18px}
+body.diff .removed:before{content:'Olib tashlandi';position:absolute;top:-10px;left:14px;background:var(--danger);
+  color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px}
+.removed h4{margin:0 0 5px;font-size:14px;font-weight:700;color:var(--danger)}
+.removed p{margin:0;font-size:12px;line-height:1.55;color:#8d3a44}
+.removed p + p{margin-top:6px}
+.legend{display:none}
+body.diff .legend{display:flex;flex-wrap:wrap;gap:14px;padding:14px 18px;background:#fff;
+  border-radius:var(--r-lg);box-shadow:var(--shadow-1);margin-bottom:20px}
+.legend span{font-size:11px;font-weight:600;color:var(--text-muted);display:inline-flex;align-items:center;gap:6px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+/* ---------- Ilova qobig'i ---------- */
+.frame{max-width:1400px;margin:22px auto;background:var(--bg-subtle);
+  box-shadow:0 30px 90px rgba(16,32,51,.18);overflow:hidden;border-radius:14px}
+.shell{display:flex;min-height:900px}
+
+/* Sidebar */
+.side{width:250px;flex:none;background:var(--navy);color:#fff;padding:24px 16px;display:flex;flex-direction:column}
+.side .logo{display:flex;align-items:center;gap:11px;padding:0 10px;margin-bottom:30px}
+.side .logo .mark{width:38px;height:38px;border-radius:10px;background:var(--brand);display:grid;place-items:center;
+  font-family:'Space Grotesk';font-weight:700;font-size:18px;flex:none}
+.side .logo b{font-family:'Space Grotesk';font-size:19px;font-weight:700}
+.nav{display:grid;gap:6px}
+.nav a{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--r-md);
+  color:rgba(255,255,255,.55);text-decoration:none;font-size:13.5px;font-weight:500;transition:.15s}
+.nav a:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav a.active{background:var(--brand);color:#fff;box-shadow:var(--brand-shadow)}
+.nav a svg{width:19px;height:19px;flex:none}
+.navlabel{padding:22px 14px 4px;font-size:11px;font-weight:600;color:rgba(255,255,255,.33)}
+.sidefoot{margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,.1)}
+/* Rasmda faqat shu tavsif bor edi; bizda pastda funksional bloklar ham kerak */
+.sidedesc{padding:0 10px 14px;font-size:11px;line-height:1.55;color:rgba(255,255,255,.4)}
+.sidedesc b{display:block;color:rgba(255,255,255,.75);font-size:12px;font-weight:700;margin-bottom:2px}
+.userrow{display:flex;align-items:center;gap:8px}
+.userbox{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:var(--r-md);text-decoration:none;flex:1;min-width:0}
+.userbox:hover{background:rgba(255,255,255,.1)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--brand-soft);color:#08776d;display:grid;place-items:center;
+  font-family:'Space Grotesk';font-weight:700;font-size:13px;flex:none}
+.userbox b{display:block;font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.userbox small{display:block;font-size:11px;color:rgba(255,255,255,.45)}
+.iconbtn{width:32px;height:32px;border-radius:var(--r-sm);border:0;background:transparent;color:rgba(255,255,255,.6);
+  display:grid;place-items:center;cursor:pointer;flex:none}
+.iconbtn:hover{background:rgba(255,255,255,.12);color:#fff}
+.iconbtn svg{width:17px;height:17px}
+.logout{display:flex;align-items:center;gap:10px;width:100%;margin-top:6px;padding:9px 10px;border:0;background:transparent;
+  color:rgba(255,255,255,.6);border-radius:var(--r-md);font:600 13px 'DM Sans';cursor:pointer}
+.logout:hover{background:rgba(255,255,255,.1);color:#fff}
+.logout svg{width:17px;height:17px}
+
+/* Asosiy qism */
+.main{flex:1;min-width:0;padding:32px 34px}
+.pagehead{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:22px}
+.pagehead h1{font-size:31px;font-weight:700;letter-spacing:-.04em;line-height:1.1}
+.pagehead .sub{margin-top:7px;font-size:13.5px;color:var(--text-muted);max-width:620px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Tugmalar */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;cursor:pointer;
+  border-radius:var(--r-md);padding:10px 16px;font:600 13px 'DM Sans';transition:.15s;text-decoration:none}
+.btn svg{width:17px;height:17px}
+.btn.primary{background:var(--brand);color:#fff;box-shadow:var(--brand-shadow)}
+.btn.primary:hover{background:var(--brand-hover)}
+.btn.secondary{background:#fff;color:var(--text);border:1px solid var(--border)}
+.btn.secondary:hover{background:var(--bg-subtle)}
+.pill{border:0;border-radius:var(--r-md);padding:8px 15px;font:700 12px 'DM Sans';cursor:pointer;white-space:nowrap}
+.pill.teal{background:var(--brand);color:#fff}
+.pill.blue{background:var(--info-soft);color:var(--info)}
+.pill.purple{background:var(--purple-soft);color:var(--purple)}
+.pill.amber{background:var(--warning-soft);color:var(--warning)}
+.tag{display:inline-block;border-radius:99px;padding:4px 11px;font-size:11px;font-weight:700;
+  background:var(--brand-soft);color:#08776d}
+
+/* Kartochka — chegara YO'Q, faqat soya (rasmdagidek) */
+.card{background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--shadow-1);padding:21px 22px}
+.cardhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.cardtitle{display:flex;align-items:center;gap:9px;font-family:'Space Grotesk';font-size:17px;font-weight:700}
+.cardtitle svg{width:20px;height:20px;color:var(--brand);flex:none}
+.note{font-size:12px;color:var(--text-faint)}
+.link{color:var(--brand);font-size:12.5px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+
+/* KPI plitkalar */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:18px}
+.kpi{background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--shadow-1);padding:21px}
+.kpi .top{display:flex;align-items:center;gap:15px}
+.kpi .circ{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;flex:none}
+.kpi .circ svg{width:25px;height:25px}
+.kpi .lbl{font-size:13px;font-weight:500;color:var(--text-muted)}
+.kpi .val{font-family:'Space Grotesk';font-size:35px;font-weight:700;letter-spacing:-.045em;line-height:1.05;
+  margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi .foot{margin-top:14px;font-size:11.5px;color:var(--text-faint);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.kpi .foot b{color:var(--brand);font-weight:700;display:inline-flex;align-items:center;gap:3px}
+.c-teal{background:var(--brand-soft);color:var(--brand)}
+.c-blue{background:var(--info-soft);color:var(--info)}
+.c-purple{background:var(--purple-soft);color:var(--purple)}
+.c-amber{background:var(--warning-soft);color:var(--warning)}
+.c-gray{background:var(--surface-2);color:var(--text-muted)}
+
+/* Ikki ustunli tartib */
+.cols{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(290px,.76fr);gap:18px;align-items:start}
+.stack{display:grid;gap:18px}
+
+/* Segment kaliti */
+.seg{display:inline-flex;background:var(--surface-2);border-radius:var(--r-md);padding:3px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--text-muted);padding:6px 14px;border-radius:9px;
+  font:600 12px 'DM Sans';cursor:pointer}
+.seg button.on{background:var(--brand);color:#fff}
+
+/* Grafik */
+.chartwrap{position:relative;height:215px;display:flex;gap:10px}
+.yaxis{display:flex;flex-direction:column;justify-content:space-between;font-size:11px;color:var(--text-faint);
+  padding-bottom:22px;font-variant-numeric:tabular-nums;text-align:right;width:26px}
+.plot{flex:1;position:relative;min-width:0}
+.plot svg.chart{width:100%;height:190px}
+.xaxis{display:flex;justify-content:space-between;font-size:11px;color:var(--text-faint);margin-top:5px}
+
+/* E'tibor ro'yxati — rasmda har bir qator ALOHIDA och plitka */
+.alist{display:grid;gap:9px}
+.arow{display:flex;align-items:center;gap:13px;padding:13px 14px;border-radius:var(--r-md);background:#f7fafc}
+.arow .circ{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;flex:none}
+.arow .circ svg{width:20px;height:20px}
+.arow .txt{min-width:0;flex:1}
+.arow strong{display:block;font-size:13.5px;font-weight:700}
+.arow span{display:block;font-size:12px;color:var(--text-muted);margin-top:2px;line-height:1.45}
+/* Pastdagi ko'k blok — rasmdagi "Bugungi maqsad" joyi, endi haqiqiy ma'lumot */
+.callout{display:flex;align-items:center;gap:12px;margin-top:14px;padding:14px 15px;border-radius:var(--r-md);
+  background:var(--info-soft);text-decoration:none;color:inherit}
+.callout .circ{width:34px;height:34px;border-radius:50%;background:#fff;color:var(--info);display:grid;place-items:center;flex:none}
+.callout .circ svg{width:17px;height:17px}
+.callout strong{display:block;font-size:13px;font-weight:700}
+.callout span{display:block;font-size:11.5px;color:#41618c;margin-top:1px}
+.callout .chev{margin-left:auto;color:#7d9cc4}
+
+/* Jadval */
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;padding:11px 12px;font-size:12px;font-weight:600;color:var(--text-muted);background:var(--surface-2)}
+thead th:first-child{border-radius:var(--r-sm) 0 0 var(--r-sm)}
+thead th:last-child{border-radius:0 var(--r-sm) var(--r-sm) 0}
+tbody td{padding:13px 12px;border-bottom:1px solid var(--border-subtle)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:rgba(14,167,154,.045)}
+.rank{width:29px;height:29px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;
+  font-family:'Space Grotesk'}
+.num{font-variant-numeric:tabular-nums;font-weight:600}
+.bar{height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden;min-width:70px;flex:1}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--brand)}
+.barwrap{display:flex;align-items:center;gap:9px}
+.badge{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:4px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.badge:before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.b-ok{background:var(--brand-soft);color:#08776d}
+.b-warn{background:var(--warning-soft);color:var(--warning)}
+.b-bad{background:var(--danger-soft);color:var(--danger)}
+.b-gray{background:var(--surface-2);color:var(--text-muted)}
+
+/* Kalitlar (Ruxsatlar kartochkasi) */
+.sw{display:flex;align-items:flex-start;gap:13px;padding:13px 0;border-bottom:1px solid var(--border-subtle)}
+.sw:last-child{border-bottom:0}
+.sw .knob{width:40px;height:23px;border-radius:99px;background:#cfd9e4;position:relative;flex:none;margin-top:2px}
+.sw .knob.on{background:var(--brand)}
+.sw .knob:after{content:'';position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff}
+.sw .knob.on:after{left:auto;right:3px}
+.sw strong{display:block;font-size:13px;font-weight:700}
+.sw span{display:block;font-size:12px;color:var(--text-muted);margin-top:2px;line-height:1.45}
+
+/* Xulosa bloklari */
+.explain{max-width:1400px;margin:0 auto 26px;padding:0 18px}
+.explain .card{padding:22px 24px}
+.explain h3{font-size:17px;font-weight:700;margin-bottom:12px}
+.explain ul{margin:0;padding-left:18px}
+.explain li{font-size:13px;color:var(--text-muted);margin-bottom:8px;line-height:1.6}
+.explain li b{color:var(--text)}
+.explain code{background:var(--surface-2);border-radius:5px;padding:1px 5px;font-size:12px}
+
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}.cols{grid-template-columns:1fr}}
+@media(max-width:720px){.side{display:none}.main{padding:20px 16px}.kpis{grid-template-columns:1fr}.frame{margin:0;border-radius:0}}
+</style>
+</head>
+<body>
+
+<!-- ======== SVG ikonkalar (bir marta e'lon qilinadi, keyin <use> bilan) ======== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- TO'LDIRILGAN: pastel doiralar ichida ishlatiladi -->
+    <g id="f-home"><path d="M12 3.1 2.8 10.5c-.3.25-.15.75.25.75H5V20a1 1 0 0 0 1 1h3.2v-5.4h5.6V21H18a1 1 0 0 0 1-1v-8.75h1.95c.4 0 .55-.5.25-.75L12 3.1Z"/></g>
+    <g id="f-star"><path d="m12 2.6 2.83 5.73 6.32.92-4.57 4.46 1.08 6.3L12 16.93l-5.66 2.98 1.08-6.3-4.57-4.46 6.32-.92L12 2.6Z"/></g>
+    <g id="f-users"><path d="M9 11.5a4.25 4.25 0 1 0 0-8.5 4.25 4.25 0 0 0 0 8.5Zm7.6-.6a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8ZM9 13.2c-4 0-7 2.2-7 5.2 0 1.1.7 1.6 1.8 1.6h10.4c1.1 0 1.8-.5 1.8-1.6 0-3-3-5.2-7-5.2Zm7.6-.6c-.5 0-1 .04-1.44.12A7.4 7.4 0 0 1 17.8 18c0 .74-.16 1.4-.46 2H21c1 0 1.7-.5 1.7-1.5 0-2.7-2.6-4.9-6.1-4.9Z"/></g>
+    <g id="f-group"><path d="M7 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm10 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-5 1.2a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8ZM7 12.6c-2.9 0-5.2 1.7-5.2 3.9 0 .8.5 1.2 1.3 1.2h3.3c.2-1.6 1-3 2.3-3.9A7 7 0 0 0 7 12.6Zm10 0c-.6 0-1.2.1-1.7.3 1.3.9 2.1 2.3 2.3 3.9h3.3c.8 0 1.3-.4 1.3-1.2 0-2.2-2.3-3.9-5.2-3.9Zm-5 1.3c-3.1 0-5.6 1.9-5.6 4.2 0 .9.6 1.4 1.5 1.4h8.2c.9 0 1.5-.5 1.5-1.4 0-2.3-2.5-4.2-5.6-4.2Z"/></g>
+    <g id="f-cap"><path d="M12 3 1.4 8.2 12 13.4l8.6-4.2v5.6h1.9V8.2L12 3ZM6 12.4v3.9c0 .45.22.85.6 1.08C8.24 18.4 10.04 19 12 19s3.76-.6 5.4-1.62c.38-.23.6-.63.6-1.08v-3.9l-6 2.94-6-2.94Z"/></g>
+    <g id="f-bell"><path d="M12 2.2A6.1 6.1 0 0 0 5.9 8.3c0 4.4-1.4 5.8-2.65 7.1A1.05 1.05 0 0 0 4 17.2h16a1.05 1.05 0 0 0 .75-1.8C19.5 14.1 18.1 12.7 18.1 8.3A6.1 6.1 0 0 0 12 2.2Zm-1.73 16.6a2 2 0 0 0 3.46 0h-3.46Z"/></g>
+    <g id="f-money"><path d="M12 2.6c4.42 0 8 1.4 8 3.15S16.42 8.9 12 8.9 4 7.5 4 5.75 7.58 2.6 12 2.6ZM4 8.6c1.8 1.35 4.9 2.05 8 2.05s6.2-.7 8-2.05v3.15c0 1.75-3.58 3.15-8 3.15s-8-1.4-8-3.15V8.6Zm0 6c1.8 1.35 4.9 2.05 8 2.05s6.2-.7 8-2.05v3.65c0 1.75-3.58 3.15-8 3.15s-8-1.4-8-3.15V14.6Z"/></g>
+    <g id="f-alert"><path d="m12 2.9 9.72 17a1.5 1.5 0 0 1-1.3 2.25H3.58a1.5 1.5 0 0 1-1.3-2.25l9.72-17ZM11 9.3v5.2h2V9.3h-2Zm0 7v2h2v-2h-2Z"/></g>
+    <g id="f-user"><path d="M12 12.1a4.55 4.55 0 1 0 0-9.1 4.55 4.55 0 0 0 0 9.1Zm0 1.8c-4.05 0-7.3 2.35-7.3 5.25 0 1 .8 1.55 1.8 1.55h11c1 0 1.8-.55 1.8-1.55 0-2.9-3.25-5.25-7.3-5.25Z"/></g>
+    <!-- CHIZIQLI: menyu, sarlavha, tugma -->
+    <g id="s-target" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></g>
+    <g id="s-trophy" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/>
+      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></g>
+    <g id="s-trend" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/></g>
+    <g id="s-plus" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 5v14M5 12h14"/></g>
+    <g id="s-chev" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m9 18 6-6-6-6"/></g>
+    <g id="s-building" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/>
+      <path d="M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01"/></g>
+    <g id="s-shield" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1Z"/></g>
+    <g id="s-logout" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></g>
+    <g id="s-moon" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></g>
+    <g id="s-clock" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></g>
+  </defs>
+</svg>
+
+<div class="toolbar">
+  <div class="t-brand"><span class="mark">T</span> Direktor paneli — taklif</div>
+  <p>Ranglar, shriftlar va o'lchamlar haqiqiy koddan (<code>globals.css</code>). Kalitni yoqsangiz — nima o'zgargani belgilanadi.</p>
+  <label class="switch"><input type="checkbox" id="diffToggle"><span class="track"></span> Farqlarni belgilash</label>
+</div>
+
+<div class="explain">
+  <div class="legend">
+    <span><i class="dot" style="background:var(--brand)"></i> Ma'lumot bor — faqat ko'rinish o'zgaradi</span>
+    <span><i class="dot" style="background:var(--warning)"></i> Yangi hisob-kitob kerak</span>
+    <span><i class="dot" style="background:var(--info)"></i> Rasmda yo'q edi — bizga kerak</span>
+    <span><i class="dot" style="background:var(--purple)"></i> Rasmdagi detal, men avval o'tkazib yuborgan</span>
+    <span><i class="dot" style="background:var(--danger)"></i> Olib tashlandi</span>
+  </div>
+</div>
+
+<div class="frame">
+<div class="shell">
+
+  <!-- ==================== SIDEBAR ==================== -->
+  <aside class="side">
+    <div class="logo">
+      <span class="mark">T</span>
+      <b>Testify</b>
+      <span class="ann fixed" style="margin-left:4px">rol yozuvi olindi</span>
+    </div>
+
+    <nav class="nav">
+      <a class="active" href="#"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#f-home"/></svg> Umumiy</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#f-users"/></svg> O'quvchilar</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#f-money"/></svg> To'lovlar</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#f-bell"/></svg> Bildirishnomalar</a>
+      <div class="navlabel">Sozlamalar</div>
+      <a href="#"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#f-user"/></svg> Profil</a>
+    </nav>
+
+    <div class="sidefoot">
+      <!-- Rasmdagi tavsif bloki — men uni avval tushirib qoldirgandim -->
+      <div class="sidedesc">
+        <b>Testify PDD</b>
+        Haydovchilik maktabi<br>boshqaruv tizimi
+        <span class="ann fixed">rasmda bor edi</span>
+      </div>
+      <!-- Rasmda yo'q, lekin ilovada shart: chiqish va mavzu kaliti -->
+      <div class="userrow">
+        <a class="userbox" href="#">
+          <span class="avatar">D</span>
+          <span><b>Dilnoza Rahimova</b><small>Profil</small></span>
+        </a>
+        <button class="iconbtn" title="Qorong'i rejim"><svg viewBox="0 0 24 24"><use href="#s-moon"/></svg></button>
+      </div>
+      <button class="logout"><svg viewBox="0 0 24 24"><use href="#s-logout"/></svg> Chiqish
+        <span class="ann added" style="margin-left:auto">bizga kerak</span></button>
+    </div>
+  </aside>
+
+  <!-- ==================== ASOSIY ==================== -->
+  <main class="main">
+
+    <div class="pagehead">
+      <div>
+        <h1>Xush kelibsiz, Dilnoza <span class="ann fixed">rasmda «direktor» edi — ism bazada bor</span></h1>
+        <div class="sub">Test Avtomaktab — ustozlar, guruhlar va to'lovlar bo'yicha bugungi holat.</div>
+      </div>
+      <div class="actions">
+        <span class="ann added">sana tanlagich o'rniga</span>
+        <button class="btn secondary"><svg viewBox="0 0 24 24"><use href="#s-plus"/></svg> Ustoz qo'shish</button>
+        <button class="btn primary"><svg viewBox="0 0 24 24"><use href="#s-plus"/></svg> Guruh qo'shish</button>
+      </div>
+    </div>
+
+    <div class="removed" style="margin-bottom:18px">
+      <h4>1. Sana tanlagich — «12-may, 2025 ⌄»</h4>
+      <p>Ilovada sana bo'yicha filtr yo'q va rejada ham emas. Ishlamaydigan boshqaruv qo'yilsa, direktor uni bosib hech narsa o'zgarmasligini ko'radi.</p>
+      <p><b>O'rniga:</b> direktorning eng ko'p ishlatadigan ikki amali — «Ustoz qo'shish» va «Guruh qo'shish». Ular avval sahifaning turli joylarida tarqoq turardi.</p>
+    </div>
+
+    <!-- ===== KPI ===== -->
+    <div class="kpis">
+      <div class="kpi">
+        <div class="top">
+          <span class="circ c-teal"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#f-star"/></svg></span>
+          <div><div class="lbl">O'rtacha ball <span class="ann fixed">yulduz ikonkasi</span></div><div class="val">78%</div></div>
+        </div>
+        <div class="foot hl-newdata">
+          <b><svg viewBox="0 0 24 24" width="12" height="12"><use href="#s-trend"/></svg> +6%</b>
+          o'tgan oyga nisbatan <span class="ann newdata">yangi hisob</span>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="top">
+          <span class="circ c-blue"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#f-users"/></svg></span>
+          <div><div class="lbl">O'quvchilar <span class="ann keep">bor</span></div><div class="val">124</div></div>
+        </div>
+        <div class="foot">3 tasi bloklangan</div>
+      </div>
+
+      <div class="kpi">
+        <div class="top">
+          <span class="circ c-purple"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#f-group"/></svg></span>
+          <div><div class="lbl">Guruhlar <span class="ann keep">bor</span></div><div class="val">8</div></div>
+        </div>
+        <div class="foot">O'rtacha 15 o'quvchidan</div>
+      </div>
+
+      <div class="kpi">
+        <div class="top">
+          <span class="circ c-amber"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#f-cap"/></svg></span>
+          <div><div class="lbl">Ustozlar <span class="ann keep">bor</span></div><div class="val">12</div></div>
+        </div>
+        <div class="foot">2 ta qabulxona xodimi</div>
+      </div>
+    </div>
+
+    <!-- ===== Ikki ustun ===== -->
+    <div class="cols">
+      <div class="stack">
+
+        <!-- Grafik -->
+        <div class="card hl-newdata">
+          <div class="cardhead">
+            <div class="cardtitle"><svg viewBox="0 0 24 24"><use href="#s-trend"/></svg> O'quvchilar faolligi
+              <span class="ann newdata">yangi hisob</span></div>
+            <div class="seg"><button class="on">7 kun</button><button>30 kun</button><button>90 kun</button></div>
+          </div>
+          <div class="chartwrap">
+            <div class="yaxis"><span>150</span><span>120</span><span>90</span><span>60</span><span>30</span><span>0</span></div>
+            <div class="plot">
+              <svg class="chart" viewBox="0 0 700 190" preserveAspectRatio="none">
+                <defs><linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#0ea79a" stop-opacity=".2"/>
+                  <stop offset="100%" stop-color="#0ea79a" stop-opacity="0"/></linearGradient></defs>
+                <line x1="0" y1="2" x2="700" y2="2" stroke="#edf2f6" stroke-width="1.5"/>
+                <line x1="0" y1="64" x2="700" y2="64" stroke="#edf2f6" stroke-width="1.5"/>
+                <line x1="0" y1="126" x2="700" y2="126" stroke="#edf2f6" stroke-width="1.5"/>
+                <path d="M4 160 C60 152 80 146 104 142 S190 138 204 134 S290 128 304 126 S390 118 404 110 S490 100 504 97 S590 88 604 78 L696 48 V190 H4Z" fill="url(#fill)"/>
+                <path d="M4 160 C60 152 80 146 104 142 S190 138 204 134 S290 128 304 126 S390 118 404 110 S490 100 504 97 S590 88 604 78 L696 48"
+                      fill="none" stroke="#0ea79a" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <g fill="#0ea79a">
+                  <circle cx="4" cy="160" r="4.5"/><circle cx="104" cy="142" r="4.5"/><circle cx="204" cy="134" r="4.5"/>
+                  <circle cx="304" cy="126" r="4.5"/><circle cx="404" cy="110" r="4.5"/><circle cx="504" cy="97" r="4.5"/>
+                  <circle cx="604" cy="78" r="4.5"/><circle cx="696" cy="48" r="4.5"/></g>
+              </svg>
+              <div class="xaxis"><span>14-sen</span><span>15-sen</span><span>16-sen</span><span>17-sen</span><span>18-sen</span><span>19-sen</span><span>20-sen</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ustozlar reytingi -->
+        <div class="card">
+          <div class="cardhead">
+            <div class="cardtitle"><svg viewBox="0 0 24 24"><use href="#s-trophy"/></svg> Ustozlar reytingi</div>
+            <a class="link" href="#">Barchasi (12) <svg viewBox="0 0 24 24" width="13" height="13"><use href="#s-chev"/></svg></a>
+          </div>
+          <table>
+            <thead><tr>
+              <th style="width:44px">#</th><th>Ustoz</th><th>Guruh</th>
+              <th style="width:92px">O'quvchilar</th>
+              <th style="width:158px">O'rtacha ball <span class="ann keep">bor</span></th>
+              <th style="width:140px">Faollik <span class="ann newdata">yangi hisob</span></th>
+            </tr></thead>
+            <tbody>
+              <tr><td><span class="rank c-teal">1</span></td><td><b>Azizbek Karimov</b></td><td>A-guruh</td><td class="num">18</td>
+                <td><div class="barwrap"><div class="bar"><i style="width:92%"></i></div><span class="num">92%</span></div></td>
+                <td><span class="badge b-ok">Faol</span></td></tr>
+              <tr><td><span class="rank c-blue">2</span></td><td><b>Dilshod Rahmonov</b></td><td>B-guruh</td><td class="num">15</td>
+                <td><div class="barwrap"><div class="bar"><i style="width:88%"></i></div><span class="num">88%</span></div></td>
+                <td><span class="badge b-ok">Faol</span></td></tr>
+              <tr><td><span class="rank c-purple">3</span></td><td><b>Malika Sodiqova</b></td><td>C-guruh</td><td class="num">14</td>
+                <td><div class="barwrap"><div class="bar"><i style="width:84%"></i></div><span class="num">84%</span></div></td>
+                <td><span class="badge b-warn">2 hafta jim</span></td></tr>
+              <tr><td><span class="rank c-amber">4</span></td><td><b>Javlonbek Xolmirzayev</b></td><td>D-guruh</td><td class="num">11</td>
+                <td><div class="barwrap"><div class="bar"><i style="width:79%"></i></div><span class="num">79%</span></div></td>
+                <td><span class="badge b-ok">Faol</span></td></tr>
+              <tr><td><span class="rank c-gray">5</span></td><td><b>Nargiza Toshmatova</b></td><td>E-guruh</td><td class="num">9</td>
+                <td><div class="barwrap"><div class="bar"><i style="width:76%"></i></div><span class="num">76%</span></div></td>
+                <td><span class="badge b-bad">Vazifa bermagan</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="removed">
+          <h4>2. Yulduzli reyting — «★★★★☆ 4.8»</h4>
+          <p>100 pog'onali ballni 5 pog'onaga siqadi: 92% va 88% ikkalasi ham «4.6» bo'lib chiqishi mumkin. Yulduz «kimdir baho qo'ydi» degan ma'no ham beradi — aslida bu hisoblangan o'rtacha.</p>
+          <p><b>O'rniga:</b> foiz + shkala qoldi, yoniga <b>Faollik</b> ustuni qo'shildi. Buni <code>docs/ishlar.md</code> allaqachon talab qilgan: «Ustozni faqat o'quvchilarining o'rtacha bali bilan baholamaslik».</p>
+        </div>
+      </div>
+
+      <!-- O'ng ustun -->
+      <div class="stack">
+        <div class="card">
+          <div class="cardhead">
+            <div class="cardtitle"><svg viewBox="0 0 24 24"><use href="#s-target"/></svg> Bugungi e'tibor</div>
+            <span class="tag">20-sentabr <span class="ann fixed">rasmda bor edi</span></span>
+          </div>
+
+          <div class="alist">
+            <div class="arow">
+              <span class="circ c-teal"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#f-money"/></svg></span>
+              <span class="txt"><strong>To'lovlarni tekshirish <span class="ann keep">bor</span></strong>
+                <span>3 ta chek tasdiq kutmoqda — 1 350 000 so'm</span></span>
+              <button class="pill teal">Tekshirish</button>
+            </div>
+            <div class="arow">
+              <span class="circ c-blue"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#f-alert"/></svg></span>
+              <span class="txt"><strong>Diqqat talab qiladi <span class="ann keep">bor</span></strong>
+                <span>5 o'quvchi 14 kundan beri kirmagan</span></span>
+              <button class="pill blue">Ko'rish</button>
+            </div>
+            <div class="arow">
+              <span class="circ c-purple"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#f-cap"/></svg></span>
+              <span class="txt"><strong>Ustozlar faoliyati <span class="ann newdata">yangi hisob</span></strong>
+                <span>1 ustoz 2 haftadan beri vazifa bermagan</span></span>
+              <button class="pill purple">Ko'rish</button>
+            </div>
+            <div class="arow">
+              <span class="circ c-amber"><svg viewBox="0 0 24 24" fill="currentColor"><use href="#f-bell"/></svg></span>
+              <span class="txt"><strong>Bildirishnomalar <span class="ann keep">bor</span></strong>
+                <span>5 ta yangi xabar</span></span>
+              <button class="pill amber">Ko'rish</button>
+            </div>
+          </div>
+
+          <!-- Rasmdagi "Bugungi maqsad" bloki turgan joy — endi haqiqiy ma'lumot -->
+          <a class="callout" href="#">
+            <span class="circ"><svg viewBox="0 0 24 24"><use href="#s-clock"/></svg></span>
+            <span><strong>Obuna: 24 kun qoldi <span class="ann added">o'rnini bosadi</span></strong>
+              <span>Professional tarif · 14-oktabrgacha</span></span>
+            <span class="chev"><svg viewBox="0 0 24 24" width="17" height="17"><use href="#s-chev"/></svg></span>
+          </a>
+        </div>
+
+        <div class="removed">
+          <h4>3. «Bugungi maqsad» bloki</h4>
+          <p>Rasmda pastda «O'quvchilar faolligini 80% dan yuqori saqlash» degan ko'k blok bor. Maqsad qo'yish, saqlash va bajarilishini o'lchash — alohida funksiya. Hozir qo'yilsa, u har bir avtomaktabda bir xil turadigan bezak jumla bo'lardi.</p>
+          <p><b>O'rniga:</b> xuddi shu ko'k blokda <b>obuna holati</b> ko'rsatiladi — bu haqiqiy ma'lumot (<code>getSubscriptionSummary</code>) va direktor uchun muhim.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Rasmda yo'q, lekin ilovada bor bo'limlar ===== -->
+    <div class="card" style="margin-top:18px">
+      <div class="cardhead">
+        <div class="cardtitle"><svg viewBox="0 0 24 24"><use href="#s-building"/></svg> Guruhlar
+          <span class="ann added">rasmda yo'q edi</span></div>
+        <span class="note">8 ta guruh · nomini bosing — to'liq tahlil ochiladi</span>
+      </div>
+      <table>
+        <thead><tr><th>Guruh</th><th>Ustoz</th><th style="width:92px">O'quvchilar</th><th style="width:158px">O'rtacha ball</th><th style="width:140px">Holat</th></tr></thead>
+        <tbody>
+          <tr><td><b>A-guruh</b></td><td>Azizbek Karimov</td><td class="num">18</td>
+            <td><div class="barwrap"><div class="bar"><i style="width:92%"></i></div><span class="num">92%</span></div></td>
+            <td><span class="badge b-ok">Tayyor</span></td></tr>
+          <tr><td><b>B-guruh</b></td><td>Dilshod Rahmonov</td><td class="num">15</td>
+            <td><div class="barwrap"><div class="bar"><i style="width:88%"></i></div><span class="num">88%</span></div></td>
+            <td><span class="badge b-ok">Tayyor</span></td></tr>
+          <tr><td><b>C-guruh</b></td><td>Malika Sodiqova</td><td class="num">14</td>
+            <td><div class="barwrap"><div class="bar"><i style="width:71%;background:var(--warning)"></i></div><span class="num">71%</span></div></td>
+            <td><span class="badge b-warn">Deyarli tayyor</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cols" style="margin-top:18px">
+      <div class="card">
+        <div class="cardhead">
+          <div class="cardtitle"><svg viewBox="0 0 24 24"><use href="#s-shield"/></svg> Ruxsatlar
+            <span class="ann added">rasmda yo'q edi</span></div>
+          <span class="note">Kim nima qila oladi</span>
+        </div>
+        <div class="sw"><span class="knob on"></span><span><strong>Qabulxona to'lovlarni qabul qiladi</strong>
+          <span>Chekni tasdiqlaydi/rad etadi va naqd to'lovni qayd etadi</span></span></div>
+        <div class="sw"><span class="knob on"></span><span><strong>Qabulxona natijalarni ko'radi</strong>
+          <span>O'quvchining progressi va urinishlari</span></span></div>
+        <div class="sw"><span class="knob"></span><span><strong>Ustoz o'quvchi qo'shadi</strong>
+          <span>O'z guruhiga qo'shadi va bloklaydi</span></span></div>
+        <div class="sw"><span class="knob"></span><span><strong>Ustoz parol tiklaydi</strong>
+          <span>O'z o'quvchisining parolini yangilaydi</span></span></div>
+      </div>
+
+      <div class="card">
+        <div class="cardhead">
+          <div class="cardtitle"><svg viewBox="0 0 24 24" fill="currentColor" style="color:var(--brand)"><use href="#f-user"/></svg> Qabulxona
+            <span class="ann added">rasmda yo'q edi</span></div>
+          <span class="note">2 ta xodim</span>
+        </div>
+        <div class="arow" style="background:transparent;padding:11px 0;border-bottom:1px solid var(--border-subtle)">
+          <span class="avatar" style="background:var(--brand-soft);color:#08776d">S</span>
+          <span class="txt"><strong>Sevara Yusupova</strong><span>sevara@testify.uz</span></span>
+          <span class="badge b-ok">Faol</span>
+        </div>
+        <div class="arow" style="background:transparent;padding:11px 0">
+          <span class="avatar" style="background:var(--surface-2);color:var(--text-muted)">N</span>
+          <span class="txt"><strong>Nodira Qodirova</strong><span>nodira@testify.uz</span></span>
+          <span class="badge b-gray">Bloklangan</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="note" style="margin:16px 2px 0">Sahifa yana <b>To'lovlar tarixi</b> kartochkasi bilan tugaydi — u ham shu uslubda.</p>
+
+  </main>
+</div>
+</div>
+
+<div class="explain">
+  <div class="card">
+    <h3>Xulosa</h3>
+    <ul>
+      <li><b>Rasmdan to'liq olingan:</b> navy sidebar turkuaz faol band bilan · to'ldirilgan ikonkalar pastel doiralarda · 4 ta KPI plitka trend qatori bilan · faollik grafigi nuqtalari va 7/30/90 kalitlari bilan · «Bugungi e'tibor» alohida och plitkalar va rangli tabletka tugmalar bilan · pastdagi ko'k blok · och sarlavhali jadval, o'rin raqami pastel doirada · chegarasiz, faqat soyali kartochkalar.</li>
+      <li><b>Men avval o'tkazib yuborgan va endi qo'shilgan detallar:</b> sidebar pastidagi «Testify PDD» tavsifi · «Bugungi e'tibor» sarlavhasidagi sana tabletkasi · e'tibor qatorlarining alohida och plitka bo'lishi · to'ldirilgan (solid) ikonka uslubi · sarlavhada eyebrow yo'qligi · «To'lovlar» uchun disk-to'plam ikonkasi.</li>
+      <li><b>Ikonka qoidasi:</b> pastel doira ichida — to'ldirilgan (22-25px da aniqroq o'qiladi); menyu, tugma va jadvalda — chiziqli (matn yonida nozikroq).</li>
+      <li><b>Uchta blok olib tashlandi,</b> har birining o'rniga haqiqiy narsa qo'yildi: sana tanlagich → amal tugmalari · yulduzli reyting → Faollik ustuni · «Bugungi maqsad» → obuna holati.</li>
+      <li><b>Ikkita yangi hisob yoziladi:</b> kunlik faollik grafigi (<code>Attempt</code> jadvalidan) va ustoz faolligi. Uchinchisi — «+6% o'tgan oyga nisbatan» — eng qimmati, tasdiqlansa qilinadi.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+document.getElementById('diffToggle').addEventListener('change', function(){
+  document.body.classList.toggle('diff', this.checked);
+});
+document.querySelectorAll('.seg').forEach(function(seg){
+  seg.addEventListener('click', function(e){
+    if(e.target.tagName!=='BUTTON') return;
+    seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+    e.target.classList.add('on');
+  });
+});
+</script>
+</body>
+</html>
