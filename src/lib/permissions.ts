@@ -55,6 +55,38 @@ export function canManageQuestionBank(user: SessionUser): boolean {
   return isOwner(user);
 }
 
+/**
+ * Savolni saqlash (xatcho'p) — faqat o'quvchi.
+ *
+ * Xatcho'p o'quvchining O'Z o'rganish vositasi; ustoz yoki direktor
+ * uchun undan foyda yo'q va "kim nimani saqladi" degan ma'lumot ham
+ * hech qayerda ko'rsatilmaydi.
+ */
+export function canSaveQuestion(user: SessionUser): boolean {
+  return isStudent(user);
+}
+
+/**
+ * Savolga shikoyat qilish — o'quvchi va ustoz.
+ *
+ * Ustoz ham kiradi: u savollarni o'quvchidan ko'ra ko'proq ko'radi va
+ * xatoni birinchi bo'lib aynan u sezadi. Direktor va qabulxona esa
+ * savollar bilan umuman ishlamaydi.
+ */
+export function canReportQuestion(user: SessionUser): boolean {
+  return isStudent(user) || isTutor(user);
+}
+
+/**
+ * Shikoyatlarni ko'rib chiqish — faqat owner.
+ *
+ * Savollar bazasi umumiy (barcha tashkilotlar uchun bitta), uni faqat
+ * owner tahrirlaydi — demak shikoyatni hal qila oladigan ham yolg'iz u.
+ */
+export function canReviewQuestionReports(user: SessionUser): boolean {
+  return canManageQuestionBank(user);
+}
+
 /** Owner har qanday tashkilotni, Direktor faqat o'zinikini ko'ra oladi. */
 export function canViewOrganization(
   user: SessionUser,

@@ -40,6 +40,8 @@ export type IconName =
   | "search"
   | "calendar"
   | "clock"
+  | "bookmark"
+  | "flag"
   | "trophy"
   | "trendUp"
   | "inbox"
@@ -165,6 +167,17 @@ const ICONS: Record<IconName, ReactNode> = {
     <>
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v5l3.5 2" />
+    </>
+  ),
+  bookmark: (
+    <>
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+    </>
+  ),
+  flag: (
+    <>
+      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+      <line x1="4" y1="22" x2="4" y2="15" />
     </>
   ),
   trophy: (

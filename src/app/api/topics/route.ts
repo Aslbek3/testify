@@ -26,6 +26,7 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => null);
   const name = typeof body?.name === "string" ? body.name.trim() : "";
+  const category = typeof body?.category === "string" ? body.category : null;
 
   if (!name) {
     return NextResponse.json(
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const topic = await createTopic(name);
+    const topic = await createTopic(name, category);
     return NextResponse.json(topic, { status: 201 });
   } catch (error) {
     if (error instanceof QuestionBankError) {

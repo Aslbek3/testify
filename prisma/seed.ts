@@ -30,6 +30,7 @@ function seedRandom(seedStr: string) {
 const TOPIC_DEFS = [
   {
     name: "Yo'l belgilari",
+    category: "Belgilar va ishoralar",
     questions: [
       {
         text: "Doira shaklidagi qizil ramkali \"Kirish taqiqlangan\" belgisi qanday ma'noni bildiradi?",
@@ -142,6 +143,7 @@ const TOPIC_DEFS = [
   },
   {
     name: "Svetofor va nazoratchi ishoralari",
+    category: "Belgilar va ishoralar",
     questions: [
       {
         text: "Svetoforda sariq chiroq yonganda haydovchi qanday harakat qilishi kerak?",
@@ -244,6 +246,7 @@ const TOPIC_DEFS = [
   },
   {
     name: "Ustunlik huquqi",
+    category: "Harakat qoidalari",
     questions: [
       {
         text: "Tenglashtirilgan yo'llar chorrahasida chapdan transport kelsa, kim yo'l beradi?",
@@ -348,6 +351,7 @@ const TOPIC_DEFS = [
   },
   {
     name: "Tezlik rejimi",
+    category: "Harakat qoidalari",
     questions: [
       {
         text: "Aholi punktida, boshqacha belgi bo'lmasa, ruxsat etilgan eng yuqori tezlik?",
@@ -440,6 +444,7 @@ const TOPIC_DEFS = [
   },
   {
     name: "To'xtash va turish qoidalari",
+    category: "Harakat qoidalari",
     questions: [
       {
         text: "Piyodalar o'tish joyidan necha metr masofada to'xtash taqiqlanadi?",
@@ -521,6 +526,7 @@ const TOPIC_DEFS = [
   },
   {
     name: "YTH va javobgarlik",
+    category: "Xavfsizlik va javobgarlik",
     questions: [
       {
         text: "YTH sodir bo'lgach, haydovchi eng avval nima qilishi shart?",
@@ -600,6 +606,7 @@ const TOPIC_DEFS = [
   },
   {
     name: "Texnik holat",
+    category: "Xavfsizlik va javobgarlik",
     questions: [
       {
         text: "Tormoz tizimi nosoz transport vositasini haydash mumkinmi?",
@@ -686,6 +693,7 @@ const TOPIC_DEFS = [
   },
   {
     name: "Piyodalar xavfsizligi",
+    category: "Xavfsizlik va javobgarlik",
     questions: [
       {
         text: "Piyodalar o'tish joyida to'xtagan piyoda oldida haydovchi qanday harakat qiladi?",
@@ -876,8 +884,14 @@ async function main() {
   for (const t of TOPIC_DEFS) {
     const topic = await prisma.topic.upsert({
       where: { id: `seed-topic-${slugify(t.name)}` },
-      update: {},
-      create: { id: `seed-topic-${slugify(t.name)}`, name: t.name },
+      // `update` da ham category bor: TOPIC_DEFS o'zgarsa, allaqachon
+      // mavjud mavzuga ham yetib borsin.
+      update: { category: t.category },
+      create: {
+        id: `seed-topic-${slugify(t.name)}`,
+        name: t.name,
+        category: t.category,
+      },
     });
     const questions = [];
     for (let i = 0; i < t.questions.length; i++) {

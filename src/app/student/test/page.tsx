@@ -11,6 +11,7 @@ import { startAssignmentAttempt, AssignmentError } from "@/services/assignments"
 import { startMistakesAttempt } from "@/services/mistakes";
 import { startTicketAttempt } from "@/services/tickets";
 import { startNumericAttempt } from "@/services/numericQuestions";
+import { listSavedQuestionIds } from "@/services/savedQuestions";
 import { parseMistakeSources, parseTopicIds } from "@/lib/mistakeFilters";
 import { EXAM_MAX_WRONG } from "@/lib/examRules";
 import { TestRunner } from "./TestRunner";
@@ -61,11 +62,17 @@ export default async function TestPage({
       redirect(`/student/test/${attemptId}/natija`);
     }
 
+    const savedIds = await listSavedQuestionIds(
+      user.id,
+      resumed.questions.map((q) => q.id)
+    );
+
     return (
       <TestRunner
         attempt={resumed}
         examDurationSeconds={EXAM_DURATION_SECONDS}
         maxWrong={EXAM_MAX_WRONG}
+        savedQuestionIds={[...savedIds]}
       />
     );
   }

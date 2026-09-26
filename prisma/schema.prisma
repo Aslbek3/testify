@@ -116,6 +116,7 @@ model Organization {
   // ongli ravishda yoqqanda beriladi.
   /**
    * /**
+   * /**
    * Qabulxona chekni tasdiqlay/rad eta oladi va naqd to'lovni qayd etadi.
    */
   receptionHandlesPayments Boolean @default(true)
@@ -281,6 +282,8 @@ model User {
   studentPaymentsReviewed StudentPayment[] @relation("StudentPaymentReviewer")
   assignmentsCreated      Assignment[]     @relation("AssignmentCreatedBy")
   lessonsCreated          Lesson[]         @relation("LessonCreatedBy")
+  savedQuestions          SavedQuestion[]
+  questionReports         QuestionReport[]
   notifications           Notification[]
 
   @@index([organizationId])
@@ -413,17 +416,17 @@ model Assignment {
 /// alohida mexanizm kerak bo'lardi. Alohida yozuvda istisno shunchaki
 /// o'sha qatorni tahrirlash demak.
 model Lesson {
-  id       String   @id @default(cuid())
-  groupId  String
+  id          String   @id @default(cuid())
+  groupId     String
   /// Dars boshlanish vaqti. Sana ham, soat ham shu yerda.
-  startsAt DateTime
+  startsAt    DateTime
   /// Davomiyligi, daqiqada. Avtomaktabda odatda 90 yoki 120.
-  durationMin Int @default(90)
+  durationMin Int      @default(90)
   /// O'tiladigan mavzu. Ixtiyoriy: amaliy dars yoki takrorlash bo'lishi
   /// mumkin, unda mavzu tanlanmaydi.
-  topicId  String?
+  topicId     String?
   /// Qisqa izoh: "amaliyot", "nazorat ishi", "o'quv markazida".
-  note     String?
+  note        String?
   /// Jadvalni kim tuzgani. Guruh boshqa ustozga o'tsa ham tarix saqlanadi.
   createdById String
   createdAt   DateTime @default(now())
@@ -455,11 +458,23 @@ model StudentProfile {
 }
 
 model Topic {
-  id   String @id @default(cuid())
-  name String
+  id       String  @id @default(cuid())
+  name     String
+  /**
+   * Katta guruh — masalan "Yo'l belgilari", ichida "Ogohlantiruvchi
+   * belgilar", "Taqiqlovchi belgilar" va hokazo.
+   * Oddiy matn, alohida jadval emas: guruhning nomdan boshqa hech qanday
+   * xossasi yo'q va ularning soni o'nlab. Alohida model qilinsa, har
+   * mavzuni kiritishda avval guruh yaratish kerak bo'lardi.
+   * `null` — mavzu hech qaysi guruhga kirmaydi; u ro'yxat oxirida
+   * "Boshqa" ostida chiqadi.
+   */
+  category String?
 
   questions Question[]
   lessons   Lesson[]
+
+  @@index([category, name])
 }
 
 model Question {
@@ -493,11 +508,76 @@ model Question {
    */
   ticketOrder        Int?
 
-  topic   Topic           @relation(fields: [topicId], references: [id])
+  topic   Topic            @relation(fields: [topicId], references: [id])
   answers AttemptAnswer[]
+  savedBy SavedQuestion[]
+  reports QuestionReport[]
 
   @@index([topicId])
   @@index([ticketNumber, ticketOrder])
+}
+
+/**
+ * O'quvchi belgilab qo'ygan savol ("Saqlanganlar").
+ * Nega kerak: mashq paytida "buni keyin yana ko'rishim kerak" degan
+ * savol uchraydi, lekin uni qayta topishning yo'li yo'q edi —
+ * "Xatolarim" faqat XATO qilinganlarni yig'adi, to'g'ri javob berilgan
+ * lekin tushunilmagan savol esa yo'qolib ketardi.
+ * Alohida izoh maydoni YO'Q: xatcho'p "bu savolga qayt" degan bitta
+ * ma'noni bildiradi. Izoh kerak bo'lsa, u alohida funksiya bo'ladi.
+ */
+model SavedQuestion {
+  id         String   @id @default(cuid())
+  studentId  String
+  questionId String
+  createdAt  DateTime @default(now())
+
+  student  User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  // Bir savolni ikki marta saqlab bo'lmaydi — tugma "saqlash/bekor
+  // qilish" bo'lib ishlaydi.
+  @@unique([studentId, questionId])
+  @@index([studentId, createdAt])
+}
+
+enum QuestionReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+/**
+ * Savolga shikoyat — "bu savol yoki javobi noto'g'ri".
+ * Nega kerak: savollar import orqali kiritiladi va ularda xato bo'ladi
+ * (noto'g'ri belgilangan javob, tushib qolgan variant). Hozirgacha buni
+ * bildirishning yo'li yo'q edi: o'quvchi ustoziga aytardi, ustoz esa
+ * hech kimga ayta olmasdi — savollarni faqat owner boshqaradi.
+ * Bu "xabarlar" tizimining ARZON muqobili: erkin yozishma emas, aniq
+ * bitta obyektga (savolga) bog'langan signal.
+ */
+model QuestionReport {
+  id           String               @id @default(cuid())
+  questionId   String
+  reportedById String
+  /**
+   * Ixtiyoriy izoh — nima noto'g'ri ekani.
+   */
+  reason       String?
+  status       QuestionReportStatus @default(OPEN)
+  createdAt    DateTime             @default(now())
+  /**
+   * Owner ko'rib chiqqan payt.
+   */
+  resolvedAt   DateTime?
+
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  reportedBy User     @relation(fields: [reportedById], references: [id], onDelete: Cascade)
+
+  // Bitta odam bitta savolga bir marta shikoyat qiladi — aks holda
+  // bitta savol ro'yxatni to'ldirib yuborishi mumkin.
+  @@unique([questionId, reportedById])
+  @@index([status, createdAt])
 }
 
 model Attempt {

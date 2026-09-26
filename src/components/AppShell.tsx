@@ -51,8 +51,10 @@ const NAV_ITEMS: Record<Role, NavItem[]> = {
     { label: "Biletlar", href: "/student/bilet", icon: "ticket" },
     { label: "Mashq", href: "/student/mashq", icon: "target" },
     { label: "Maraton", href: "/student/maraton", icon: "flame" },
+    { label: "Raqamli savollar", href: "/student/raqamli", icon: "target" },
     { label: "Imtihon", href: "/student/imtihon", icon: "clipboardCheck" },
     { label: "Xatolarim", href: "/student/xatolarim", icon: "alertTriangle" },
+    { label: "Saqlanganlar", href: "/student/saqlanganlar", icon: "bookmark" },
     { label: "To'lov", href: "/student/tolov", icon: "creditCard" },
   ],
 };

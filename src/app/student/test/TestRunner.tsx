@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
 import { QuestionImage } from "@/components/QuestionImage";
+import { QuestionActions } from "@/components/QuestionActions";
 import { optionLetter } from "@/lib/questionOptions";
 import { cn } from "@/lib/cn";
 import type { ResumableAttempt } from "@/services/attempts";
@@ -71,9 +72,12 @@ export function TestRunner({
   attempt,
   examDurationSeconds,
   maxWrong,
+  savedQuestionIds,
 }: {
   attempt: ResumableAttempt;
   examDurationSeconds: number;
+  /** Shu urinishdagi savollardan qaysilari allaqachon saqlangan. */
+  savedQuestionIds: string[];
   /** Imtihonda ruxsat etilgan xato soni (`EXAM_MAX_WRONG`). Qoidalar
    *  fayli emas, prop orqali keladi — `examDurationSeconds` bilan bir xil
    *  usul, klient komponenti server qoidalariga bog'lanib qolmasin. */
@@ -100,6 +104,18 @@ export function TestRunner({
   // ustidan bosilgan) qayta urinish javobi kelib qolsa, uni e'tiborsiz
   // qoldirish uchun solishtiriladi.
   const latestSelectionRef = useRef<Record<string, number>>({});
+  // Boshlang'ich xatcho'p holati. Keyingi o'zgarishlarni `QuestionActions`
+  // o'zi boshqaradi — bu yerda faqat birinchi chizishdagi holat kerak.
+  // `useMemo`, `useRef` emas: qiymat render paytida O'QILADI, ref esa
+  // buning uchun mo'ljallanmagan (react-hooks/refs).
+  const savedSet = useMemo(
+    () => new Set(savedQuestionIds),
+    // Ro'yxat serverdan bir marta keladi va urinish davomida
+    // o'zgarmaydi — massiv havolasi har renderda yangi bo'lsa ham
+    // to'plamni qayta qurishning ma'nosi yo'q.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   // Boshlang'ich qiymat DOIM statik (Date.now() ishlatilmaydi) — aks holda
   // server render qilgan payt bilan klient hidratsiya qilgan payt orasidagi
@@ -483,9 +499,23 @@ export function TestRunner({
           )}
 
           <div className="flex flex-col gap-5">
-            <p className="font-display text-[22px] font-bold leading-snug tracking-[-0.02em] text-white sm:text-[26px]">
-              {currentQuestion.text}
-            </p>
+            {/* Savol matni va uning ustidagi amallar bitta qatorda:
+                xatcho'p va shikoyat AYNAN shu savolga tegishli, shuning
+                uchun ular sarlavha yoki pastki panelda emas, savolning
+                o'zida turadi. */}
+            <div className="flex items-start justify-between gap-3">
+              <p className="font-display text-[22px] font-bold leading-snug tracking-[-0.02em] text-white sm:text-[26px]">
+                {currentQuestion.text}
+              </p>
+              <QuestionActions
+                // `key` — savol almashganda holat (saqlangan/saqlanmagan)
+                // yangi savolnikiga qayta o'rnatilsin.
+                key={currentQuestion.id}
+                questionId={currentQuestion.id}
+                initiallySaved={savedSet.has(currentQuestion.id)}
+                dark
+              />
+            </div>
 
             {currentStatus === "retrying" && (
               <p className="flex items-center gap-1.5 rounded-md border border-[#fbbf24]/40 bg-[#fbbf24]/10 px-4 py-3 text-sm text-[#fcd34d]">

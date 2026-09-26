@@ -28,6 +28,9 @@ const PASSWORD = process.env.TEST_PASSWORD ?? "testify123";
 /** Skript yaratadigan darslarning izohi — tozalashda shu bo'yicha topiladi. */
 const TEST_LESSON_NOTE = "tekshiruv-darsi";
 
+/** Skript yuboradigan shikoyatning izohi — tozalashda shu bo'yicha topiladi. */
+const TEST_REPORT_REASON = "tekshiruv-shikoyati";
+
 /** Skript yaratadigan vaqtinchalik qabulxona hisobi. */
 const RECEPTION_EMAIL = "tekshiruv-qabulxona@testify.local";
 
@@ -243,6 +246,69 @@ async function loadSampleIds() {
   };
 }
 
+/**
+ * Xatcho'p va shikoyat: saqlash -> ro'yxatda ko'rinishi -> bekor qilish,
+ * va shikoyatning owner paneliga tushishi.
+ *
+ * Skript yaratgan yozuvlar `cleanup` da o'chiriladi.
+ */
+async function checkSavedAndReportFlow(studentCookie: string) {
+  const question = await prisma.question.findFirst({ select: { id: true } });
+  if (!question) {
+    record(false, "Xatcho'p oqimi", "bazada savol yo'q");
+    return;
+  }
+
+  const save = await fetch(`${BASE}/api/saved-questions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", cookie: studentCookie },
+    body: JSON.stringify({ questionId: question.id }),
+  });
+  const saveBody = (await save.json().catch(() => null)) as { saved?: boolean } | null;
+  record(
+    save.status === 200 && saveBody?.saved === true,
+    "Savol saqlandi",
+    save.status === 200 ? undefined : `javob ${save.status}`
+  );
+
+  const savedHtml = await (
+    await fetch(`${BASE}/student/saqlanganlar`, { headers: { cookie: studentCookie } })
+  ).text();
+  record(
+    savedHtml.includes("Saqlangan savollar"),
+    "Saqlangan savol ro'yxatda ko'rinadi"
+  );
+
+  // AYNI endpoint ikkinchi marta bosilganda bekor qiladi.
+  const unsave = await fetch(`${BASE}/api/saved-questions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", cookie: studentCookie },
+    body: JSON.stringify({ questionId: question.id }),
+  });
+  const unsaveBody = (await unsave.json().catch(() => null)) as { saved?: boolean } | null;
+  record(unsaveBody?.saved === false, "Xatcho'p bekor qilindi");
+
+  const report = await fetch(`${BASE}/api/question-reports`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", cookie: studentCookie },
+    body: JSON.stringify({ questionId: question.id, reason: TEST_REPORT_REASON }),
+  });
+  record(report.status === 201, "Savolga shikoyat yuborildi", `javob ${report.status}`);
+
+  // Ikkinchi marta yuborish XATO emas — tugma ikki marta bosilishi mumkin.
+  const again = await fetch(`${BASE}/api/question-reports`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", cookie: studentCookie },
+    body: JSON.stringify({ questionId: question.id, reason: TEST_REPORT_REASON }),
+  });
+  record(again.status === 201, "Takroriy shikoyat xato bermaydi", `javob ${again.status}`);
+
+  const count = await prisma.questionReport.count({
+    where: { questionId: question.id, reason: TEST_REPORT_REASON },
+  });
+  record(count === 1, "Takroriy shikoyat dublikat yaratmaydi", `${count} ta yozuv`);
+}
+
 /** Qabulxona hisobini yaratadi (yoki bor bo'lsa parolini tiklaydi). */
 async function ensureReceptionAccount(): Promise<string | null> {
   const director = await prisma.user.findFirst({
@@ -317,6 +383,8 @@ async function main() {
     );
     await checkPage(student, "/student/bilet?filtr=yangi");
     await checkPage(student, "/student/bilet?filtr=xatolar");
+    // Xatcho'p va shikoyat oqimi
+    await checkSavedAndReportFlow(student);
     for (const path of [
       "/student/mashq",
       "/student/bilet",
@@ -326,6 +394,8 @@ async function main() {
       "/student/tolov",
       // Raqamli savollar — yangi rejim
       "/student/raqamli",
+      // Saqlanganlar — xatcho'p ro'yxati
+      "/student/saqlanganlar",
       "/profil",
       "/bildirishnomalar",
     ]) {
@@ -467,6 +537,17 @@ async function main() {
           "Qabulxona dars jadvalini tuza olmaydi",
           `javob ${receptionLesson.status}`
         );
+        // Xatcho'p — faqat o'quvchining O'Z vositasi.
+        const receptionSave = await fetch(`${BASE}/api/saved-questions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", cookie: reception },
+          body: JSON.stringify({ questionId: "istalgan" }),
+        });
+        record(
+          receptionSave.status === 403,
+          "Qabulxona savolni saqlay olmaydi",
+          `javob ${receptionSave.status}`
+        );
         if (ids.studentId) await checkPage(reception, `/oquvchi/${ids.studentId}`);
       }
     }
@@ -478,6 +559,24 @@ async function main() {
     await checkPage(tutor, "/tutor");
     await checkDenied(tutor, "/director/guruhlar", "Ustoz /director/guruhlar ga kira olmaydi");
     await checkDenied(tutor, "/qabulxona", "Ustoz /qabulxona ga kira olmaydi");
+
+    // Shikoyatni ustoz ham yubora oladi, lekin YOPA olmaydi — savollar
+    // bazasi umumiy va uni faqat owner boshqaradi.
+    {
+      const anyReport = await prisma.questionReport.findFirst({ select: { id: true } });
+      if (anyReport) {
+        const res = await fetch(`${BASE}/api/question-reports/${anyReport.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", cookie: tutor },
+          body: JSON.stringify({ status: "RESOLVED" }),
+        });
+        record(
+          res.status === 403,
+          "Ustoz shikoyatni yopa olmaydi",
+          `javob ${res.status}`
+        );
+      }
+    }
 
     // Ustozning yangi bo'limlari
     await checkPage(tutor, "/tutor/oquvchilar", ["quvchilarim"]);
@@ -510,8 +609,37 @@ async function main() {
   const owner = await login("owner@testify.dev");
   if (owner) {
     await checkPage(owner, "/owner");
-    await checkPage(owner, "/owner/questions");
+    // Mavzular guruhlangan (#13) va shikoyatlar bo'limi bor (#16).
+    await checkPage(owner, "/owner/questions", [
+      "Savolga shikoyatlar",
+      "Belgilar va ishoralar",
+    ]);
+    await checkOwnerReportReview(owner);
   }
+}
+
+/** Owner shikoyatni ko'radi va yopa oladi. */
+async function checkOwnerReportReview(ownerCookie: string) {
+  const report = await prisma.questionReport.findFirst({
+    where: { reason: TEST_REPORT_REASON, status: "OPEN" },
+    select: { id: true },
+  });
+  if (!report) {
+    record(false, "Owner shikoyatni ko'radi", "ochiq shikoyat topilmadi");
+    return;
+  }
+
+  const html = await (
+    await fetch(`${BASE}/owner/questions`, { headers: { cookie: ownerCookie } })
+  ).text();
+  record(html.includes(TEST_REPORT_REASON), "Shikoyat owner panelida ko'rinadi");
+
+  const close = await fetch(`${BASE}/api/question-reports/${report.id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", cookie: ownerCookie },
+    body: JSON.stringify({ status: "RESOLVED" }),
+  });
+  record(close.status === 200, "Owner shikoyatni yopdi", `javob ${close.status}`);
 }
 
 async function cleanup() {
@@ -545,6 +673,13 @@ async function cleanup() {
 
   // Skript yaratgan darslar: faqat o'z izohi bo'yicha va faqat shu
   // ishga tushirishdagilari — seed jadvaliga tegilmaydi.
+  const deletedReports = await prisma.questionReport.deleteMany({
+    where: { reason: TEST_REPORT_REASON },
+  });
+  const deletedSaved = await prisma.savedQuestion.deleteMany({
+    where: { createdAt: { gte: startedRunAt } },
+  });
+
   const deletedLessons = await prisma.lesson.deleteMany({
     where: { note: TEST_LESSON_NOTE, createdAt: { gte: startedRunAt } },
   });
@@ -553,6 +688,8 @@ async function cleanup() {
   if (deletedUsers.count > 0) parts.push("vaqtinchalik qabulxona hisobi");
   if (deletedAttempts > 0) parts.push(`${deletedAttempts} ta test urinishi`);
   if (deletedLessons.count > 0) parts.push(`${deletedLessons.count} ta dars`);
+  if (deletedReports.count > 0) parts.push(`${deletedReports.count} ta shikoyat`);
+  if (deletedSaved.count > 0) parts.push(`${deletedSaved.count} ta xatcho'p`);
   if (parts.length > 0) {
     console.log(`\nTozalandi: ${parts.join(" va ")} o'chirildi.`);
   }

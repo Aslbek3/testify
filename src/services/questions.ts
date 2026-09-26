@@ -19,6 +19,16 @@ export class QuestionBankError extends Error {
 export type TopicWithQuestionCount = {
   id: string;
   name: string;
+  /** Katta guruh ("Yo'l belgilari"). `null` — guruhsiz. */
+  category: string | null;
+  questionCount: number;
+};
+
+/** Guruhlangan ro'yxat — ekranda mavzular shu tartibda chiziladi. */
+export type TopicGroup = {
+  /** `null` — guruhsiz mavzular; ular ro'yxat OXIRIDA turadi. */
+  category: string | null;
+  topics: TopicWithQuestionCount[];
   questionCount: number;
 };
 
@@ -37,7 +47,10 @@ export async function listTopicsWithQuestionCount(): Promise<
   TopicWithQuestionCount[]
 > {
   const topics = await prisma.topic.findMany({
-    orderBy: { name: "asc" },
+    // Guruh bo'yicha, ichida nom bo'yicha. Guruhsizlar Postgres'da
+    // oxirida qoladi (`nulls: "last"`) — ro'yxatda ham shunday
+    // ko'rsatiladi.
+    orderBy: [{ category: { sort: "asc", nulls: "last" } }, { name: "asc" }],
     include: {
       _count: { select: { questions: true } },
     },
@@ -46,15 +59,47 @@ export async function listTopicsWithQuestionCount(): Promise<
   return topics.map((topic) => ({
     id: topic.id,
     name: topic.name,
+    category: topic.category,
     questionCount: topic._count.questions,
   }));
+}
+
+/**
+ * Mavzularni katta guruhlarga bo'ladi.
+ *
+ * Ro'yxat 20 tadan oshganda tekis ro'yxat o'qib bo'lmaydigan bo'lib
+ * qoladi: "Ogohlantiruvchi belgilar" va "Taqiqlovchi belgilar" bir-biriga
+ * yaqin turishi kerak, alifbo esa ularni ajratib yuboradi.
+ *
+ * Kirish ro'yxati ALLAQACHON to'g'ri tartibda (`listTopicsWithQuestionCount`),
+ * shuning uchun bu yerda qayta saralash yo'q — faqat ketma-ket kelganlar
+ * bitta guruhga yig'iladi.
+ */
+export function groupTopicsByCategory(
+  topics: TopicWithQuestionCount[]
+): TopicGroup[] {
+  const groups: TopicGroup[] = [];
+  for (const topic of topics) {
+    const last = groups[groups.length - 1];
+    if (last && last.category === topic.category) {
+      last.topics.push(topic);
+      last.questionCount += topic.questionCount;
+    } else {
+      groups.push({
+        category: topic.category,
+        topics: [topic],
+        questionCount: topic.questionCount,
+      });
+    }
+  }
+  return groups;
 }
 
 export async function getTopic(topicId: string) {
   return prisma.topic.findUnique({ where: { id: topicId } });
 }
 
-export async function createTopic(name: string) {
+export async function createTopic(name: string, category?: string | null) {
   const trimmed = name.trim();
   if (!trimmed) {
     throw new QuestionBankError("Mavzu nomi bo'sh bo'lishi mumkin emas");
@@ -67,7 +112,10 @@ export async function createTopic(name: string) {
     throw new QuestionBankError("Bunday nomli mavzu allaqachon mavjud");
   }
 
-  return prisma.topic.create({ data: { name: trimmed } });
+  // Bo'sh guruh nomi `null` bo'lib saqlanadi — bo'sh satr bilan `null`
+  // ikki xil "guruhsiz" hosil qilib, ro'yxatni ikkiga bo'lib yuborardi.
+  const trimmedCategory = category?.trim() || null;
+  return prisma.topic.create({ data: { name: trimmed, category: trimmedCategory } });
 }
 
 export async function listQuestionsForTopic(
