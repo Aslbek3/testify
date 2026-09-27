@@ -3,6 +3,12 @@ import { getVerifiedSessionUser } from "@/lib/auth";
 import { canManageQuestionBank } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
 import { createQuestion, QuestionBankError } from "@/services/questions";
+import {
+  readInt,
+  readJsonBody,
+  readNullableString,
+  readRawString,
+} from "@/lib/requestBody";
 
 export async function POST(request: Request) {
   const user = await getVerifiedSessionUser();
@@ -10,20 +16,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
 
-  const body = await request.json().catch(() => null);
-  const topicId = typeof body?.topicId === "string" ? body.topicId : "";
-  const text = typeof body?.text === "string" ? body.text : "";
+  const body = await readJsonBody(request);
+  const topicId = readRawString(body, "topicId");
+  const text = readRawString(body, "text");
   const options = Array.isArray(body?.options)
     ? body.options.filter((option: unknown): option is string => typeof option === "string")
     : [];
   const correctOptionIndex =
-    typeof body?.correctOptionIndex === "number" ? body.correctOptionIndex : -1;
-  const imageUrl = typeof body?.imageUrl === "string" ? body.imageUrl : null;
-  const imageAlt = typeof body?.imageAlt === "string" ? body.imageAlt : null;
+    (readInt(body, "correctOptionIndex") ?? -1);
+  const imageUrl = readNullableString(body, "imageUrl");
+  const imageAlt = readNullableString(body, "imageAlt");
   const explanation =
-    typeof body?.explanation === "string" ? body.explanation : null;
+    readNullableString(body, "explanation");
   const legalReference =
-    typeof body?.legalReference === "string" ? body.legalReference : null;
+    readNullableString(body, "legalReference");
 
   if (!topicId || !text || options.length === 0) {
     return NextResponse.json(

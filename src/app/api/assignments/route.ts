@@ -8,6 +8,7 @@ import {
   createAssignment,
   isAssignmentKind,
 } from "@/services/assignments";
+import { readInt, readJsonBody, readRawString } from "@/lib/requestBody";
 
 /**
  * Ustoz guruhga vazifa beradi:
@@ -20,15 +21,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null);
-  const groupId = typeof body?.groupId === "string" ? body.groupId : "";
+  const body = await readJsonBody(request);
+  const groupId = readRawString(body, "groupId");
   const kind = isAssignmentKind(body?.kind) ? body.kind : null;
   const topicIds: string[] = Array.isArray(body?.topicIds)
     ? body.topicIds.filter((t: unknown): t is string => typeof t === "string")
     : [];
-  const targetCount = typeof body?.targetCount === "number" ? body.targetCount : NaN;
-  const dueDate = typeof body?.dueDate === "string" ? body.dueDate : "";
-  const note = typeof body?.note === "string" ? body.note : "";
+  const targetCount = (readInt(body, "targetCount") ?? NaN);
+  const dueDate = readRawString(body, "dueDate");
+  const note = readRawString(body, "note");
 
   if (!groupId || !kind || !dueDate) {
     return NextResponse.json(

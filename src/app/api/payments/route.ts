@@ -4,6 +4,12 @@ import { getVerifiedSessionUser } from "@/lib/auth";
 import { isDirector } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
 import { submitPayment, PaymentError } from "@/services/payments";
+import {
+  readEnum,
+  readInt,
+  readJsonBody,
+  readNullableString,
+} from "@/lib/requestBody";
 
 const PLANS: Plan[] = ["START", "STANDARD", "PRO"];
 
@@ -20,10 +26,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
 
-  const body = await request.json().catch(() => null);
-  const amount = typeof body?.amount === "number" ? body.amount : NaN;
-  const months = typeof body?.months === "number" ? body.months : NaN;
-  const plan = PLANS.includes(body?.plan) ? (body.plan as Plan) : null;
+  const body = await readJsonBody(request);
+  const amount = (readInt(body, "amount") ?? NaN);
+  const months = (readInt(body, "months") ?? NaN);
+  const plan = readEnum(body, "plan", PLANS);
 
   if (!plan) {
     return NextResponse.json({ error: "Tarif rejasi noto'g'ri" }, { status: 400 });
@@ -36,8 +42,8 @@ export async function POST(request: Request) {
       amount,
       months,
       plan,
-      reference: typeof body?.reference === "string" ? body.reference : null,
-      note: typeof body?.note === "string" ? body.note : null,
+      reference: readNullableString(body, "reference"),
+      note: readNullableString(body, "note"),
     });
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {

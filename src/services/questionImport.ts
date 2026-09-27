@@ -167,7 +167,20 @@ export async function importQuestions(rawItems: unknown): Promise<ImportResult> 
   const topicIdByName = new Map(
     existingTopics.map((topic) => [topic.name.toLowerCase(), topic.id])
   );
-  const createdTopics = topicNames.filter((name) => !topicIdByName.has(name.toLowerCase()));
+  // Yangi yaratiladigan mavzular — katta/kichik harf bo'yicha BIR MARTA.
+  //
+  // `topicNames` aniq yozuv bo'yicha ajratilgan, ya'ni bitta importda
+  // "Tezlik" va "tezlik" ikkita alohida qator bo'lib qolardi va ikkita
+  // mavzu yaratilardi. Bazada mavjudlari bilan solishtirish allaqachon
+  // `mode: "insensitive"` bilan — bu yerda ham shu qoida bo'lishi kerak.
+  const createdTopics: string[] = [];
+  const pendingLower = new Set<string>();
+  for (const name of topicNames) {
+    const lower = name.toLowerCase();
+    if (topicIdByName.has(lower) || pendingLower.has(lower)) continue;
+    pendingLower.add(lower);
+    createdTopics.push(name);
+  }
 
   // Takrorlarni aniqlash uchun shu mavzulardagi mavjud savol matnlari.
   const existingQuestions = await prisma.question.findMany({
@@ -179,16 +192,35 @@ export async function importQuestions(rawItems: unknown): Promise<ImportResult> 
   );
 
   return prisma.$transaction(async (tx) => {
-    for (const name of createdTopics) {
-      const topic = await tx.topic.create({ data: { name }, select: { id: true, name: true } });
-      topicIdByName.set(topic.name.toLowerCase(), topic.id);
+    // Yangi mavzular BITTA so'rovda. `createMany` ID qaytarmaydi, shuning
+    // uchun keyin bir marta o'qib olamiz — ikkalasi birga ikki so'rov,
+    // mavzular soni qancha bo'lsa ham.
+    if (createdTopics.length > 0) {
+      await tx.topic.createMany({ data: createdTopics.map((name) => ({ name })) });
+      const fresh = await tx.topic.findMany({
+        // Aynan shu nomlar bilan yaratildi, shuning uchun aniq moslik
+        // yetarli.
+        where: { name: { in: createdTopics } },
+        select: { id: true, name: true },
+      });
+      for (const topic of fresh) {
+        topicIdByName.set(topic.name.toLowerCase(), topic.id);
+      }
     }
 
-    let created = 0;
     let skipped = 0;
     // Bir yuborishning O'ZIDA takrorlangan savol ham o'tkazib yuboriladi.
     const seen = new Set(existingKeys);
 
+    // Avval qatorlar XOTIRADA yig'iladi, keyin bitta `createMany` bilan
+    // yoziladi.
+    //
+    // Ilgari bu yerda har savol uchun alohida `create` bor edi: 500 ta
+    // savollik import bitta tranzaksiya ichida 500 marta bazaga borib
+    // kelardi. Bu uzoq qulf va timeout xavfi degani — aynan savollar
+    // bazasini to'ldirishda (platformaning eng katta to'sig'i) eng ko'p
+    // ishlatiladigan yo'l.
+    const rows = [];
     for (const item of valid) {
       const topicId = topicIdByName.get(item.topic.toLowerCase())!;
       const key = `${topicId}::${item.text.toLowerCase()}`;
@@ -197,23 +229,24 @@ export async function importQuestions(rawItems: unknown): Promise<ImportResult> 
         continue;
       }
       seen.add(key);
-      await tx.question.create({
-        data: {
-          topicId,
-          text: item.text,
-          options: item.options,
-          correctOptionIndex: item.correctOptionIndex,
-          explanation: item.explanation ?? null,
-          legalReference: item.legalReference ?? null,
-          imageUrl: item.imageUrl ?? null,
-          imageAlt: item.imageAlt ?? null,
-          ticketNumber: item.ticketNumber ?? null,
-          ticketOrder: item.ticketOrder ?? null,
-        },
+      rows.push({
+        topicId,
+        text: item.text,
+        options: item.options,
+        correctOptionIndex: item.correctOptionIndex,
+        explanation: item.explanation ?? null,
+        legalReference: item.legalReference ?? null,
+        imageUrl: item.imageUrl ?? null,
+        imageAlt: item.imageAlt ?? null,
+        ticketNumber: item.ticketNumber ?? null,
+        ticketOrder: item.ticketOrder ?? null,
       });
-      created++;
     }
 
-    return { created, skipped, createdTopics, errors: [] };
+    // `rows` bo'sh bo'lsa ham `createMany` xato bermaydi, lekin bekorga
+    // so'rov yubormaymiz.
+    const result = rows.length > 0 ? await tx.question.createMany({ data: rows }) : { count: 0 };
+
+    return { created: result.count, skipped, createdTopics, errors: [] };
   });
 }

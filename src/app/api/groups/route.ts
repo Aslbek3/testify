@@ -3,6 +3,7 @@ import { getVerifiedSessionUser } from "@/lib/auth";
 import { isDirector } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
 import { createGroup, DirectorActionError } from "@/services/directorDashboard";
+import { readJsonBody, readRawString, readString } from "@/lib/requestBody";
 
 export async function POST(request: Request) {
   const user = await getVerifiedSessionUser();
@@ -10,9 +11,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
 
-  const body = await request.json().catch(() => null);
-  const name = typeof body?.name === "string" ? body.name.trim() : "";
-  const tutorId = typeof body?.tutorId === "string" ? body.tutorId : "";
+  const body = await readJsonBody(request);
+  const name = readString(body, "name");
+  const tutorId = readRawString(body, "tutorId");
 
   if (!name || !tutorId) {
     return NextResponse.json(

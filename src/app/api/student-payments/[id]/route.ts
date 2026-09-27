@@ -8,6 +8,7 @@ import {
   rejectStudentPayment,
   StudentPaymentError,
 } from "@/services/studentPayments";
+import { readJsonBody, readRawString } from "@/lib/requestBody";
 
 /**
  * Chekni tasdiqlash yoki rad etish: `{ action, reason? }`.
@@ -32,9 +33,9 @@ export async function PATCH(
     return NextResponse.json({ error: "To'lov topilmadi" }, { status: 404 });
   }
 
-  const body = await request.json().catch(() => null);
+  const body = await readJsonBody(request);
   const action = body?.action;
-  const reason = typeof body?.reason === "string" ? body.reason : "";
+  const reason = readRawString(body, "reason");
 
   try {
     if (action === "confirm") {

@@ -5,6 +5,7 @@ import { logError } from "@/lib/logger";
 import { isStudentPaymentMonths } from "@/lib/payments";
 import { getStudentGroupContext } from "@/services/tutorDashboard";
 import { recordCashPayment, StudentPaymentError } from "@/services/studentPayments";
+import { readJsonBody, readRawString } from "@/lib/requestBody";
 
 /**
  * Naqd to'lovni qayd etish: `{ studentId, months }`.
@@ -18,8 +19,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null);
-  const studentId = typeof body?.studentId === "string" ? body.studentId : "";
+  const body = await readJsonBody(request);
+  const studentId = readRawString(body, "studentId");
   const months = body?.months;
   if (!studentId || !isStudentPaymentMonths(months)) {
     return NextResponse.json({ error: "O'quvchi va muddat (1 yoki 6 oy) kerak" }, { status: 400 });

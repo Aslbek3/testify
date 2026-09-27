@@ -6,6 +6,7 @@ import {
   clientLogRateLimitKey,
   getClientIp,
 } from "@/lib/rateLimit";
+import { readJsonBody } from "@/lib/requestBody";
 
 /**
  * Client komponentlarda (masalan error.tsx) ushlangan xatolarni serverga
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = await request.json().catch(() => null);
+  const body = await readJsonBody(request);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ ok: false }, { status: 400 });
   }

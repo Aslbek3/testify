@@ -10,6 +10,7 @@ import {
 } from "@/lib/rateLimit";
 import { getStudentGroupContext } from "@/services/tutorDashboard";
 import { resetUserPassword } from "@/services/users";
+import { readJsonBody, readRawString } from "@/lib/requestBody";
 
 export async function PATCH(
   request: Request,
@@ -49,8 +50,8 @@ export async function PATCH(
     return NextResponse.json({ error: "O'quvchi topilmadi" }, { status: 404 });
   }
 
-  const body = await request.json().catch(() => null);
-  const password = typeof body?.password === "string" ? body.password : "";
+  const body = await readJsonBody(request);
+  const password = readRawString(body, "password");
 
   const passwordError = validatePassword(password);
   if (passwordError) {

@@ -9,6 +9,7 @@ import {
   OrganizationError,
   OrganizationNotFoundError,
 } from "@/services/organizations";
+import { readJsonBody } from "@/lib/requestBody";
 
 /**
  * Tashkilotni tahrirlash — FAQAT App Owner (`canManageOrganizations`).
@@ -29,7 +30,7 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const body = await request.json().catch(() => null);
+  const body = await readJsonBody(request);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Noto'g'ri so'rov" }, { status: 400 });
   }

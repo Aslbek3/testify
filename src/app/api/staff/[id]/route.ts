@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getVerifiedSessionUser } from "@/lib/auth";
 import { canManageStaff } from "@/lib/permissions";
 import { getStaffOrgContext, setUserActive } from "@/services/users";
+import { readBoolean, readJsonBody } from "@/lib/requestBody";
 
 /** Xodimni (ustoz yoki qabulxona) bloklash/tiklash — faqat direktor. */
 export async function PATCH(
@@ -14,8 +15,8 @@ export async function PATCH(
   }
 
   const { id: staffId } = await params;
-  const body = await request.json().catch(() => null);
-  if (typeof body?.isActive !== "boolean") {
+  const body = await readJsonBody(request);
+  if (readBoolean(body, "isActive") === null) {
     return NextResponse.json({ error: "isActive kerak" }, { status: 400 });
   }
 
@@ -25,6 +26,8 @@ export async function PATCH(
     return NextResponse.json({ error: "Xodim topilmadi" }, { status: 404 });
   }
 
-  await setUserActive(staffId, body.isActive);
+  // Yuqorida `readBoolean(...) === null` bilan tekshirilgan, shuning
+  // uchun bu yerda qiymat aniq boolean.
+  await setUserActive(staffId, readBoolean(body, "isActive")!);
   return NextResponse.json({ ok: true });
 }

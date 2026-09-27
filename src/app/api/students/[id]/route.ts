@@ -3,6 +3,7 @@ import { getVerifiedSessionUser } from "@/lib/auth";
 import { canManageStudent } from "@/lib/permissions";
 import { getStudentGroupContext } from "@/services/tutorDashboard";
 import { setUserActive } from "@/services/users";
+import { readBoolean, readJsonBody } from "@/lib/requestBody";
 
 /**
  * O'quvchi hisobini bloklash/tiklash — direktor, qabulxona va (kalit
@@ -22,8 +23,8 @@ export async function PATCH(
   }
 
   const { id: studentId } = await params;
-  const body = await request.json().catch(() => null);
-  if (typeof body?.isActive !== "boolean") {
+  const body = await readJsonBody(request);
+  if (readBoolean(body, "isActive") === null) {
     return NextResponse.json({ error: "isActive kerak" }, { status: 400 });
   }
 
@@ -33,6 +34,8 @@ export async function PATCH(
     return NextResponse.json({ error: "O'quvchi topilmadi" }, { status: 404 });
   }
 
-  await setUserActive(studentId, body.isActive);
+  // Yuqorida `readBoolean(...) === null` bilan tekshirilgan, shuning
+  // uchun bu yerda qiymat aniq boolean.
+  await setUserActive(studentId, readBoolean(body, "isActive")!);
   return NextResponse.json({ ok: true });
 }

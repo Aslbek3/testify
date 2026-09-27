@@ -7,6 +7,7 @@ import {
   moveStudentToGroup,
   UserActionError,
 } from "@/services/users";
+import { readJsonBody, readRawString } from "@/lib/requestBody";
 
 /**
  * O'quvchini boshqa guruhga ko'chirish — direktor va qabulxona.
@@ -24,8 +25,8 @@ export async function PATCH(
   }
 
   const { id: studentId } = await params;
-  const body = await request.json().catch(() => null);
-  const groupId = typeof body?.groupId === "string" ? body.groupId : "";
+  const body = await readJsonBody(request);
+  const groupId = readRawString(body, "groupId");
   if (!groupId) {
     return NextResponse.json({ error: "groupId kerak" }, { status: 400 });
   }

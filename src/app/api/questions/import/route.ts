@@ -3,6 +3,7 @@ import { getVerifiedSessionUser } from "@/lib/auth";
 import { canManageQuestionBank } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
 import { importQuestions, QuestionImportError } from "@/services/questionImport";
+import { readJsonBody } from "@/lib/requestBody";
 
 /**
  * Savollarni ommaviy import qilish — FAQAT savollar bazasini boshqaradigan
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
 
-  const body = await request.json().catch(() => null);
+  const body = await readJsonBody(request);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "So'rov noto'g'ri" }, { status: 400 });
   }

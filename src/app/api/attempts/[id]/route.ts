@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getVerifiedSessionUser } from "@/lib/auth";
 import { logError } from "@/lib/logger";
 import { saveAnswer, AttemptError } from "@/services/attempts";
+import { readInt, readJsonBody, readRawString } from "@/lib/requestBody";
 
 export async function PATCH(
   request: Request,
@@ -13,10 +14,10 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const body = await request.json().catch(() => null);
-  const questionId = typeof body?.questionId === "string" ? body.questionId : "";
+  const body = await readJsonBody(request);
+  const questionId = readRawString(body, "questionId");
   const selectedOptionIndex =
-    typeof body?.selectedOptionIndex === "number" ? body.selectedOptionIndex : -1;
+    (readInt(body, "selectedOptionIndex") ?? -1);
 
   if (!questionId || selectedOptionIndex < 0) {
     return NextResponse.json(

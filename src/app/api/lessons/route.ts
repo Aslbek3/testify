@@ -8,6 +8,13 @@ import {
   createLessonSeries,
   deleteUpcomingLessons,
 } from "@/services/lessons";
+import {
+  readInt,
+  readJsonBody,
+  readOptionalString,
+  readRawString,
+  readString,
+} from "@/lib/requestBody";
 
 /**
  * Guruhga dars jadvali tuzadi:
@@ -23,17 +30,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null);
-  const groupId = typeof body?.groupId === "string" ? body.groupId : "";
+  const body = await readJsonBody(request);
+  const groupId = readRawString(body, "groupId");
   const weekdays: number[] = Array.isArray(body?.weekdays)
     ? body.weekdays.filter((d: unknown): d is number => typeof d === "number")
     : [];
-  const hour = typeof body?.hour === "number" ? body.hour : NaN;
-  const minute = typeof body?.minute === "number" ? body.minute : 0;
-  const durationMin = typeof body?.durationMin === "number" ? body.durationMin : NaN;
-  const weeks = typeof body?.weeks === "number" ? body.weeks : NaN;
-  const topicId = typeof body?.topicId === "string" && body.topicId ? body.topicId : null;
-  const note = typeof body?.note === "string" ? body.note.trim() : "";
+  const hour = (readInt(body, "hour") ?? NaN);
+  const minute = (readInt(body, "minute") ?? 0);
+  const durationMin = (readInt(body, "durationMin") ?? NaN);
+  const weeks = (readInt(body, "weeks") ?? NaN);
+  const topicId = readOptionalString(body, "topicId");
+  const note = readString(body, "note");
   // Jadvalni qayta tuzishda eski kelajakdagi darslar o'chiriladi — aks
   // holda ikki nusxa chiqadi.
   const replaceUpcoming = body?.replaceUpcoming === true;

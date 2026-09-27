@@ -3,6 +3,7 @@ import { getVerifiedSessionUser } from "@/lib/auth";
 import { canReviewQuestionReports } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
 import { resolveReport, QuestionReportError } from "@/services/questionReports";
+import { readJsonBody } from "@/lib/requestBody";
 
 /** Shikoyatni yopish — faqat owner (savollar bazasi umumiy). */
 export async function PATCH(
@@ -15,7 +16,7 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const body = await request.json().catch(() => null);
+  const body = await readJsonBody(request);
   const status = body?.status;
 
   if (status !== "RESOLVED" && status !== "DISMISSED") {

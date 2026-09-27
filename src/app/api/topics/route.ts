@@ -7,6 +7,7 @@ import {
   listTopicsWithQuestionCount,
   QuestionBankError,
 } from "@/services/questions";
+import { readJsonBody, readNullableString, readString } from "@/lib/requestBody";
 
 export async function GET() {
   const user = await getVerifiedSessionUser();
@@ -24,9 +25,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
 
-  const body = await request.json().catch(() => null);
-  const name = typeof body?.name === "string" ? body.name.trim() : "";
-  const category = typeof body?.category === "string" ? body.category : null;
+  const body = await readJsonBody(request);
+  const name = readString(body, "name");
+  const category = readNullableString(body, "category");
 
   if (!name) {
     return NextResponse.json(

@@ -7,6 +7,7 @@ import {
   parsePlan,
   parseOrganizationStatus,
 } from "@/services/organizations";
+import { readJsonBody, readString } from "@/lib/requestBody";
 
 export async function POST(request: Request) {
   const user = await getVerifiedSessionUser();
@@ -14,9 +15,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
 
-  const body = await request.json().catch(() => null);
-  const name = typeof body?.name === "string" ? body.name.trim() : "";
-  const city = typeof body?.city === "string" ? body.city.trim() : "";
+  const body = await readJsonBody(request);
+  const name = readString(body, "name");
+  const city = readString(body, "city");
   // Enum tekshiruvi service qatlamiga ko'chirildi (`parsePlan` /
   // `parseOrganizationStatus`) — PATCH route ham aynan shu ro'yxatlarga
   // muhtoj edi va nusxa ko'chirilsa ikkisi vaqt o'tib ajralib ketardi.

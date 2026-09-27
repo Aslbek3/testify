@@ -8,6 +8,7 @@ import {
 } from "@/lib/rateLimit";
 import { logError } from "@/lib/logger";
 import { changeOwnPassword, ProfileError } from "@/services/profile";
+import { readJsonBody, readRawString } from "@/lib/requestBody";
 
 /**
  * O'z parolini o'zgartirish.
@@ -40,10 +41,10 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const body = await request.json().catch(() => null);
+  const body = await readJsonBody(request);
   const currentPassword =
-    typeof body?.currentPassword === "string" ? body.currentPassword : "";
-  const newPassword = typeof body?.newPassword === "string" ? body.newPassword : "";
+    readRawString(body, "currentPassword");
+  const newPassword = readRawString(body, "newPassword");
 
   if (!currentPassword || !newPassword) {
     return NextResponse.json(

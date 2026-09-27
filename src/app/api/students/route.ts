@@ -7,6 +7,7 @@ import { validatePassword } from "@/lib/password";
 import { normalizePhone, INVALID_PHONE_MESSAGE } from "@/lib/phone";
 import { registerStudent, RegistrationError } from "@/services/auth";
 import { getGroupPermissionContext } from "@/services/users";
+import { readJsonBody, readRawString, readString } from "@/lib/requestBody";
 
 /**
  * O'quvchi qo'shish — direktor, qabulxona va (kalit yoqilgan bo'lsa)
@@ -25,12 +26,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null);
-  const name = typeof body?.name === "string" ? body.name.trim() : "";
-  const email = typeof body?.email === "string" ? normalizeEmail(body.email) : "";
-  const password = typeof body?.password === "string" ? body.password : "";
-  const groupId = typeof body?.groupId === "string" ? body.groupId : "";
-  const rawPhone = typeof body?.phone === "string" ? body.phone : "";
+  const body = await readJsonBody(request);
+  const name = readString(body, "name");
+  const email = normalizeEmail(readRawString(body, "email"));
+  const password = readRawString(body, "password");
+  const groupId = readRawString(body, "groupId");
+  const rawPhone = readRawString(body, "phone");
 
   if (!name || !email || !password || !groupId) {
     return NextResponse.json(

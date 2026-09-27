@@ -459,8 +459,13 @@ async function main() {
         })
       ).text();
       record(runnerHtml.includes("Savollar holati"), "Test ekrani chizildi");
-      // To'q qobiq — savol oq matnda, fon navy.
-      record(runnerHtml.includes("111c2e"), "Test ekrani to'q qobiqda");
+      // To'q qobiq — savol oq matnda, fon to'q.
+      //
+      // Ilgari bu yerda `111c2e` hex qidirilardi. 2026-09-27 da rang
+      // `globals.css` dagi `--test-shell` tokeniga ko'chirildi, ya'ni
+      // HTML'da endi SINF nomi turadi, hex emas. Token qiymati
+      // o'zgarganda tekshiruv buzilmasligi uchun sinf nomi tekshiriladi.
+      record(runnerHtml.includes("bg-test-shell"), "Test ekrani to'q qobiqda");
     }
   }
 

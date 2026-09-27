@@ -7,6 +7,7 @@ import {
   QuestionReportError,
   REPORT_REASON_MAX_LENGTH,
 } from "@/services/questionReports";
+import { readJsonBody, readNullableString, readRawString } from "@/lib/requestBody";
 
 /** Savolga shikoyat yuborish — o'quvchi va ustoz. */
 export async function POST(request: Request) {
@@ -15,9 +16,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
 
-  const body = await request.json().catch(() => null);
-  const questionId = typeof body?.questionId === "string" ? body.questionId : "";
-  const reason = typeof body?.reason === "string" ? body.reason : null;
+  const body = await readJsonBody(request);
+  const questionId = readRawString(body, "questionId");
+  const reason = readNullableString(body, "reason");
 
   if (!questionId) {
     return NextResponse.json({ error: "questionId kerak" }, { status: 400 });

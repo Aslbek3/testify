@@ -3,6 +3,7 @@ import { getVerifiedSessionUser } from "@/lib/auth";
 import { canManageOrganizations } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
 import { confirmPayment, rejectPayment, PaymentError } from "@/services/payments";
+import { readJsonBody, readRawString } from "@/lib/requestBody";
 
 /**
  * Owner to'lovni tasdiqlaydi yoki rad etadi.
@@ -20,7 +21,7 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const body = await request.json().catch(() => null);
+  const body = await readJsonBody(request);
   const action = body?.action;
 
   try {
@@ -30,7 +31,7 @@ export async function PATCH(
       await rejectPayment({
         paymentId: id,
         reviewedById: user.id,
-        reason: typeof body?.reason === "string" ? body.reason : "",
+        reason: readRawString(body, "reason"),
       });
     } else {
       return NextResponse.json(

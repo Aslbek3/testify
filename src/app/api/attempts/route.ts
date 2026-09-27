@@ -5,6 +5,12 @@ import { logError } from "@/lib/logger";
 import { startAttempt, AttemptError } from "@/services/attempts";
 import { getStudentGroupId } from "@/services/studentDashboard";
 import type { AttemptMode } from "@prisma/client";
+import {
+  readEnum,
+  readInt,
+  readJsonBody,
+  readStringArray,
+} from "@/lib/requestBody";
 
 const VALID_MODES: AttemptMode[] = ["PRACTICE", "EXAM"];
 
@@ -19,11 +25,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
 
-  const body = await request.json().catch(() => null);
-  const mode: AttemptMode | null = VALID_MODES.includes(body?.mode) ? body.mode : null;
-  const topicIds = Array.isArray(body?.topicIds)
-    ? body.topicIds.filter((t: unknown): t is string => typeof t === "string")
-    : undefined;
+  const body = await readJsonBody(request);
+  const mode = readEnum(body, "mode", VALID_MODES);
+  // `readStringArray` bitta element noto'g'ri bo'lsa BUTUN maydonni rad
+  // etadi — ilgari bu yerda noto'g'ri elementlar jimgina tashlab
+  // yuborilardi va o'quvchi kutganidan kam mavzu bo'yicha test olardi.
+  const topicIds = readStringArray(body, "topicIds") ?? undefined;
 
   if (!mode) {
     return NextResponse.json({ error: "Rejim (mode) noto'g'ri" }, { status: 400 });
@@ -31,7 +38,7 @@ export async function POST(request: Request) {
   // Maraton uchun — savollar soni. Chegaralar `startAttempt` ichida
   // tekshiriladi (u yagona manba), bu yerda faqat turi tekshiriladi.
   const questionCount =
-    typeof body?.questionCount === "number" ? body.questionCount : undefined;
+    (readInt(body, "questionCount") ?? undefined);
 
   if (topicIds && topicIds.length > MAX_TOPIC_IDS) {
     return NextResponse.json(

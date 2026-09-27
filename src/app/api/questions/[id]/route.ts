@@ -7,6 +7,12 @@ import {
   updateQuestion,
   QuestionBankError,
 } from "@/services/questions";
+import {
+  readInt,
+  readJsonBody,
+  readNullableString,
+  readRawString,
+} from "@/lib/requestBody";
 
 export async function PATCH(
   request: Request,
@@ -18,19 +24,19 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const body = await request.json().catch(() => null);
-  const text = typeof body?.text === "string" ? body.text : "";
+  const body = await readJsonBody(request);
+  const text = readRawString(body, "text");
   const options = Array.isArray(body?.options)
     ? body.options.filter((option: unknown): option is string => typeof option === "string")
     : [];
   const correctOptionIndex =
-    typeof body?.correctOptionIndex === "number" ? body.correctOptionIndex : -1;
-  const imageUrl = typeof body?.imageUrl === "string" ? body.imageUrl : null;
-  const imageAlt = typeof body?.imageAlt === "string" ? body.imageAlt : null;
+    (readInt(body, "correctOptionIndex") ?? -1);
+  const imageUrl = readNullableString(body, "imageUrl");
+  const imageAlt = readNullableString(body, "imageAlt");
   const explanation =
-    typeof body?.explanation === "string" ? body.explanation : null;
+    readNullableString(body, "explanation");
   const legalReference =
-    typeof body?.legalReference === "string" ? body.legalReference : null;
+    readNullableString(body, "legalReference");
 
   if (!text || options.length === 0) {
     return NextResponse.json(

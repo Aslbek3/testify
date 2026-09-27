@@ -12,6 +12,7 @@ import {
   resetRateLimit,
 } from "@/lib/rateLimit";
 import { logError } from "@/lib/logger";
+import { readJsonBody, readRawString, readString } from "@/lib/requestBody";
 
 function tooManyAttempts(retryAfterSeconds: number) {
   const waitMinutes = Math.ceil(retryAfterSeconds / 60);
@@ -43,9 +44,9 @@ export async function POST(request: Request) {
     return tooManyAttempts(ipRateLimit.retryAfterSeconds);
   }
 
-  const body = await request.json().catch(() => null);
-  const email = typeof body?.email === "string" ? body.email.trim() : "";
-  const password = typeof body?.password === "string" ? body.password : "";
+  const body = await readJsonBody(request);
+  const email = readString(body, "email");
+  const password = readRawString(body, "password");
 
   if (!email || !password) {
     return NextResponse.json(

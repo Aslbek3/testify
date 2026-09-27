@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getVerifiedSessionUser } from "@/lib/auth";
 import { logError } from "@/lib/logger";
 import { updateOwnName, ProfileError } from "@/services/profile";
+import { readJsonBody, readNullableString } from "@/lib/requestBody";
 
 /**
  * O'z profilini yangilash (hozircha faqat ism).
@@ -18,13 +19,16 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null);
-  if (typeof body?.name !== "string") {
+  const body = await readJsonBody(request);
+  // Kesilmagan qiymat: bo'shliqlarni `updateOwnName` o'zi oladi va u
+  // yerda "faqat bo'shliqdan iborat ism" ham rad etiladi.
+  const name = readNullableString(body, "name");
+  if (name === null) {
     return NextResponse.json({ error: "Ism kiritilishi shart" }, { status: 400 });
   }
 
   try {
-    await updateOwnName(user.id, body.name);
+    await updateOwnName(user.id, name);
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof ProfileError) {

@@ -9,6 +9,7 @@ import {
   DirectorActionError,
 } from "@/services/directorDashboard";
 import type { SessionUser } from "@/types/auth";
+import { readJsonBody, readNullableString } from "@/lib/requestBody";
 
 /**
  * Ikkala metod uchun umumiy darvoza: sessiya + `canManageGroup`.
@@ -52,11 +53,11 @@ export async function PATCH(
   const auth = await authorize(groupId);
   if (!auth.ok) return auth.response;
 
-  const body = await request.json().catch(() => null);
+  const body = await readJsonBody(request);
   // Ikkala maydon ham ixtiyoriy — faqat nomni yoki faqat ustozni
   // o'zgartirish mumkin. Lekin hech biri bo'lmasa, so'rovning ma'nosi yo'q.
-  const name = typeof body?.name === "string" ? body.name : undefined;
-  const tutorId = typeof body?.tutorId === "string" ? body.tutorId : undefined;
+  const name = (readNullableString(body, "name") ?? undefined);
+  const tutorId = (readNullableString(body, "tutorId") ?? undefined);
 
   if (name === undefined && tutorId === undefined) {
     return NextResponse.json(

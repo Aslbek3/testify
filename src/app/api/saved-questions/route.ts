@@ -3,6 +3,7 @@ import { getVerifiedSessionUser } from "@/lib/auth";
 import { canSaveQuestion } from "@/lib/permissions";
 import { logError } from "@/lib/logger";
 import { toggleSavedQuestion, SavedQuestionError } from "@/services/savedQuestions";
+import { readJsonBody, readRawString } from "@/lib/requestBody";
 
 /**
  * Savolni saqlash / saqlanganini bekor qilish.
@@ -17,8 +18,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
   }
 
-  const body = await request.json().catch(() => null);
-  const questionId = typeof body?.questionId === "string" ? body.questionId : "";
+  const body = await readJsonBody(request);
+  const questionId = readRawString(body, "questionId");
   if (!questionId) {
     return NextResponse.json({ error: "questionId kerak" }, { status: 400 });
   }

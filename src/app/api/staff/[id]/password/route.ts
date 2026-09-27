@@ -9,6 +9,7 @@ import {
   passwordResetRateLimitKey,
 } from "@/lib/rateLimit";
 import { getStaffOrgContext, resetUserPassword } from "@/services/users";
+import { readJsonBody, readRawString } from "@/lib/requestBody";
 
 /** Xodimning (ustoz yoki qabulxona) parolini tiklash — faqat direktor. */
 export async function PATCH(
@@ -49,8 +50,8 @@ export async function PATCH(
     return NextResponse.json({ error: "Xodim topilmadi" }, { status: 404 });
   }
 
-  const body = await request.json().catch(() => null);
-  const password = typeof body?.password === "string" ? body.password : "";
+  const body = await readJsonBody(request);
+  const password = readRawString(body, "password");
 
   const passwordError = validatePassword(password);
   if (passwordError) {
