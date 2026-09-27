@@ -117,6 +117,7 @@ model Organization {
   /**
    * /**
    * /**
+   * /**
    * Qabulxona chekni tasdiqlay/rad eta oladi va naqd to'lovni qayd etadi.
    */
   receptionHandlesPayments Boolean @default(true)
@@ -605,8 +606,16 @@ model Attempt {
   assignment Assignment?     @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
   answers    AttemptAnswer[]
 
-  @@index([studentId])
-  @@index([groupId])
+  // Kompozit indekslar — bu jadval eng ko'p so'raladigan jadvallardan
+  // biri va deyarli har so'rov `finishedAt` bilan birga keladi
+  // ("yakunlanganlari").
+  //
+  // `studentId` va `groupId` alohida indeks sifatida qoldirilmadi:
+  // Postgres kompozit indeksning BIRINCHI ustunini yolg'iz ham
+  // ishlata oladi, ya'ni ular ortiqcha bo'lib, faqat yozish narxini
+  // oshirardi.
+  @@index([studentId, finishedAt])
+  @@index([groupId, mode, finishedAt])
   @@index([assignmentId])
 }
 
