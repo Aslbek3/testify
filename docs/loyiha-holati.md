@@ -19,11 +19,11 @@ avtomaktabga sotadi, ya'ni "tayyor" degani nimani anglatishini u biladi.
 |---|---|
 | Kod (MVP funksiyalari) | ~92% |
 | Kontent (savollar bazasi) | ~5% |
-| 18 qismning o'rtachasi | **76%** |
+| 18 qismning o'rtachasi | **77%** |
 
 ⚠️ Ilgari bu yerda "~84%" yozilgan edi — u haqiqiy o'rtacha emas, qo'lda
 qo'yilgan taxmin edi. Endi raqam jadvaldagi 18 ta foizdan hisoblanadi
-(jami 1375 / 18 = 76.4). 2026-09-26 da ikkita qism qo'shildi:
+(jami 1382 / 18 = 76.8). 2026-09-26 da ikkita qism qo'shildi:
 "Ma'lumotnoma" (25%) va "Mobil" (70%) — ilgari mobil "UI va mobil"
 ichida 95% deb turardi, lekin o'lchov boshqasini ko'rsatdi.
 Raqamning tushishi yomonlashuv emas: yashirin bo'shliqlar ro'yxatga
@@ -46,14 +46,14 @@ savollarning o'zi.
 | 6 | Vazifa berish | 90% | takroriy vazifa (har hafta avtomatik) |
 | 7 | O'quvchi: test yechish | 95% | — |
 | 8 | Xatolar ustida ishlash | 90% | aqlli takrorlash (spaced repetition) |
-| 9 | Infratuzilma | 90% | monitoring, CI |
+| 9 | Infratuzilma | 92% | monitoring; CI qo'shildi (2026-09-27) |
 | 10 | Bildirishnomalar | 80% | Telegram; menyudagi son real vaqtda yangilanmaydi |
 | 11 | UI (kompyuter) | 95% | owner/questions ekranlari chuqurroq ishlanmagan |
 | 18 | Mobil (telefon) | 90% | jadvallar telefonda kartochkaga aylanadi (`globals.css` `.table-cards`). Qolgani: haqiqiy qurilmada ko'z bilan tekshirilmagan |
 | 12 | Owner paneli | 85% | mavzu tahriri, direktorni bloklash, arxivlash |
 | 13 | Avtomaktab → platforma obunasi | 50% | UI yashirin (`ORGANIZATION_BILLING_UI_ENABLED = false`) |
 | 14 | **Savollar bazasi (kontent)** | **5%** | production 20 ta, dev 66 ta savol; bilet yo'q |
-| 15 | Avtomatik testlar | 60% | 34 ta birlik testi (`tests/`, `npm test`) + CI (`.github/workflows/ci.yml`: eslint, test, tsc) + 110 ta HTTP tekshiruv. Yetishmaydi: HTTP tekshiruvi CI'da emas (server va baza kerak), servis qatlami qoplanmagan, qamrov o'lchanmaydi |
+| 15 | Avtomatik testlar | 65% | 34 ta birlik testi (`tests/`, `npm test`) + CI (`.github/workflows/ci.yml`: eslint, test, tsc) + 110 ta HTTP tekshiruv. Yetishmaydi: HTTP tekshiruvi CI'da emas (server va baza kerak), servis qatlami qoplanmagan, qamrov o'lchanmaydi |
 | 17 | Ma'lumotnoma (shpargalka, yo'l belgilari) | 25% | shakl tayyor, kontent yo'q: 283 ta belgidan 20 tasi, 8 ta shpargalkadan 2 tasi |
 | 16 | Dars jadvali | 85% | davomat (kim keldi), darsni ko'chirish — hozir faqat bekor qilish |
 
