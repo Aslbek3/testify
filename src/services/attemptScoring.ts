@@ -91,12 +91,45 @@ export function computeScore(
  *
  * @returns nechta urinish yopilgani.
  */
+/**
+ * Muddati o'tgan imtihonlarni yopish — QAMROV bo'yicha.
+ *
+ * Nega bir nechta qamrov bor: ilgari faqat `studentId` bo'yicha ishlardi
+ * va faqat O'QUVCHINING o'zi ilovaga kirganda chaqirilardi. Natijada
+ * yorliqni yopib ketgan va qaytmagan o'quvchining urinishi abadiy
+ * "yakunlanmagan" bo'lib qolardi — ustoz uni statistikada ko'rmasdi va
+ * "nega 20 ta imtihon topshirilgan, jadvalda 17 ta?" degan savol
+ * javobsiz qolardi.
+ *
+ * Endi xodim o'z panelini ochganda ham yopiladi: ustoz uchun uning
+ * guruhlari bo'yicha, direktor uchun butun tashkilot bo'yicha. So'rov
+ * odatda BO'SH qaytadi (`finishedAt: null` + muddati o'tgan) va
+ * `@@index([groupId])` bor, ya'ni panel sekinlashmaydi.
+ */
+export type FinalizeScope =
+  | { studentId: string }
+  | { groupId: string }
+  | { tutorId: string }
+  | { organizationId: string };
+
+function scopeFilter(scope: FinalizeScope) {
+  if ("studentId" in scope) return { studentId: scope.studentId };
+  if ("groupId" in scope) return { groupId: scope.groupId };
+  if ("tutorId" in scope) return { group: { tutorId: scope.tutorId } };
+  return { group: { organizationId: scope.organizationId } };
+}
+
+/** Eski imzo — o'quvchining o'z sahifalari shu orqali chaqiradi. */
 export async function finalizeExpiredAttempts(studentId: string): Promise<number> {
+  return finalizeExpiredAttemptsIn({ studentId });
+}
+
+export async function finalizeExpiredAttemptsIn(scope: FinalizeScope): Promise<number> {
   const expiryCutoff = new Date(Date.now() - EXAM_DURATION_SECONDS * 1000);
 
   const expired = await prisma.attempt.findMany({
     where: {
-      studentId,
+      ...scopeFilter(scope),
       mode: "EXAM",
       finishedAt: null,
       startedAt: { lt: expiryCutoff },

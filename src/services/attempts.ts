@@ -573,6 +573,8 @@ export async function getAttemptForResume(input: {
 export {
   finishAttempt,
   finalizeExpiredAttempts,
+  finalizeExpiredAttemptsIn,
+  type FinalizeScope,
 } from "@/services/attemptScoring";
 
 export {

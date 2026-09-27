@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
+import { finalizeExpiredAttemptsIn } from "@/services/attempts";
 import { canViewOrganization } from "@/lib/permissions";
 import {
   getOrganizationOverview,
@@ -119,6 +120,15 @@ export default async function DirectorPage({
   searchParams: Promise<{ kun?: string }>;
 }) {
   const user = await requireRole("DIRECTOR");
+
+  // Tashlab ketilgan imtihonlarni yopamiz. Ilgari buni faqat
+  // O'QUVCHINING o'zi ilovaga kirganda amalga oshirardi, ya'ni
+  // yorliqni yopib qaytmagan o'quvchining urinishi bu yerdagi
+  // sonlarga hech qachon tushmasdi. So'rov odatda bo'sh qaytadi.
+  if (user.organizationId) {
+    await finalizeExpiredAttemptsIn({ organizationId: user.organizationId });
+  }
+
   // Grafik davri URL'da: holat saqlanadi va havolani yuborish mumkin.
   const { kun } = await searchParams;
   const period = parseActivityPeriod(kun);

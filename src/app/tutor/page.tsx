@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
+import { finalizeExpiredAttemptsIn } from "@/services/attempts";
 import { Card } from "@/components/Card";
 import { PageHeader } from "@/components/PageHeader";
 import { TaskCard } from "@/components/TaskCard";
@@ -30,6 +31,13 @@ import { formatRelativeDays } from "@/lib/format";
  */
 export default async function TutorPage() {
   const user = await requireRole("TUTOR");
+
+  // Tashlab ketilgan imtihonlarni yopamiz. Ilgari buni faqat
+  // O'QUVCHINING o'zi ilovaga kirganda amalga oshirardi, ya'ni
+  // yorliqni yopib qaytmagan o'quvchining urinishi bu yerdagi
+  // sonlarga hech qachon tushmasdi. So'rov odatda bo'sh qaytadi.
+  await finalizeExpiredAttemptsIn({ tutorId: user.id });
+
   const [groups, userName] = await Promise.all([
     getGroupSummariesForTutor(user.id),
     getUserName(user.id),

@@ -26,6 +26,7 @@ import {
 import { listAssignmentsForGroup } from "@/services/assignments";
 import { listTopicsWithQuestionCount } from "@/services/questions";
 import { listLessonsForGroup } from "@/services/lessons";
+import { finalizeExpiredAttemptsIn } from "@/services/attempts";
 import { getStudentAccessMap } from "@/services/studentPayments";
 import { assignmentDueDateBounds } from "@/lib/assignments";
 import { attentionList } from "@/lib/attention";
@@ -76,6 +77,12 @@ export default async function GroupPage({
   const canBlockStudents = canManageStudent(user, group);
   const canResetPasswords = canResetStudentPassword(user, group);
   const canEditLessons = canManageLesson(user, group);
+
+  // Shu guruhdagi tashlab ketilgan imtihonlarni yopamiz — jadvaldagi
+  // sonlar o'quvchi ilovaga qaytishini kutmasin
+  // (`finalizeExpiredAttemptsIn` izohiga qara). Ruxsat tekshiruvidan
+  // KEYIN turadi: begona guruhga hech narsa qilinmasin.
+  await finalizeExpiredAttemptsIn({ groupId });
 
   const [roster, analytics, recentExamCount, assignments, lessons] =
     await Promise.all([

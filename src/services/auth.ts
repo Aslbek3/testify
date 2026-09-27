@@ -1,3 +1,4 @@
+import { cache } from "react";
 import bcrypt from "bcryptjs";
 import { getSubscriptionState } from "@/lib/subscription";
 import { prisma } from "@/lib/prisma";
@@ -116,8 +117,21 @@ export const ORGANIZATION_SWITCH_SELECT = {
  * allaqachon kirgan xodim/o'quvchilari JWT muddati (1 hafta) tugaguncha
  * ishlashda davom etardi. Bu qo'shimcha SO'ROV emas, o'sha so'rovdagi JOIN —
  * narxi deyarli nol.
+ *
+ * `cache()` — BITTA so'rov ichida bu funksiya bir necha marta chaqiriladi:
+ * layout `requireRole` qiladi, sahifa yana qiladi, ba'zi komponentlar ham.
+ * Ilova bo'ylab 184 ta chaqiruv joyi bor va har biri bazaga borardi.
+ * React'ning `cache()` i qamrovi bitta so'rov bilan chegaralangan, ya'ni
+ * foydalanuvchilar orasida ma'lumot oqib ketishi MUMKIN EMAS.
+ *
+ * ⚠️ Shu sababli: agar so'rov ichida foydalanuvchining o'zi o'zgartirilsa
+ * (masalan parol almashtirilib `sessionVersion` oshsa), keyingi o'qish
+ * eski qiymatni beradi. Hozir bunday joy yo'q — parol almashtirish
+ * route'i yangi cookie qo'yadi va qaytadan o'qimaydi.
  */
-export async function getUserSessionState(userId: string): Promise<UserSessionState> {
+export const getUserSessionState = cache(async function getUserSessionState(
+  userId: string
+): Promise<UserSessionState> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -152,7 +166,7 @@ export async function getUserSessionState(userId: string): Promise<UserSessionSt
         }
       : null,
   };
-}
+});
 
 /**
  * Foydalanuvchining barcha joriy sessiyalarini bekor qiladi —
