@@ -920,6 +920,49 @@ async function main() {
   }
   const allQuestions = topics.flatMap((t) => t.questions);
 
+  // ---- Biletlar ----
+  // Bilet — savollarning TARTIBLI ro'yxati (alohida jadval emas,
+  // `Question.ticketNumber` + `ticketOrder`). Real imtihonda bitta
+  // biletda 20 ta savol bo'ladi.
+  //
+  // Bazadagi savollar hammasi bitta mavzudan bo'lib qolmasligi uchun
+  // mavzular bo'ylab NAVBAT bilan olinadi: aks holda 1-bilet butunlay
+  // "Yo'l belgilari" dan iborat bo'lib, bilet rejimining ma'nosi
+  // yo'qolardi.
+  //
+  // ⚠️ Bu NAMUNA: savollar bazasi to'lgach biletlar haqiqiy manbadan
+  // (import orqali) keladi va bu blok olib tashlanadi.
+  {
+    const TICKET_SIZE = 20;
+    const TICKET_COUNT = 2;
+
+    // Mavzular bo'ylab navbat bilan ("round-robin") tekis ro'yxat.
+    const mixed: typeof allQuestions = [];
+    for (let i = 0; ; i += 1) {
+      const before = mixed.length;
+      for (const t of topics) {
+        if (t.questions[i]) mixed.push(t.questions[i]);
+      }
+      if (mixed.length === before) break;
+    }
+
+    let assigned = 0;
+    for (let ticket = 1; ticket <= TICKET_COUNT; ticket += 1) {
+      for (let order = 1; order <= TICKET_SIZE; order += 1) {
+        const question = mixed[assigned];
+        if (!question) break;
+        await prisma.question.update({
+          where: { id: question.id },
+          data: { ticketNumber: ticket, ticketOrder: order },
+        });
+        assigned += 1;
+      }
+    }
+    console.log(
+      `  Biletlar: ${TICKET_COUNT} ta bilet, ${assigned} ta savol biriktirildi`
+    );
+  }
+
   // ---- O'quvchilar ----
   const students = [];
   for (let i = 0; i < STUDENT_NAMES.length; i++) {

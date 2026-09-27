@@ -375,12 +375,20 @@ async function main() {
     // savolda null), shuning uchun filtr tabletkalari chizilmaydi — bu
     // to'g'ri xatti-harakat. Shu sabab filtrning O'ZI emas, sahifaning
     // ikkala holatda ham ishlashi tekshiriladi.
-    await checkPageAny(
-      student,
-      "/student/bilet",
-      ["Biletlar hali kiritilmagan", "Barchasi"],
-      "Biletlar sahifasi holatga mos chiziladi"
-    );
+    // Seed 2 ta bilet yaratadi (har birida 20 ta savol), shuning uchun
+    // filtr tabletkalari ham, plitkalar ham chizilishi shart.
+    await checkPage(student, "/student/bilet", [
+      "Barchasi",
+      "Yangi",
+      "Xatolar",
+      // ⚠️ "1-bilet" MATNI bo'yicha qidirib bo'lmaydi: JSX'da u
+      // `{ticket.number}-bilet` va HTML'ga `1<!-- -->-bilet` bo'lib
+      // tushadi (React matn tugunlarini ajratadi). Shuning uchun
+      // HAVOLA tekshiriladi — u bo'linmaydi.
+      "/student/test?bilet=1",
+      "/student/test?bilet=2",
+      "ta savol",
+    ]);
     await checkPage(student, "/student/bilet?filtr=yangi");
     await checkPage(student, "/student/bilet?filtr=xatolar");
     // Shpargalka jadvalidagi haqiqiy qiymat va tekshirilmaganlik belgisi
