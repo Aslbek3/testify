@@ -119,24 +119,71 @@ export async function createTopic(name: string, category?: string | null) {
   return prisma.topic.create({ data: { name: trimmed, category: trimmedCategory } });
 }
 
+/** Bitta sahifada nechta savol. */
+export const QUESTIONS_PAGE_SIZE = 25;
+
+export type QuestionPage = {
+  items: QuestionListItem[];
+  /** Filtrga mos JAMI savol soni — sahifalar sonini hisoblash uchun. */
+  total: number;
+  /** 1 dan boshlanadi. */
+  page: number;
+  pageCount: number;
+};
+
+/**
+ * Mavzudagi savollar — SAHIFALAB va qidiruv bilan.
+ *
+ * Nega kerak bo'lib qoldi: ilgari bu funksiya mavzudagi HAMMA savolni
+ * qaytarardi va sahifa ularni bir yo'la chizardi. Hozirgi bazada mavzuga
+ * 8-20 ta savol to'g'ri keladi, ya'ni sezilmasdi — lekin loyihaning
+ * asosiy rejasi 1 220 ta savol kiritish. Bitta mavzuda 300 ta savol
+ * bo'lganda owner kerakli savolni umuman topa olmasdi: boshqa barcha
+ * jurnalda qidiruv bor, bu yerda esa yo'q edi.
+ *
+ * Qidiruv savol MATNI va VARIANTLARI bo'yicha emas, faqat matn
+ * bo'yicha: variantlar `Json` ustunida va ularni indekslab bo'lmaydi,
+ * ya'ni qidiruv butun jadvalni skanerlashga aylanardi.
+ */
 export async function listQuestionsForTopic(
-  topicId: string
-): Promise<QuestionListItem[]> {
+  topicId: string,
+  options: { page?: number; search?: string } = {}
+): Promise<QuestionPage> {
+  const search = options.search?.trim() ?? "";
+  const where: Prisma.QuestionWhereInput = {
+    topicId,
+    ...(search ? { text: { contains: search, mode: "insensitive" as const } } : {}),
+  };
+
+  const total = await prisma.question.count({ where });
+  const pageCount = Math.max(1, Math.ceil(total / QUESTIONS_PAGE_SIZE));
+  // Chegaradan tashqaridagi sahifa so'ralsa (masalan qidiruvdan keyin
+  // ro'yxat qisqarib qolsa) oxirgi sahifaga tushamiz — bo'sh ekran
+  // ko'rsatishdan ko'ra foydaliroq.
+  const page = Math.min(Math.max(1, options.page ?? 1), pageCount);
+
   const questions = await prisma.question.findMany({
-    where: { topicId },
+    where,
     orderBy: { text: "asc" },
+    skip: (page - 1) * QUESTIONS_PAGE_SIZE,
+    take: QUESTIONS_PAGE_SIZE,
   });
 
-  return questions.map((question) => ({
-    id: question.id,
-    text: question.text,
-    options: toStringArray(question.options),
-    correctOptionIndex: question.correctOptionIndex,
-    imageUrl: question.imageUrl,
-    imageAlt: question.imageAlt,
-    explanation: question.explanation,
-    legalReference: question.legalReference,
-  }));
+  return {
+    items: questions.map((question) => ({
+      id: question.id,
+      text: question.text,
+      options: toStringArray(question.options),
+      correctOptionIndex: question.correctOptionIndex,
+      imageUrl: question.imageUrl,
+      imageAlt: question.imageAlt,
+      explanation: question.explanation,
+      legalReference: question.legalReference,
+    })),
+    total,
+    page,
+    pageCount,
+  };
 }
 
 /**

@@ -39,6 +39,23 @@ export type ListStudentsParams = {
 };
 
 /**
+ * Bitta so'rovda qaytariladigan eng ko'p o'quvchi.
+ *
+ * Nega sahifalash EMAS: jurnal sahifasi filtr sonlarini ("e'tibor
+ * talab qiladi", "jim", "to'lov") ro'yxatning O'ZIDAN, JS'da
+ * hisoblaydi. Sahifalash qo'yilsa, bu sonlar faqat ko'rinayotgan
+ * sahifani sanab, direktorga yolg'on raqam ko'rsatardi.
+ *
+ * To'g'ri yechim — o'sha sonlarni SQL'ga ko'chirish, lekin bu alohida
+ * ish. Shu paytgacha chegara qo'yiladi va u ekranda OCHIQ aytiladi:
+ * jimgina kesib tashlangan ro'yxat eng yomon variant.
+ *
+ * 500 — real avtomaktabning o'lchamidan ancha katta (odatda 50-200
+ * o'quvchi), ya'ni amalda bu chegaraga yetilmaydi.
+ */
+export const MAX_STUDENT_ROWS = 500;
+
+/**
  * Tashkilotdagi BARCHA o'quvchilar (guruhidan qat'iy nazar) — Direktor
  * paneli uchun. O'rtacha ball FAQAT imtihon (EXAM) urinishlaridan
  * hisoblanadi — tutorDashboard'dagi kabi sabab: mashqda javob darhol
@@ -51,6 +68,7 @@ export async function listStudentsForOrganization(
   const { q, groupId } = params;
 
   const students = await prisma.user.findMany({
+    take: MAX_STUDENT_ROWS,
     where: {
       ...studentScope(organizationId),
       ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),

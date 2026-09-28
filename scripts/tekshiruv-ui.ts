@@ -654,6 +654,31 @@ async function main() {
   if (owner) {
     await checkPage(owner, "/owner");
     // Mavzular guruhlangan (#13) va shikoyatlar bo'limi bor (#16).
+    // Savollar ro'yxatida qidiruv va sahifalash (2026-09-28 da
+    // qo'shildi — ilgari butun ro'yxat bir sahifada chizilardi).
+    {
+      const topic = await prisma.topic.findFirst({ select: { id: true } });
+      if (topic) {
+        await checkPage(owner, `/owner/questions/${topic.id}`, [
+          "Savol matni bo&#x27;yicha qidirish",
+        ]);
+        await checkPage(owner, `/owner/questions/${topic.id}?q=yoq-bunday-savol`, [
+          "Hech narsa topilmadi",
+        ]);
+        await checkPage(owner, `/owner/questions/${topic.id}?sahifa=99`);
+      }
+    }
+    // To'lovlar tarixida qidiruv va holat filtri
+    await checkPage(director!, "/director/tolovlar", [
+      "O&#x27;quvchi ismi bo&#x27;yicha qidirish",
+      "Tasdiqlangan",
+      "Rad etilgan",
+    ]);
+    await checkPage(director!, "/director/tolovlar?holat=rad");
+    await checkPage(director!, "/director/tolovlar?q=yoq-bunday-odam", [
+      "Hech narsa topilmadi",
+    ]);
+
     await checkPage(owner, "/owner/questions", [
       "Savolga shikoyatlar",
       "Belgilar va ishoralar",

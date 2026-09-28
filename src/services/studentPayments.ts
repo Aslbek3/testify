@@ -393,15 +393,34 @@ export async function rejectStudentPayment(input: {
 // ---------------------------------------------------------------------------
 
 /** Direktor va qabulxona uchun — ko'rib chiqilganlar tarixi. */
+/**
+ * Ko'rib chiqilgan to'lovlar — qidiruv va holat filtri bilan.
+ *
+ * Nega kerak bo'lib qoldi: bu ro'yxat oxirgi 30 tasini ko'rsatardi va
+ * boshqa hech qanday yo'l yo'q edi. Direktor "Alisher to'laganmi?"
+ * degan savolga javob topolmasdi — barcha boshqa jurnalda qidiruv
+ * bor, bu yerda esa yo'q edi. 30 tadan eski to'lov esa umuman
+ * ko'rinmasdi.
+ *
+ * Qidiruv o'quvchining ISMI bo'yicha: direktor to'lovni odam orqali
+ * qidiradi, summa yoki sana orqali emas.
+ */
 export async function listReviewedStudentPayments(
   organizationId: string,
-  limit = 30
+  options: { limit?: number; search?: string; status?: "CONFIRMED" | "REJECTED" } = {}
 ): Promise<StudentPaymentRow[]> {
+  const search = options.search?.trim() ?? "";
   const rows = await prisma.studentPayment.findMany({
-    where: { organizationId, status: { not: "PENDING" } },
+    where: {
+      organizationId,
+      status: options.status ?? { not: "PENDING" },
+      ...(search
+        ? { student: { name: { contains: search, mode: "insensitive" as const } } }
+        : {}),
+    },
     select: rowSelect,
     orderBy: { createdAt: "desc" },
-    take: limit,
+    take: options.limit ?? 30,
   });
   return rows.map(toRow);
 }

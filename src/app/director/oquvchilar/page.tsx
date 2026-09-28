@@ -2,6 +2,7 @@ import { requireRole } from "@/lib/auth";
 import { canViewOrganization } from "@/lib/permissions";
 import {
   listStudentsForOrganization,
+  MAX_STUDENT_ROWS,
   countStudentsForOrganization,
   listGroupsForOrganization,
   getOrganizationOverview,
@@ -9,6 +10,7 @@ import {
 } from "@/services/directorDashboard";
 import { Card } from "@/components/Card";
 import { PageHeader } from "@/components/PageHeader";
+import { FormMessage } from "@/components/FormMessage";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { SummaryStrip } from "@/components/SummaryStrip";
 import { FilterChips } from "@/components/JournalToolbar";
@@ -134,6 +136,12 @@ export default async function DirectorStudentsPage({
 
   const isFiltered = filter !== "" || Boolean(q) || Boolean(group);
 
+  // Ro'yxat chegaraga urildimi. Chegara `MAX_STUDENT_ROWS` da
+  // asoslangan; bu yerda faqat ochiq AYTILADI — jimgina kesilgan
+  // ro'yxat direktorni chalg'itardi va filtr sonlari ham shu ro'yxatdan
+  // hisoblanadi.
+  const isTruncated = students.length >= MAX_STUDENT_ROWS;
+
   return (
     <div className="space-y-5">
       <Breadcrumb
@@ -163,6 +171,15 @@ export default async function DirectorStudentsPage({
           },
         ]}
       />
+
+      {isTruncated && (
+        <FormMessage tone="warning">
+          Ro&apos;yxat {MAX_STUDENT_ROWS} ta o&apos;quvchi bilan cheklandi —
+          pastdagi sonlar ham shu {MAX_STUDENT_ROWS} tasi bo&apos;yicha.
+          Aniq natija uchun guruh bo&apos;yicha filtrlang yoki ism bilan
+          qidiring.
+        </FormMessage>
+      )}
 
       <div className="space-y-3">
         <FilterChips

@@ -552,6 +552,7 @@ export {
   type GroupDetail,
 } from "@/services/directorGroups";
 export {
+  MAX_STUDENT_ROWS,
   listStudentsForOrganization,
   countStudentsForOrganization,
   listReceptionStaff,
