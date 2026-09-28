@@ -39,6 +39,23 @@ yuboriladi, natija Prisma orqali bazadan tekshiriladi, skript oxirida o'zi
 yaratgan hamma narsani o'chiradi. Shu usulda tekshirilgan: to'lov oqimi (jonli
 saytda), vazifa berish (51 ta tekshiruv), bildirishnomalar (38 ta).
 
+**Uch qatlam (2026-09-28 dan):**
+
+```
+npm test                  # 56 ta birlik testi — BAZASIZ, CI'da ham ishlaydi
+npm run test:services     # 67 ta servis testi — .env dagi DATABASE_URL kerak
+npm run test:coverage     # qamrov (bazasiz to'plam bo'yicha)
+npm run test:coverage:all # qamrov (servis testlari bilan — baza kerak)
+```
+
+`tests/services/` ALOHIDA papkada, chunki `npm test` ning glob'i
+(`tests/*.test.ts`) pastki papkani tutmaydi — ya'ni bazasiz to'plam
+tasodifan bazaga bog'lanib qolmaydi. Testlar `tests/services/fixture.ts`
+orqali o'z tashkiloti/guruhi/o'quvchisini `birlik-test-` prefiksi bilan
+yaratadi va oxirida o'chiradi; seed ma'lumotiga (`seed-*`) tegilmaydi.
+Uzilib qolgan ishga tushirishdan qolgan yozuvlar keyingi safar
+avtomatik supuriladi (1 soatdan eski bo'lsa).
+
 **Doimiy skript (2026-09-21):** `scripts/tekshiruv-ui.ts` — 110 ta tekshiruv.
 
 ```

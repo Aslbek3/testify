@@ -1,11 +1,12 @@
 # Uzluksiz integratsiya — har push va pull request'da.
 #
-# Nega faqat shu uchtasi: birlik testlari baza ham, server ham talab
-# qilmaydi (sof funksiyalar), ya'ni ular sekundlarda tugaydi va har
-# safar ishlaydi. `scripts/tekshiruv-ui.ts` (110 ta HTTP tekshiruv) esa
-# ishlab turgan dev server va to'ldirilgan bazani talab qiladi — u
-# qo'lda ishga tushiriladi. Ikkalasini aralashtirsak, CI sekin va
-# ishonchsiz bo'lib qolardi.
+# Nega faqat shular: bu yerdagi hamma narsa baza ham, server ham talab
+# qilmaydi (sof funksiyalar), ya'ni sekundlarda tugaydi va har safar
+# ishlaydi. Bazaga boradigan ikki to'plam ataylab tashqarida:
+# `npm run test:services` (`tests/services/`, `.env` dagi
+# `DATABASE_URL` kerak) va `scripts/tekshiruv-ui.ts` (110 ta HTTP
+# tekshiruv, ishlab turgan dev server kerak). Ularni aralashtirsak, CI
+# sekin va ishonchsiz bo'lib qolardi.
 name: CI
 
 on:
@@ -34,6 +35,19 @@ jobs:
 
       - name: Birlik testlari
         run: npm test
+
+      # Qamrov — faqat KO'RSATADI, yiqitmaydi. Chegara (`--test-coverage-lines`)
+      # ataylab qo'yilmagan: qamrov hali past va qattiq chegara CI'ni doimiy
+      # qizil holatda ushlab turardi, ya'ni signal qiymatini yo'qotardi.
+      # `continue-on-error` esa `--experimental-test-coverage` bayrog'i uchun:
+      # u tajriba bosqichida va Node yangilanishida xatti-harakati o'zgarishi
+      # mumkin — qamrov hisoboti hech qachon haqiqiy testlarni bloklamasin.
+      #
+      # ⚠️ Bu son BAZASIZ ishlaydigan testlar bo'yicha. Servis qatlamining
+      # qamrovi `npm run test:coverage:all` da (baza kerak) — u CI'da yo'q.
+      - name: Qamrov (ma'lumot uchun)
+        run: npm run test:coverage
+        continue-on-error: true
 
       # Next.js marshrut tiplari (`.next/types`) — usiz `tsc` sahifa
       # propslarini topa olmaydi (`muhim.md` dagi eslatma).
