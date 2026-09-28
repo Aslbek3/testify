@@ -5,6 +5,7 @@ import { useRefresh } from "@/lib/useServerMutation";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/Button";
 import { Field } from "@/components/Field";
+import { FormMessage } from "@/components/FormMessage";
 
 export function NewTopicModal({
   /**
@@ -65,9 +66,7 @@ export function NewTopicModal({
       <Modal open={open} onClose={close} title="Yangi mavzu qo'shish">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
-              {error}
-            </p>
+            <FormMessage>{error}</FormMessage>
           )}
 
           <Field

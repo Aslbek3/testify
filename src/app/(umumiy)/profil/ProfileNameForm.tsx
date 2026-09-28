@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRefresh } from "@/lib/useServerMutation";
 import { Button } from "@/components/Button";
 import { Field } from "@/components/Field";
+import { FormMessage } from "@/components/FormMessage";
 
 /**
  * Ismni tahrirlash — faqat foydalanuvchining O'ZI uchun.
@@ -74,7 +75,7 @@ export function ProfileNameForm({ currentName }: { currentName: string }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-3 border-b border-border py-3">
       {error && (
-        <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
+        <FormMessage>{error}</FormMessage>
       )}
       <Field
         id="profile-name"

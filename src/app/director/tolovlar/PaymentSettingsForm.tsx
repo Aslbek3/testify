@@ -13,6 +13,7 @@ import {
 import { Field } from "@/components/Field";
 import { Button } from "@/components/Button";
 import type { StudentPaymentSettings } from "@/services/studentPayments";
+import { FormMessage } from "@/components/FormMessage";
 
 /**
  * O'quvchi to'lovi sozlamalari.
@@ -131,7 +132,7 @@ export function PaymentSettingsForm({ settings }: { settings: StudentPaymentSett
       </div>
 
       {error && (
-        <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
+        <FormMessage>{error}</FormMessage>
       )}
 
       <div className="flex items-center justify-end gap-3">

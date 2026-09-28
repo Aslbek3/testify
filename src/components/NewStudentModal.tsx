@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { Field, SelectField } from "@/components/Field";
 import { PasswordField } from "@/components/PasswordField";
 import { PHONE_HINT } from "@/lib/phone";
+import { FormMessage } from "@/components/FormMessage";
 
 /**
  * O'quvchi qo'shish — direktor, qabulxona va ustoz uchun BITTA modal.
@@ -102,9 +103,7 @@ export function NewStudentModal({
       <Modal open={open} onClose={close} title="Yangi o'quvchi qo'shish">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
-              {error}
-            </p>
+            <FormMessage>{error}</FormMessage>
           )}
           {success && (
             <p className="rounded-md bg-success/10 px-3 py-2 text-sm text-success">

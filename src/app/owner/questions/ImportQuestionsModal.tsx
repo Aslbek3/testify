@@ -5,6 +5,7 @@ import { useServerMutation } from "@/lib/useServerMutation";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/Button";
 import { MAX_IMPORT_QUESTIONS } from "@/lib/questionImport";
+import { FormMessage } from "@/components/FormMessage";
 
 type ImportResult = {
   created: number;
@@ -94,7 +95,7 @@ export function ImportQuestionsModal() {
       <Modal open={open} onClose={close} title="Savollarni import qilish">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
+            <FormMessage>{error}</FormMessage>
           )}
 
           {result && result.errors.length === 0 && (

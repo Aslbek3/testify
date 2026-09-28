@@ -462,10 +462,27 @@ export type DailyActivityPoint = {
  * beradi: kunlik statistika sekin o'zgaradi, foydalanuvchiga xos emas,
  * va direktor o'z amalining natijasini shu grafikda kutmaydi).
  */
-export const getDailyActivity = cachedStatsRead(
+const getDailyActivityCached = cachedStatsRead(
   getDailyActivityUncached,
   ["director-daily-activity"]
 );
+
+/**
+ * ⚠️ `unstable_cache` natijani JSON orqali saqlaydi, ya'ni `Date`
+ * obyekti qaytishda SATRGA aylanadi. Bu jimgina xato beradi: grafik
+ * komponenti `date.getTime()` ni chaqiradi va sahifa yiqiladi.
+ *
+ * Shuning uchun sana bu yerda qayta tiklanadi. Keshlangan funksiya
+ * o'zi o'zgarmaydi — u baribir `Date` qaytaradi, faqat kesh orqali
+ * o'tganda tipi yo'qoladi.
+ */
+export async function getDailyActivity(
+  organizationId: string,
+  days: number
+): Promise<DailyActivityPoint[]> {
+  const points = await getDailyActivityCached(organizationId, days);
+  return points.map((point) => ({ ...point, date: new Date(point.date) }));
+}
 
 async function getDailyActivityUncached(
   organizationId: string,

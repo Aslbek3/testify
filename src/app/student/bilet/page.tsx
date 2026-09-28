@@ -3,10 +3,10 @@ import { requireActiveStudent } from "@/lib/auth";
 import { Card, CardHeader, CardTitle, CardNote } from "@/components/Card";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
-import { Icon } from "@/components/Icon";
 import { FilterChips } from "@/components/JournalToolbar";
 import { Badge } from "@/components/Badge";
 import { listTickets, getTicketProgressForStudent } from "@/services/tickets";
+import { FormMessage } from "@/components/FormMessage";
 
 /** URL'dagi filtr qiymatlari. */
 type TicketFilter = "" | "yangi" | "xatolar";
@@ -56,10 +56,7 @@ export default async function StudentTicketsPage({
       />
 
       {xato && (
-        <p className="flex items-start gap-2 rounded-md border border-danger/25 bg-danger-soft px-4 py-3 text-[13px] text-danger">
-          <Icon name="alertTriangle" className="mt-0.5 h-4 w-4" />
-          {xato}
-        </p>
+        <FormMessage>{xato}</FormMessage>
       )}
 
       {allTickets.length > 0 && (

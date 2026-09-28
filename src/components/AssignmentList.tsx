@@ -13,6 +13,7 @@ import {
   TableHeaderCell,
   TableRow,
 } from "@/components/Table";
+import { FormMessage } from "@/components/FormMessage";
 
 /**
  * Klientga beriladigan, allaqachon formatlangan vazifa. Sana va "necha
@@ -177,7 +178,7 @@ function DeleteAssignmentModal({
     <Modal open onClose={onClose} title="Vazifani o'chirish">
       <div className="space-y-4">
         {error && (
-          <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
+          <FormMessage>{error}</FormMessage>
         )}
         <p className="text-sm text-text">
           &laquo;{item.title}&raquo; vazifasi o&apos;quvchilar ro&apos;yxatidan

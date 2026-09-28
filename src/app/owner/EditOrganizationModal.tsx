@@ -8,6 +8,7 @@ import { Field, SelectField } from "@/components/Field";
 import { PLAN_LABEL, ORG_STATUS_LABEL } from "@/lib/labels";
 import type { OrganizationWithCounts } from "@/services/organizations";
 import type { OrganizationStatus, Plan } from "@prisma/client";
+import { FormMessage } from "@/components/FormMessage";
 
 // Ro'yxatlar yorliq jadvallaridan olinadi — enumga yangi tarif/holat
 // qo'shilganda `labels.ts` da yorliq yozilishi bilan u shu yerda ham
@@ -100,9 +101,7 @@ export function EditOrganizationModal({
       <Modal open={open} onClose={close} title="Tashkilotni tahrirlash">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
-              {error}
-            </p>
+            <FormMessage>{error}</FormMessage>
           )}
 
           <Field

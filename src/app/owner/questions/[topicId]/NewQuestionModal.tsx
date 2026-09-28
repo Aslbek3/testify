@@ -9,6 +9,7 @@ import {
   emptyQuestionForm,
   useQuestionForm,
 } from "./QuestionFormFields";
+import { FormMessage } from "@/components/FormMessage";
 
 export function NewQuestionModal({ topicId }: { topicId: string }) {
   const { refresh, refreshing } = useRefresh();
@@ -56,9 +57,7 @@ export function NewQuestionModal({ topicId }: { topicId: string }) {
       <Modal open={open} onClose={close} title="Yangi savol qo'shish">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
-              {error}
-            </p>
+            <FormMessage>{error}</FormMessage>
           )}
 
           <QuestionFormFields idPrefix="question" {...questionForm} />

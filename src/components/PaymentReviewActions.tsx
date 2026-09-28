@@ -6,6 +6,7 @@ import { Button } from "@/components/Button";
 import { Field } from "@/components/Field";
 import { Modal } from "@/components/Modal";
 import { MAX_TEXT_LENGTH } from "@/lib/payments";
+import { FormMessage } from "@/components/FormMessage";
 
 /**
  * Bitta kutayotgan to'lov uchun ikki amal: tasdiqlash va rad etish.
@@ -86,9 +87,7 @@ export function PaymentReviewActions({
           xatosini (masalan "allaqachon ko'rib chiqilgan") ko'rsatadigan
           boshqa joy yo'q. */}
       {error && !rejectOpen && (
-        <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
+        <FormMessage>{error}</FormMessage>
       )}
 
       <div className="flex flex-wrap gap-2">
@@ -123,9 +122,7 @@ export function PaymentReviewActions({
       >
         <form onSubmit={handleReject} className="space-y-4">
           {error && (
-            <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
-              {error}
-            </p>
+            <FormMessage>{error}</FormMessage>
           )}
 
           <p className="text-sm text-text-muted">

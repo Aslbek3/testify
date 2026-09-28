@@ -25,6 +25,7 @@ import { formatLessonDate, formatTime } from "@/lib/format";
 import { ProgressRing } from "./ProgressRing";
 import { AttemptHistoryTable } from "./AttemptHistoryTable";
 import { StudentAssignmentsCard } from "./StudentAssignmentsCard";
+import { FormMessage } from "@/components/FormMessage";
 
 /**
  * Mavzu foizining rangi tayyorgarlik holati bilan AYNI chegaralardan
@@ -185,10 +186,7 @@ export default async function StudentPage({
       />
 
       {xato && (
-        <p className="flex items-start gap-2 rounded-md border border-danger/25 bg-danger-soft px-4 py-3 text-[13px] text-danger">
-          <Icon name="alertTriangle" className="mt-0.5 h-4 w-4" />
-          {xato}
-        </p>
+        <FormMessage>{xato}</FormMessage>
       )}
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(270px,0.65fr)]">

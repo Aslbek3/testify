@@ -5,6 +5,7 @@ import { useRefresh } from "@/lib/useServerMutation";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/Button";
 import { PasswordField } from "@/components/PasswordField";
+import { FormMessage } from "@/components/FormMessage";
 
 /**
  * Ustoz o'z o'quvchisiga, direktor o'z ustoziga yangi parol belgilashi
@@ -60,7 +61,7 @@ export function ResetPasswordModal({
     <Modal open={open} onClose={close} title={`${userName} uchun parolni tiklash`}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
+          <FormMessage>{error}</FormMessage>
         )}
         <PasswordField
           id="reset-password"

@@ -5,7 +5,6 @@ import { Card, CardHeader, CardTitle, CardNote } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
-import { Icon } from "@/components/Icon";
 import { cn } from "@/lib/cn";
 import {
   MISTAKE_SOURCES,
@@ -18,6 +17,7 @@ import {
 import { getStudentMistakes } from "@/services/mistakes";
 import { finalizeExpiredAttempts } from "@/services/attempts";
 import { MistakesList } from "./MistakesList";
+import { FormMessage } from "@/components/FormMessage";
 
 /**
  * Filtrlar URL'da turadi (`?manba=EXAM,ASSIGNMENT&mavzu=<id>`).
@@ -120,10 +120,7 @@ export default async function StudentMistakesPage({
       />
 
       {xato && (
-        <p className="flex items-start gap-2 rounded-md border border-danger/25 bg-danger-soft px-4 py-3 text-[13px] text-danger">
-          <Icon name="alertTriangle" className="mt-0.5 h-4 w-4" />
-          {xato}
-        </p>
+        <FormMessage>{xato}</FormMessage>
       )}
 
       {!mistakes.hasFinishedAttempt ? (

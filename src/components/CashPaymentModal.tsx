@@ -7,6 +7,7 @@ import { STUDENT_PAYMENT_MONTHS, type StudentPaymentMonths } from "@/lib/payment
 import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
 import { SelectField } from "@/components/Field";
+import { FormMessage } from "@/components/FormMessage";
 
 /**
  * Naqd toʻlovni belgilash — oʻquvchi avtomaktab kassasiga toʻlaganda.
@@ -52,7 +53,7 @@ export function CashPaymentModal({
         </p>
 
         {error && (
-          <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
+          <FormMessage>{error}</FormMessage>
         )}
 
         <SelectField

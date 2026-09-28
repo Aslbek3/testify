@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { PasswordField } from "@/components/PasswordField";
 import { PASSWORD_MIN_LENGTH } from "@/lib/password";
+import { FormMessage } from "@/components/FormMessage";
 
 const EMPTY = { current: "", next: "", confirm: "" };
 
@@ -68,9 +69,7 @@ export function ChangePasswordForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
-            {error}
-          </p>
+          <FormMessage>{error}</FormMessage>
         )}
         {done && (
           <p className="rounded-md bg-success/10 px-3 py-2 text-sm text-success">

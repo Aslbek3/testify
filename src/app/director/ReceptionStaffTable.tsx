@@ -15,6 +15,7 @@ import { Button } from "@/components/Button";
 import { ResetPasswordModal } from "@/components/ResetPasswordModal";
 import { formatDate } from "@/lib/format";
 import type { ReceptionStaffRow } from "@/services/directorDashboard";
+import { FormMessage } from "@/components/FormMessage";
 
 /**
  * Qabulxona xodimlari — bloklash va parol tiklash.
@@ -45,7 +46,7 @@ export function ReceptionStaffTable({ rows }: { rows: ReceptionStaffRow[] }) {
   return (
     <>
       {error && (
-        <p className="mb-3 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
+        <FormMessage className="mb-3">{error}</FormMessage>
       )}
 
       <Table>

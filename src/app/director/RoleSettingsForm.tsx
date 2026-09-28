@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useServerMutation } from "@/lib/useServerMutation";
 import { Button } from "@/components/Button";
 import type { OrganizationSwitches } from "@/types/auth";
+import { FormMessage } from "@/components/FormMessage";
 
 /**
  * Rol kalitlari — `docs/rollar.md` dagi to'rtta band.
@@ -64,7 +65,7 @@ export function RoleSettingsForm({ switches }: { switches: OrganizationSwitches 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
+        <FormMessage>{error}</FormMessage>
       )}
       {saved && !pending && (
         <p className="rounded-md bg-success/10 px-3 py-2 text-sm text-success">

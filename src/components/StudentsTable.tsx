@@ -22,6 +22,7 @@ import type { StudentAccessLabel } from "@/lib/labels";
 import { StudentAccessBadge } from "@/components/StudentAccessBadge";
 import type { StudentPaymentMonths } from "@/lib/payments";
 import { CashPaymentModal } from "@/components/CashPaymentModal";
+import { FormMessage } from "@/components/FormMessage";
 
 /**
  * Tashkilotdagi o'quvchilar ro'yxati — direktor va qabulxona uchun
@@ -113,9 +114,7 @@ export function StudentsTable({
   return (
     <>
       {error && (
-        <p className="mb-3 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
+        <FormMessage className="mb-3">{error}</FormMessage>
       )}
       <Table>
         <TableHead>

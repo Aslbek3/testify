@@ -11,6 +11,7 @@ import {
 } from "@/lib/payments";
 import { Button } from "@/components/Button";
 import { cn } from "@/lib/cn";
+import { FormMessage } from "@/components/FormMessage";
 
 /**
  * Uch qadam, ekranda ham shu tartibda: muddat → kartaga o'tkazish →
@@ -132,7 +133,7 @@ export function StudentPaymentForm({
       </section>
 
       {error && (
-        <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
+        <FormMessage>{error}</FormMessage>
       )}
 
       <div className="flex justify-end">

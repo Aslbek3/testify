@@ -5,6 +5,7 @@ import { Button } from "@/components/Button";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon, type IconName } from "@/components/Icon";
 import { cn } from "@/lib/cn";
+import { FormMessage } from "@/components/FormMessage";
 
 /**
  * Rejim boshlash sahifalarining (Mashq / Maraton / Imtihon) umumiy qobig'i.
@@ -64,10 +65,7 @@ export function ModeStartCard({
       </div>
 
       {error && (
-        <p className="flex items-start gap-2 rounded-md border border-danger/25 bg-danger-soft px-4 py-3 text-[13px] text-danger">
-          <Icon name="alertTriangle" className="mt-0.5 h-4 w-4" />
-          {error}
-        </p>
+        <FormMessage>{error}</FormMessage>
       )}
 
       <div className="grid grid-cols-3 gap-3">

@@ -8,6 +8,7 @@ import {
   MAX_QUESTION_IMAGE_BYTES,
   QUESTION_IMAGE_ACCEPT,
 } from "@/lib/questionImages";
+import { FormMessage } from "@/components/FormMessage";
 
 /**
  * "Yangi savol" va "Savolni tahrirlash" modallari uchun umumiy forma holati
@@ -294,7 +295,7 @@ function QuestionImageField({
       </label>
 
       {error && (
-        <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
+        <FormMessage>{error}</FormMessage>
       )}
 
       {value ? (

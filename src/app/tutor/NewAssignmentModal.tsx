@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { Field, SelectField } from "@/components/Field";
 import { ASSIGNMENT_MAX_TARGET, ASSIGNMENT_NOTE_MAX_LENGTH } from "@/lib/assignments";
 import { QUESTION_COUNT } from "@/lib/examRules";
+import { FormMessage } from "@/components/FormMessage";
 
 type Kind = "EXAM" | "PRACTICE";
 
@@ -93,7 +94,7 @@ export function NewAssignmentModal({
       <Modal open={open} onClose={close} title={`Vazifa: ${groupName}`}>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
+            <FormMessage>{error}</FormMessage>
           )}
 
           <SelectField
