@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { studentScope } from "@/services/directorShared";
+import { cachedStatsRead } from "@/lib/cachedRead";
 import { UZBEKISTAN_UTC_OFFSET_HOURS } from "@/lib/format";
 
 
@@ -456,7 +457,17 @@ export type DailyActivityPoint = {
  * ro'yxat JavaScript tomonda to'ldiriladi: grafikda uzilish bo'lmasligi
  * kerak, "o'sha kuni hech kim ishlamagan" ham ma'lumot.
  */
-export async function getDailyActivity(
+/**
+ * Faollik grafigi — keshlangan (`lib/cachedRead.ts` shartlariga javob
+ * beradi: kunlik statistika sekin o'zgaradi, foydalanuvchiga xos emas,
+ * va direktor o'z amalining natijasini shu grafikda kutmaydi).
+ */
+export const getDailyActivity = cachedStatsRead(
+  getDailyActivityUncached,
+  ["director-daily-activity"]
+);
+
+async function getDailyActivityUncached(
   organizationId: string,
   days: number
 ): Promise<DailyActivityPoint[]> {

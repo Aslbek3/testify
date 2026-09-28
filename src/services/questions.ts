@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { toStringArray } from "@/lib/json";
+import { cachedStatsRead } from "@/lib/cachedRead";
 import { MIN_OPTIONS, MAX_OPTIONS, optionLetter } from "@/lib/questionOptions";
 import { isAllowedQuestionImageUrl } from "@/lib/questionImages";
 
@@ -447,9 +448,18 @@ async function queryQuestionQuality(options: {
  * Butun platforma bo'yicha eng yuqori xato foizli savollar — owner uchun
  * kontent sifati ro'yxati.
  */
-export function listLowQualityQuestions(limit = 10): Promise<QuestionQualityStat[]> {
-  return queryQuestionQuality({ minAnswers: MIN_ANSWERS_FOR_QUALITY, limit });
-}
+export const listLowQualityQuestions = cachedStatsRead(
+  // Butun platformaning `AttemptAnswer` jadvalini guruhlaydi — bu
+  // jadval eng tez o'sadigani. Natija sekin o'zgaradi (bitta yangi
+  // javob foizni deyarli siljitmaydi) va owner o'z amalining
+  // natijasini bu ro'yxatda kutmaydi.
+  function listLowQualityQuestionsUncached(
+    limit = 10
+  ): Promise<QuestionQualityStat[]> {
+    return queryQuestionQuality({ minAnswers: MIN_ANSWERS_FOR_QUALITY, limit });
+  },
+  ["low-quality-questions"]
+);
 
 /**
  * "Chalg'ituvchi" savollar — ko'pchilik qoqiladigan savollar.

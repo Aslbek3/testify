@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
+import { optimizeImage, QUESTION_IMAGE_MAX_WIDTH } from "@/lib/imageOptimize";
 
 /**
  * Savol rasmlari — diskda, `public/` dan TASHQARIDA.
@@ -63,13 +64,26 @@ export function detectImageType(bytes: Uint8Array): ImageType | null {
 export async function saveQuestionImage(
   bytes: Uint8Array
 ): Promise<{ key: string; mime: string } | null> {
+  // Tur AVVAL tekshiriladi: `optimizeImage` boshqa formatlarni ham
+  // (masalan TIFF, AVIF) o'qiy oladi, lekin bu yerda ataylab faqat
+  // uchtasi qabul qilinadi — kutilmagan format bilan kelgan fayl
+  // jimgina qabul qilinib qolmasin.
   const type = detectImageType(bytes);
   if (!type) return null;
 
-  const key = `${randomUUID()}.${type.ext}`;
+  // Kichraytirish va WebP — sabab `lib/imageOptimize.ts` izohida:
+  // telefondan kelgan 4000px rasm 840px joyga qo'yilardi.
+  const optimized = await optimizeImage(bytes, QUESTION_IMAGE_MAX_WIDTH);
+  // Optimallashtirib bo'lmasa ASLI saqlanadi: savol rasmsiz qolgandan
+  // ko'ra og'irroq rasm bilan qolgani yaxshi.
+  const finalBytes = optimized?.bytes ?? bytes;
+  const ext = optimized ? "webp" : type.ext;
+  const mime = optimized?.mime ?? type.mime;
+
+  const key = `${randomUUID()}.${ext}`;
   await fs.mkdir(imagesDir(), { recursive: true });
-  await fs.writeFile(keyToPath(key), bytes, { flag: "wx" });
-  return { key, mime: type.mime };
+  await fs.writeFile(keyToPath(key), finalBytes, { flag: "wx" });
+  return { key, mime };
 }
 
 export async function readQuestionImage(

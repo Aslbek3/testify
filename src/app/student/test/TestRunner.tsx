@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
-import { Modal } from "@/components/Modal";
 import { QuestionImage } from "@/components/QuestionImage";
 import { QuestionActions } from "@/components/QuestionActions";
+import { TestModals } from "./TestModals";
+import { WarningIcon } from "./WarningIcon";
 import { optionLetter } from "@/lib/questionOptions";
 import { cn } from "@/lib/cn";
 import type { ResumableAttempt } from "@/services/attempts";
@@ -33,20 +34,6 @@ type SaveStatus = "saving" | "retrying" | "failed";
  * muvaffaqiyatsiz bo'lsa, foydalanuvchiga qo'lda "Qayta urinish" ko'rsatiladi. */
 const RETRY_DELAYS_MS = [1000, 3000];
 
-function WarningIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className={className} aria-hidden="true">
-      <path
-        d="M10 2.5 1.5 17h17L10 2.5Z"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinejoin="round"
-      />
-      <path d="M10 8v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      <circle cx="10" cy="14.3" r="0.9" fill="currentColor" />
-    </svg>
-  );
-}
 
 function formatTime(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);
@@ -666,123 +653,20 @@ export function TestRunner({
           </div>
         </div>
       </div>
-
-      <Modal
-        open={showFinishConfirm}
-        onClose={() => setShowFinishConfirm(false)}
-        title={mode === "EXAM" ? "Imtihonni yakunlash" : "Mashqni yakunlash"}
-      >
-        <div className="space-y-4">
-          {unansweredQuestions.length > 0 && (
-            <div>
-              <p className="text-sm text-text">
-                {unansweredQuestions.length} ta savol javobsiz qoldi.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {unansweredQuestions.map(({ i }) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => {
-                      setCurrentIndex(i);
-                      setShowFinishConfirm(false);
-                    }}
-                    className="rounded-md border border-border px-3 py-1.5 text-sm text-text hover:bg-bg-subtle"
-                  >
-                    {i + 1}-savol
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {failedQuestions.length > 0 && (
-            <div>
-              <p className="flex items-center gap-1.5 text-sm text-danger">
-                <WarningIcon className="h-4 w-4 shrink-0" />
-                {failedQuestions.length} ta javob saqlanmadi.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {failedQuestions.map(({ i }) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => {
-                      setCurrentIndex(i);
-                      setShowFinishConfirm(false);
-                    }}
-                    className="rounded-md border border-danger/30 bg-danger/10 px-3 py-1.5 text-sm text-danger hover:bg-danger/20"
-                  >
-                    {i + 1}-savol
-                  </button>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={retryAllFailed}
-                className="mt-2 text-sm font-medium text-brand underline"
-              >
-                Hammasini qayta saqlash
-              </button>
-            </div>
-          )}
-
-          {unansweredQuestions.length === 0 && failedQuestions.length === 0 && (
-            <p className="text-sm text-text">Barcha savollarga javob berdingiz.</p>
-          )}
-
-          {failedQuestions.length > 0 && (
-            <p className="text-xs text-text-muted">
-              Diqqat: saqlanmagan javoblar hisobga olinmaydi — ular javobsiz
-              deb belgilanadi.
-            </p>
-          )}
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="secondary" onClick={() => setShowFinishConfirm(false)}>
-              Bekor qilish
-            </Button>
-            <Button type="button" onClick={confirmFinish} disabled={finishing}>
-              {finishing
-                ? "Yakunlanmoqda..."
-                : failedQuestions.length > 0
-                  ? "Baribir yakunlash"
-                  : "Ha, yakunlash"}
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Imtihon xatolar chegarasidan o'tib ketganda. Bekor qilish tugmasi
-          YO'Q va oyna yopilmaydi: imtihon allaqachon tugagan, ortga yo'l
-          yo'q — yagona harakat natijani ko'rish. */}
-      <Modal
-        open={stoppedWrongCount !== null}
-        onClose={() => {}}
-        title="Imtihon to'xtatildi"
-      >
-        <div className="space-y-4">
-          <p className="text-sm leading-relaxed text-text">
-            {stoppedWrongCount} ta xato qildingiz. Haqiqiy imtihon qoidasiga
-            ko&apos;ra {maxWrong} tadan ortiq xatoga yo&apos;l
-            qo&apos;yilmaydi, shuning uchun imtihon avtomatik yakunlandi.
-          </p>
-          <p className="text-xs leading-relaxed text-text-muted">
-            Natija ekranida har bir savolning to&apos;g&apos;ri javobi va
-            izohi ochiladi. Xatolaringiz &quot;Xatolarim&quot; bo&apos;limiga
-            tushadi.
-          </p>
-          <div className="flex justify-end pt-2">
-            <Button
-              type="button"
-              onClick={() => router.push(`/student/test/${attemptId}/natija`)}
-              iconEnd="arrowRight"
-            >
-              Natijani ko&apos;rish
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      <TestModals
+        showFinishConfirm={showFinishConfirm}
+        setShowFinishConfirm={setShowFinishConfirm}
+        unansweredQuestions={unansweredQuestions}
+        failedQuestions={failedQuestions}
+        setCurrentIndex={setCurrentIndex}
+        confirmFinish={confirmFinish}
+        retryAllFailed={retryAllFailed}
+        finishing={finishing}
+        stoppedWrongCount={stoppedWrongCount}
+        mode={mode}
+        maxWrong={maxWrong}
+        onSeeResult={() => router.push(`/student/test/${attemptId}/natija`)}
+      />
     </div>
   );
 }

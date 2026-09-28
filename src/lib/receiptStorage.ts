@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
+import { optimizeImage, RECEIPT_MAX_WIDTH } from "@/lib/imageOptimize";
 
 /**
  * To'lov cheklari — diskda, ochiq `public/` papkadan TASHQARIDA.
@@ -35,7 +36,10 @@ const RECEIPT_TYPES: ReceiptType[] = [
 ];
 
 /** Saqlash kaliti: tasodifiy UUID + kengaytma. Boshqa hech narsa qabul qilinmaydi. */
-const KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|pdf)$/;
+// `webp` 2026-09-28 da qo'shildi: rasm cheklar saqlashdan oldin
+// kichraytirilib WebP qilinadi. Eski `jpg`/`png` kalitlar bazada
+// qolgani uchun ular ham qabul qilinaveradi.
+const KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp|pdf)$/;
 
 function receiptsDir(): string {
   // `turbopackIgnore` — yo'l ish vaqtida aniqlanadi. Busiz Turbopack
@@ -78,12 +82,25 @@ export async function saveReceipt(
   const type = detectReceiptType(bytes);
   if (!type) return null;
 
-  const key = `${randomUUID()}.${type.ext}`;
+  // PDF TEGILMAYDI: u rasm emas va uni qayta kodlash mazmunni
+  // buzardi. Faqat rasm cheklar kichraytiriladi — telefondan kelgan
+  // 5 MB'lik surat direktorning jadvalida ham shu holicha yuklanardi.
+  const optimized =
+    type.mime === "application/pdf"
+      ? null
+      : await optimizeImage(bytes, RECEIPT_MAX_WIDTH);
+  // Optimallashtirib bo'lmasa asli saqlanadi — chek yo'qolmasligi
+  // muhimroq (u pul hujjati).
+  const finalBytes = optimized?.bytes ?? bytes;
+  const ext = optimized ? "webp" : type.ext;
+  const mime = optimized?.mime ?? type.mime;
+
+  const key = `${randomUUID()}.${ext}`;
   await fs.mkdir(receiptsDir(), { recursive: true });
   // `wx` — mavjud faylni hech qachon ustidan yozmaydi (UUID to'qnashuvi
   // amalda bo'lmaydi, lekin bo'lsa ham boshqa odamning cheki buzilmasin).
-  await fs.writeFile(keyToPath(key), bytes, { flag: "wx" });
-  return { key, mime: type.mime };
+  await fs.writeFile(keyToPath(key), finalBytes, { flag: "wx" });
+  return { key, mime };
 }
 
 export async function readReceipt(key: string): Promise<Buffer> {
