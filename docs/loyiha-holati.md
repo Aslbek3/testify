@@ -123,7 +123,9 @@ Batafsil — `docs/dizayn.md`. Qisqacha nima o'zgardi:
 
 ## Chiqarilmagan ish
 
-**Yo'q — hammasi chiqarilgan.** 2026-09-26 da `edc211e` → `238a62e`
+**Yo'q — hammasi chiqarilgan.** Oxirgi deploy 2026-10-03:
+`2dfc22b` → `c091cbd` (13 ta commit, `attempt_composite_indexes`
+migratsiyasi). Undan oldingisi 2026-09-26 da `edc211e` → `238a62e`
 (11 ta commit) production'ga qo'llandi: dizayn poydevori, uchta jurnal,
 birlashgan obyekt sahifalari, "Bugungi ish" paneli, faollik grafigi,
 ustozning bo'limlari, dars jadvali. `lessons` migratsiyasi qo'llandi,

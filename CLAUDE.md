@@ -319,6 +319,35 @@ production'ga hech qachon shu holicha ko'chirilmaydi.
   ⚠️ **Test paroli aniqlandi**: dev bazada `testify123`
   (`prisma/seed.ts:6` — `SEED_PASSWORD`), `CLAUDE.md` dagi `test1234`
   eskirgan edi. Yuqoridagi jadval to'g'rilandi.
+- **2026-10-03 deploy — ishlash, testlar va ro'yxatlar**: commit
+  `2dfc22b` → `c091cbd` (13 ta commit). Bitta migratsiya:
+  `20260927143154_attempt_composite_indexes` — faqat indeks
+  yaratadi/o'chiradi, ma'lumotga tegmaydi
+  (`Attempt(studentId, finishedAt)` va `Attempt(groupId, mode,
+  finishedAt)`; eski bir ustunli indekslar olib tashlandi, chunki
+  Postgres kompozit indeksning birinchi ustunini yolg'iz ham
+  ishlatadi). Build 9.1s, `pm2 reload` (loglarda xato yo'q),
+  `/api/health` `200`.
+
+  ⚠️ **`sharp` YANGI BOG'LIQLIK** — `npm ci` majburiy, aks holda
+  rasm optimallashtirish yiqiladi. Deployda tekshirildi: `sharp OK`.
+
+  Yangi: rasm yuklashda kichraytirish (savol 1400px, chek 1800px,
+  WebP, EXIF tashlanadi), panel keshi, mobil jadvallar kartochkaga
+  aylanadi, savollar ro'yxatiga qidiruv va sahifalash, to'lovlar
+  tarixiga qidiruv va filtr, yo'l belgilari va chalg'ituvchi
+  savollar (demo), 2 ta namuna bilet, `FormMessage` (aria-live),
+  xato ekranlari (`(obyekt)`, `(umumiy)`, `(auth)`, `global-error`),
+  kompozit indekslar.
+
+  Tekshirildi (production'da, hisobga kirib): `/student` (yangi
+  plitkalar), `/student/belgilar`, `/student/shpargalka/tezlik`,
+  `/student/saqlanganlar`, `/student/chalgituvchi`, `/student/bilet`,
+  `/owner/questions` (shikoyatlar bo'limi) — hammasi 200.
+
+  ⚠️ Deploy oldidan SSH yana uzildi: hotspot IP'i o'zgargan
+  (`95.214.210.250`). UFW whitelist'iga qo'shilgandan keyin ishladi.
+  Bu har safar takrorlanadi.
 
 
 
